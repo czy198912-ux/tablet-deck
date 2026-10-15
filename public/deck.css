@@ -1,0 +1,168 @@
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; }
+html { background: var(--bg); color: var(--text); }
+body {
+  background: var(--bg-art), var(--bg);
+  background-attachment: fixed;
+  color: var(--text);
+  font: var(--label-weight) 16px/1.2 var(--font-body);
+  display: flex; flex-direction: column;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  overscroll-behavior: none; touch-action: manipulation;
+}
+button { font: inherit; color: inherit; }
+
+/* ---------- header ---------- */
+header {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 18px; border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 85%, transparent), transparent);
+}
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.brand svg { width: 32px; height: 32px; color: var(--accent); flex: none; stroke-width: 2.5; filter: var(--icon-glow); }
+.brand h1 {
+  margin: 0; font: 400 19px/1 var(--font-display); letter-spacing: .14em; text-transform: uppercase;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#status { display: flex; align-items: center; gap: 8px; margin-left: auto; font-size: 13px; color: var(--dim); white-space: nowrap; }
+#dot { width: 9px; height: 9px; border-radius: 50%; background: var(--red); box-shadow: 0 0 10px var(--red); }
+#dot.on { background: var(--green); box-shadow: 0 0 10px var(--green); }
+.hbtn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--panel); border: 1px solid var(--line); color: var(--text);
+  border-radius: min(var(--key-radius), 10px); padding: 8px 12px; font-size: 13px;
+  letter-spacing: .08em; text-transform: uppercase;
+}
+.hbtn .sw { width: 12px; height: 12px; border-radius: 3px; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+
+/* ---------- tabs ---------- */
+nav { display: flex; gap: 6px; padding: 12px 18px 0; overflow-x: auto; scrollbar-width: none; }
+nav button {
+  flex: 0 0 auto; background: var(--panel); color: var(--dim);
+  border: 1px solid var(--line); border-bottom: none; border-radius: var(--tab-radius);
+  padding: 13px 24px; font: 400 15px/1 var(--font-display); letter-spacing: .1em; text-transform: uppercase;
+}
+nav button.active {
+  color: var(--text); background: var(--panel-hi); border-color: var(--line-hi);
+  box-shadow: inset 0 2px 0 var(--accent);
+}
+
+/* ---------- button grid ---------- */
+main {
+  flex: 1; min-height: 0; overflow-y: auto;
+  border-top: 1px solid var(--line-hi); padding: 18px;
+  display: grid; gap: 14px; align-content: start;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 176px), 1fr));
+}
+body.offline main { opacity: .45; filter: saturate(.4); }
+
+.key {
+  --c: var(--accent);
+  position: relative; overflow: hidden;
+  min-height: 140px; padding: 18px 14px 12px 16px;
+  display: grid; grid-template-rows: auto 1fr auto; gap: 8px;
+  text-align: left; color: var(--text);
+  background: var(--key-bg);
+  border: 1px solid var(--line); border-left: var(--key-edge) solid var(--c);
+  border-radius: var(--key-radius); clip-path: var(--key-clip);
+  box-shadow: var(--key-shadow, none);
+  touch-action: none; cursor: pointer;
+  transition: transform .07s ease, background .07s ease, box-shadow .07s ease;
+}
+.key::before {
+  content: ""; position: absolute; inset: 0 0 auto 0; height: var(--key-top-h);
+  color: var(--c); background: var(--key-top);
+}
+.key::after {
+  /* faint sweep so the face reads as glass/metal rather than flat */
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(115deg, rgba(255,255,255,.05), transparent 38%);
+}
+.key[data-color="green"] { --c: var(--green); }
+.key[data-color="amber"] { --c: var(--amber); }
+.key[data-color="red"] { --c: var(--red); }
+.key[data-color="blue"] { --c: var(--blue); }
+
+.glyph { width: 46px; height: 46px; color: var(--c); filter: var(--icon-glow); }
+.glyph svg { width: 100%; height: 100%; display: block; stroke-width: var(--icon-stroke); }
+.label {
+  align-self: end;
+  font-size: 17px; font-weight: var(--label-weight);
+  text-transform: var(--label-case); letter-spacing: var(--label-track); line-height: 1.15;
+}
+.foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.keycap {
+  font: 600 11px/1 var(--font-body); letter-spacing: .08em; text-transform: uppercase;
+  padding: 5px 7px; border-radius: 4px; color: var(--c);
+  background: color-mix(in srgb, var(--c) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c) 38%, transparent);
+}
+.mode {
+  font: 600 10px/1 var(--font-body); letter-spacing: .14em; text-transform: uppercase; color: var(--dim);
+}
+.key.pressed {
+  transform: scale(.965);
+  background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--c) 40%, transparent), transparent 70%),
+    color-mix(in srgb, var(--c) 22%, var(--panel));
+  box-shadow: inset 0 0 0 1px var(--c), inset 0 0 28px color-mix(in srgb, var(--c) 40%, transparent);
+}
+.key.pressed .glyph { filter: drop-shadow(0 0 10px var(--c)); }
+
+#msg { padding: 40px 16px; color: var(--dim); text-align: center; grid-column: 1 / -1; }
+
+/* ---------- pairing ---------- */
+#pair { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 40px 16px; }
+#pair p { margin: 0; color: var(--dim); text-align: center; }
+#pair input {
+  width: min(100%, 280px); padding: 14px 16px; border-radius: 10px; border: 1px solid var(--line-hi);
+  background: var(--panel); color: var(--text); font: 600 24px/1 var(--font-body); text-align: center; letter-spacing: .2em;
+}
+#pair button {
+  padding: 14px 32px; border-radius: 10px; border: 1px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 22%, var(--panel)); font-size: 17px;
+}
+
+/* ---------- theme picker ---------- */
+#picker {
+  position: fixed; inset: 0; z-index: 10; display: none; flex-direction: column;
+  background: rgba(2, 4, 8, .82); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+#picker.open { display: flex; }
+#picker .bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 16px 20px; color: #e8eef5; font: 600 14px/1 "Segoe UI", system-ui, sans-serif;
+  letter-spacing: .16em; text-transform: uppercase;
+}
+#picker .bar button {
+  background: none; border: 1px solid rgba(255,255,255,.25); color: #e8eef5;
+  border-radius: 8px; padding: 9px 16px; letter-spacing: .1em; text-transform: uppercase; font-size: 13px;
+}
+#picker .cards {
+  flex: 1; overflow-y: auto; padding: 4px 20px 24px;
+  display: grid; gap: 16px; align-content: start;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+}
+.card {
+  position: relative; overflow: hidden; text-align: left;
+  display: flex; flex-direction: column; gap: 14px; padding: 18px;
+  min-height: 210px;
+  background: var(--bg-art), var(--bg); color: var(--text);
+  border: 1px solid var(--line); border-radius: min(var(--key-radius), 16px);
+}
+.card.current { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent), 0 0 30px color-mix(in srgb, var(--accent) 35%, transparent); }
+.card .top { display: flex; align-items: center; gap: 12px; }
+.card .emblem {
+  width: 64px; height: 64px; padding: 6px; flex: none; color: var(--accent);
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%);
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent) 35%, transparent));
+}
+.card .emblem svg { width: 100%; height: 100%; stroke-width: 2.5; }
+.card .name { font: 400 20px/1.05 var(--font-display); letter-spacing: .08em; text-transform: uppercase; }
+.card .tag { font-size: 12px; color: var(--dim); letter-spacing: .04em; margin-top: 4px; font-family: var(--font-body); }
+.card .swatches { display: flex; gap: 6px; margin-top: auto; }
+.card .swatches i { width: 22px; height: 8px; border-radius: 2px; }
+.card .sample { min-height: 0; padding: 10px 12px; grid-template-rows: auto; grid-template-columns: auto 1fr; align-items: center; gap: 10px; pointer-events: none; }
+.card .sample .glyph { width: 28px; height: 28px; }
+.card .sample .label { font-size: 13px; align-self: center; }

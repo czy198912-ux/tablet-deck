@@ -1,0 +1,10 @@
+# Per-player settings: pairing code, ports and local game paths.
+config.json
+
+# Built on first run from native/keysender.cs.
+native/*.exe
+
+# Third-party keybind profiles. Get your own copy; see README.
+profiles/
+
+node_modules/

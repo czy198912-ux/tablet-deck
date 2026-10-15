@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en" data-theme="rsi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#05090f">
+<title>Tablet Deck</title>
+<!-- Theme fonts. Without internet access the tablet falls back to system fonts. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Chakra+Petch:wght@500;600;700&family=Cinzel:wght@500;700&family=Comfortaa:wght@500;700&family=Exo+2:wght@400;500;600;700&family=Marcellus&family=Montserrat:wght@500;600;700&family=Oxanium:wght@500;600;700&family=Rajdhani:wght@600;700&family=Saira+Condensed:wght@600;700&family=Saira+Stencil+One&display=swap">
+<link rel="stylesheet" href="themes.css">
+<link rel="stylesheet" href="deck.css">
+<link rel="stylesheet" href="hud.css">
+<link rel="stylesheet" href="fx.css">
+</head>
+<body class="offline">
+<header>
+  <div class="brand"><span id="brandMark"></span><h1 id="title">Tablet Deck</h1></div>
+  <div id="status"><span id="dot"></span><span id="statusText">Connecting…</span></div>
+  <button id="themeBtn" class="hbtn" type="button"><span class="sw"></span><span id="themeName">Theme</span></button>
+  <button id="fs" class="hbtn" type="button">Fullscreen</button>
+</header>
+<nav id="tabs"></nav>
+<main id="grid"><div id="msg">Loading layout…</div></main>
+
+<div id="stage" hidden><div id="canvas"></div></div>
+
+<div id="picker" role="dialog" aria-label="Choose a manufacturer theme">
+  <div class="bar"><span>Choose manufacturer</span><button id="closePicker" type="button">Close</button></div>
+  <div id="cards" class="cards"></div>
+</div>
+
+<script src="icons.js"></script>
+<script src="fx.js"></script>
+<script src="canvas.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
