@@ -41,17 +41,43 @@ handy for trying the deck out.
 
 ## Keybinds
 
-The deck uses Star Citizen 4.x default keys. Some actions (operator modes,
-shield facings, door controls, emotes and so on) have no default keyboard key;
-bind them in-game to use those buttons.
+The deck uses Star Citizen 4.x default keys where they exist. Actions with no
+default keyboard key (operator modes, shield facings, doors, emotes, targeting
+and so on) get keys from the **Tablet Deck Keyboard** profile in
+`keybinds/TabletDeck-StarCitizen.xml`. Load it in Star Citizen once:
 
-The server also reads your own `actionmaps.xml`, so actions you have rebound
-yourself use your keys. It looks in the usual install folders; if yours is
-elsewhere, set the path in `config.json` (see Settings).
+1. Copy `keybinds/TabletDeck-StarCitizen.xml` into
+   `StarCitizen\LIVE\user\client\0\Controls\Mappings` (create the `Mappings`
+   folder if it doesn't exist).
+2. In-game, open **Options → Keybindings → Control Profiles** and load
+   **Tablet Deck Keyboard**. This replaces your current custom binds, so note
+   any you want to keep and set them again afterwards.
+
+The server reads the profile and your own `actionmaps.xml`, and your file wins.
+If you rebind an action in-game, its button follows. The server looks for
+`actionmaps.xml` in the usual install folders; if yours is elsewhere, set the
+path in `config.json` (see Settings).
 
 Buttons marked `"verify": true` in the layout use Star Citizen defaults that the
 profile doesn't set (power management, system power toggles, SCM/NAV, eject,
 chat, docking camera). Check those against your keybinding screen.
+
+### Rebuilding the profile
+
+The profile is generated from the layouts. After you add or change a button
+that has an `scAction`, rebuild the profile, then copy it and load it in-game
+again:
+
+```
+node tools/make-profile.js
+```
+
+Every `scAction` must be listed with its Star Citizen actionmap in `ACTIONMAPS`
+at the top of `tools/make-profile.js`. The script stops if an action is missing
+there, if two buttons give the same action different keys, or if two actions
+that are active at the same time share a key.
+`node tools/make-profile.js --check` only reports whether the committed file is
+up to date.
 
 ## Layouts
 
@@ -79,7 +105,7 @@ Edit a layout file, then reload the page on the tablet. Button fields:
 | `color`    | `green`, `amber`, `red`, `blue` or blank (uses the theme's accent) |
 | `icon`     | icon name from `public/icons.js`; defaults to the button `id` |
 | `anim`     | press animation: `flash`, `ripple`, `gear`, `charge`, `burst`, `glow`, `recoil`, `streak`, `doors`, `lock`, `hazard`, `timed` |
-| `scAction` | Star Citizen action name; if a keybind file in `actionmaps` binds it to a key, that key wins |
+| `scAction` | Star Citizen action name; if a keybind file in `actionmaps` binds it to a key, that key wins. Listed in the keybind profile (see Keybinds) |
 
 Key names: `a`-`z`, `0`-`9`, `f1`-`f24`, `np_0`-`np_9`, `np_period`, `np_add`,
 `np_subtract`, `np_multiply`, `np_divide`, `np_enter`, `lalt`, `ralt`, `lctrl`,
@@ -101,7 +127,7 @@ back to system fonts.
   generate a new random one. Restart the server afterwards.
 - `layout`: which layout file to serve.
 - `actionmaps`: keybind files to read, in order (later files win). Defaults to
-  your Star Citizen `actionmaps.xml`.
+  `keybinds/TabletDeck-StarCitizen.xml`, then your Star Citizen `actionmaps.xml`.
 - `tapMs`: how long a tap holds the key (default 60 ms).
 
 ## Safety

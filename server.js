@@ -38,8 +38,9 @@ function loadConfig() {
   if (!config.token) { config.token = crypto.randomBytes(4).toString("hex"); changed = true; }
   if (!config.layout) { config.layout = "layouts/deck.json"; changed = true; }
   if (config.actionmaps === undefined) {
-    // Later files win; missing files are skipped.
-    config.actionmaps = [findActionmaps()].filter(Boolean);
+    // Later files win; missing files are skipped. The player's actionmaps.xml goes last:
+    // loading a profile in-game copies it there, and later rebinds land there too.
+    config.actionmaps = ["keybinds/TabletDeck-StarCitizen.xml", findActionmaps()].filter(Boolean);
     changed = true;
   }
   if (!config.tapMs) { config.tapMs = 60; changed = true; }

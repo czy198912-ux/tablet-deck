@@ -5,6 +5,7 @@ config.json
 native/*.exe
 
 # Third-party keybind profiles. Get your own copy; see README.
+# The Tablet Deck profile lives in keybinds/ and is committed.
 profiles/
 
 node_modules/
