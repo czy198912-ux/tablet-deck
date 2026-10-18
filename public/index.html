@@ -16,6 +16,7 @@
 <link rel="stylesheet" href="deck.css">
 <link rel="stylesheet" href="hud.css">
 <link rel="stylesheet" href="fx.css">
+<link rel="stylesheet" href="intro.css">
 </head>
 <body class="offline">
 <header>
@@ -29,6 +30,24 @@
 
 <div id="stage" hidden><div id="canvas"></div></div>
 
+<div id="intro" role="button" tabindex="0" aria-label="Tap to continue">
+  <canvas id="introStars"></canvas>
+  <div class="intro-corners"><i></i><i></i><i></i><i></i></div>
+  <div class="intro-core">
+    <div class="intro-rings"><i></i><i></i><i></i></div>
+    <div class="intro-emblem js-emblem"></div>
+  </div>
+  <h1 class="intro-title">Tablet<span>Deck</span></h1>
+  <div class="intro-sub">Star Citizen control deck</div>
+  <div class="intro-boot">
+    <div><span>› HUD systems</span><b>ONLINE</b></div>
+    <div><span>› PC uplink</span><span class="js-status">Connecting…</span></div>
+    <div><span>› Hull profile</span><span class="js-intro-maker"></span></div>
+  </div>
+  <div class="intro-tap">Tap to continue</div>
+  <div class="intro-flash"></div>
+</div>
+
 <div id="picker" role="dialog" aria-label="Choose a manufacturer theme">
   <div class="bar"><span>Choose manufacturer</span><button id="closePicker" type="button">Close</button></div>
   <div id="cards" class="cards"></div>
@@ -38,5 +57,6 @@
 <script src="fx.js"></script>
 <script src="canvas.js"></script>
 <script src="app.js"></script>
+<script src="intro.js"></script>
 </body>
 </html>

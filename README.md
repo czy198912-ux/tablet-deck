@@ -11,6 +11,10 @@ network, and each button sends real keyboard scancodes that Star Citizen reads.
 - Press animations: landing-gear struts, quantum charge ring, decoy sparks,
   lock-on brackets, sliding doors, slide-to-eject and more
 - Works in any tablet browser (iPad or Android), no app or account needed
+- Phone layout sized for the iPhone 15 Pro in landscape; every layout stretches
+  to fill the whole screen
+- Animated intro screen: the manufacturer emblem draws itself, then tap to
+  quantum-jump into the deck
 
 > Fan project. Not affiliated with or endorsed by Cloud Imperium Games.
 > Star Citizen and the manufacturer names belong to their owners;
@@ -89,6 +93,22 @@ up to date.
   Modes, Combat, Crew/Doors, On Foot and Emotes on the right.
 - `layouts/star-citizen.json`: a simpler tabbed grid of buttons.
 
+### Phones
+
+Phones get their own layout automatically (`config.json` → `phoneLayout`,
+default `layouts/deck-phone.json`). It is sized for an iPhone 15 Pro in
+landscape: a 734×372 canvas, which is the 852×393 screen minus the Dynamic
+Island and home indicator, so it shows at full size when opened from the home
+screen. Other phones scale it to fit. The same panels are there, re-flowed for
+the shorter screen (Landing and Power on the left; QT/Systems, Emergency and the
+rest on the right). Hold the phone sideways; in portrait it asks you to turn it.
+
+The page counts any screen whose short side is under 500 points as a phone. Add
+`&device=tablet` or `&device=phone` to the address to override that.
+
+The phone layout is generated from the tablet one, so keys and animations match.
+After editing `layouts/deck.json`, run `node tools/make-phone-layout.js`.
+
 Canvas layouts place each element at `x`, `y`, `w`, `h` in canvas pixels (panel
 elements are relative to their half). Element types include `button`, `header`,
 `switch` (with `when` to show elements per mode), `menu`, `slider`, `grid` and
@@ -125,7 +145,8 @@ back to system fonts.
 - `port`: server port (default 8765).
 - `token`: the pairing code. Change it to anything you like, or delete it to
   generate a new random one. Restart the server afterwards.
-- `layout`: which layout file to serve.
+- `layout`: which layout file to serve to tablets and PCs.
+- `phoneLayout`: which layout file to serve to phones.
 - `actionmaps`: keybind files to read, in order (later files win). Defaults to
   `keybinds/TabletDeck-StarCitizen.xml`, then your Star Citizen `actionmaps.xml`.
 - `tapMs`: how long a tap holds the key (default 60 ms).

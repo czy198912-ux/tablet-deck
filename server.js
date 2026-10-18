@@ -37,6 +37,7 @@ function loadConfig() {
   if (!config.port) { config.port = 8765; changed = true; }
   if (!config.token) { config.token = crypto.randomBytes(4).toString("hex"); changed = true; }
   if (!config.layout) { config.layout = "layouts/deck.json"; changed = true; }
+  if (!config.phoneLayout) { config.phoneLayout = "layouts/deck-phone.json"; changed = true; }
   if (config.actionmaps === undefined) {
     // Later files win; missing files are skipped. The player's actionmaps.xml goes last:
     // loading a profile in-game copies it there, and later rebinds land there too.
@@ -116,8 +117,15 @@ function readActionmapOverrides(files) {
 // Loads the layout, applies actionmaps overrides, and validates every key combo.
 // A button is any object in the layout with an "id" and "keys", wherever it sits
 // (grid pages, canvas panels, menus), so both layout styles share one code path.
-function loadLayout() {
-  const layout = JSON.parse(fs.readFileSync(path.join(ROOT, config.layout), "utf8"));
+// The page asks for device=phone on small screens; phones get config.phoneLayout
+// when that file exists, everything else gets config.layout.
+function layoutFile(device) {
+  if (device === "phone" && config.phoneLayout && fs.existsSync(path.join(ROOT, config.phoneLayout))) return config.phoneLayout;
+  return config.layout;
+}
+
+function loadLayout(device) {
+  const layout = JSON.parse(fs.readFileSync(path.join(ROOT, layoutFile(device)), "utf8"));
   const overrides = readActionmapOverrides(config.actionmaps);
   const buttons = new Map();
   (function collect(node) {
@@ -242,7 +250,7 @@ const server = http.createServer((req, res) => {
   if (url.pathname === "/layout.json") {
     if (url.searchParams.get("t") !== config.token) { res.writeHead(403); res.end("bad token"); return; }
     try {
-      const { layout } = loadLayout();
+      const { layout } = loadLayout(url.searchParams.get("device"));
       res.writeHead(200, { "Content-Type": MIME[".json"], "Cache-Control": "no-store" });
       res.end(JSON.stringify(layout, (k, v) => (k === "scancodes" ? undefined : v)));
     } catch (err) {
@@ -265,7 +273,7 @@ server.on("upgrade", (req, socket) => {
     socket.end("HTTP/1.1 403 Forbidden\r\n\r\n"); return;
   }
   let buttons;
-  try { ({ buttons } = loadLayout()); } catch (err) {
+  try { ({ buttons } = loadLayout(url.searchParams.get("device"))); } catch (err) {
     console.error("Layout error:", err.message); socket.end("HTTP/1.1 500 Layout Error\r\n\r\n"); return;
   }
   wsAccept(req, socket);
@@ -313,7 +321,7 @@ server.on("upgrade", (req, socket) => {
 
 // ---------- start ----------
 
-try { loadLayout(); } catch (err) { console.error("Layout error:", err.message); process.exit(1); }
+try { loadLayout(); loadLayout("phone"); } catch (err) { console.error("Layout error:", err.message); process.exit(1); }
 startSender();
 server.listen(config.port, "0.0.0.0", () => {
   const ips = Object.values(os.networkInterfaces()).flat()

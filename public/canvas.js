@@ -9,25 +9,47 @@
     const stage = document.getElementById("stage");
     const canvas = document.getElementById("canvas");
     stage.hidden = false;
-    canvas.style.width = `${W}px`;
-    canvas.style.height = `${H}px`;
+    // Small canvases (phone layouts) get tighter menus; wide ones ask phones to turn sideways.
+    canvas.classList.toggle("compact", H < 500);
+    stage.classList.toggle("landscape-only", W > H * 1.5);
+    if (!stage.querySelector(".hud-rotate")) {
+      stage.insertAdjacentHTML("beforeend", `<div class="hud-rotate"><span class="hud-ico">${D.deckIcon("swap")}</span>Turn your phone sideways</div>`);
+    }
 
-    const saved = (() => { try { return JSON.parse(D.store.get(NS) || "{}"); } catch { return {}; } })();
+    // Separate stores per canvas size, so phone and tablet keep their own page positions.
+    const key = `${NS}-${W}x${H}`;
+    const saved = (() => { try { return JSON.parse(D.store.get(key) || "{}"); } catch { return {}; } })();
     const state = { groups: saved.groups || {}, panels: saved.panels || {} };
-    const save = () => D.store.set(NS, JSON.stringify(state));
+    const save = () => D.store.set(key, JSON.stringify(state));
 
-    const fit = () => {
-      const s = Math.min(window.innerWidth / W, window.innerHeight / H);
+    // Fill the whole stage (which CSS keeps inside the safe area, clear of the iPhone's
+    // Dynamic Island and home indicator). Text and icons scale uniformly by `s`; when the
+    // screen's shape differs from the layout's, element boxes stretch along the longer
+    // axis by kx/ky so there are no empty bands.
+    let s = 1, kx = 1, ky = 1;
+    const scaleNow = () => s;
+    function measure() {
+      const aw = stage.clientWidth || W, ah = stage.clientHeight || H;
+      s = Math.min(aw / W, ah / H);
+      const nkx = aw / s / W, nky = ah / s / H;
+      const changed = Math.abs(nkx - kx) > 0.002 || Math.abs(nky - ky) > 0.002;
+      kx = nkx; ky = nky;
+      canvas.style.width = `${W * kx}px`;
+      canvas.style.height = `${H * ky}px`;
       canvas.style.transform = `translate(-50%, -50%) scale(${s})`;
-    };
+      return changed;
+    }
+    const fit = () => { if (measure()) render(); };
     window.addEventListener("resize", fit);
-    fit();
+    window.addEventListener("orientationchange", () => setTimeout(fit, 250));
+    measure();
 
+    // Layout coordinates are in design pixels; place them on the stretched canvas.
     const box = (el, e) => {
-      el.style.left = `${e.x}px`;
-      el.style.top = `${e.y}px`;
-      if (e.w !== undefined) el.style.width = `${e.w}px`;
-      if (e.h !== undefined) el.style.height = `${e.h}px`;
+      el.style.left = `${e.x * kx}px`;
+      el.style.top = `${e.y * ky}px`;
+      if (e.w !== undefined) el.style.width = `${e.w * kx}px`;
+      if (e.h !== undefined) el.style.height = `${e.h * ky}px`;
       return el;
     };
     const make = (tag, cls, html) => {
@@ -132,7 +154,7 @@
         const el = box(make("div", "hud-slider", `<div class="track"><span class="txt"></span></div><div class="knob"></div>`), e);
         text(el, ".txt", e.label);
         const knob = el.querySelector(".knob");
-        const max = e.w - 26;
+        const max = e.w * kx - 26;
         let start = null, pos = 0;
         const setPos = (p) => { pos = Math.max(0, Math.min(max, p)); knob.style.transform = `translateX(${pos}px)`; el.style.setProperty("--fill", `${(pos / max) * 100}%`); };
         knob.addEventListener("pointerdown", (ev) => {
@@ -173,7 +195,7 @@
         const wrap = box(make("div", `hud-grid${e.compact ? " compact" : ""}`), e);
         const rows = Math.ceil(e.buttons.length / e.cols);
         const gap = e.compact ? 8 : 12;
-        const cellH = Math.min(e.compact ? 64 : 120, (e.h - gap * (rows - 1)) / rows);
+        const cellH = Math.min((e.compact ? 64 : 120) * ky, (e.h * ky - gap * (rows - 1)) / rows);
         wrap.style.gridTemplateColumns = `repeat(${e.cols}, 1fr)`;
         wrap.style.gridAutoRows = `${cellH}px`;
         wrap.style.gap = `${gap}px`;
@@ -182,7 +204,6 @@
       },
     };
 
-    const scaleNow = () => Math.min(window.innerWidth / W, window.innerHeight / H);
 
     function openMenu(e) {
       const overlay = make("div", "hud-menu", `<div class="sheet"><div class="hud-header"><b>//</b><span></span></div><div class="opts"></div></div>`);
@@ -207,11 +228,13 @@
 
     function renderRegion(region) {
       const el = box(make("div", "hud-region"), region);
+      const pagerH = region.pager || 44; // pager bar height; phone layouts use a slimmer one
+      el.style.setProperty("--pager-h", `${pagerH}px`);
       const ids = region.panels;
       const idx = Math.min(state.panels[region.id] || 0, ids.length - 1);
       const panel = layout.panels[ids[idx]];
       const body = make("div", "hud-panel");
-      body.style.height = `${region.h - 52}px`;
+      body.style.height = `${region.h * ky - pagerH - 8}px`;
       renderElements(body, panel.elements);
       el.appendChild(body);
 

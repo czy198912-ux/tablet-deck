@@ -89,6 +89,11 @@
   const grid = $("grid");
   const tabs = $("tabs");
   let token = (new URLSearchParams(location.search).get("t") || store.get("token") || "").trim().toLowerCase();
+  // Phones (short side under 500pt, e.g. iPhone 15 Pro at 393pt) get the phone layout;
+  // ?device=tablet or ?device=phone in the address overrides the guess.
+  const device = new URLSearchParams(location.search).get("device")
+    || (Math.min(screen.width, screen.height) < 500 ? "phone" : "tablet");
+  document.documentElement.dataset.device = device;
   let layout = null;
   let ws = null;
   let pageIndex = Number(store.get("page") || 0);
@@ -98,6 +103,7 @@
   function applyTheme(id) {
     const theme = themeById[id] || THEMES[0];
     document.documentElement.dataset.theme = theme.id;
+    document.documentElement.dataset.maker = theme.full; // shown on the intro screen
     $("themeName").textContent = theme.name;
     for (const m of document.querySelectorAll("#brandMark, .js-emblem")) m.innerHTML = emblemSvg(theme.emblem);
     const meta = document.querySelector('meta[name="theme-color"]');
@@ -151,7 +157,7 @@
   }
 
   function connect() {
-    ws = new WebSocket(`ws://${location.host}/ws?t=${encodeURIComponent(token)}`);
+    ws = new WebSocket(`ws://${location.host}/ws?t=${encodeURIComponent(token)}&device=${device}`);
     ws.onopen = () => setOnline(true, "Connected");
     ws.onclose = () => { setOnline(false, "Reconnecting…"); setTimeout(connect, 1000); };
     ws.onerror = () => ws.close();
@@ -244,7 +250,7 @@
   }
 
   function load() {
-    fetch(`/layout.json?t=${encodeURIComponent(token)}`)
+    fetch(`/layout.json?t=${encodeURIComponent(token)}&device=${device}`)
       .then((r) => {
         if (r.status === 403) return Promise.reject("pair");
         return r.ok ? r.json() : Promise.reject(`Layout error (${r.status})`);
