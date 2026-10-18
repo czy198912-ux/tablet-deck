@@ -38,10 +38,12 @@ on first run with the C# compiler that ships with Windows.
 4. The window prints an address and a pairing code, for example
    `http://192.168.1.20:8765` and `Pairing code: 1a2b3c4d`. Open the address on
    your tablet and enter the code. Use "Add to Home Screen" for a full-screen app.
-5. Click into Star Citizen. Keys go to whichever window is in front.
+5. Click into Star Citizen. Buttons only press keys while Star Citizen is the
+   window in front; otherwise the tablet shows "Star Citizen not focused" and
+   nothing is typed into the other window.
 
 `start.bat --dry-run` logs button presses without sending any keys, which is
-handy for trying the deck out.
+handy for trying the deck out. Dry runs skip the focus check.
 
 ## Keybinds
 
@@ -150,11 +152,17 @@ back to system fonts.
 - `actionmaps`: keybind files to read, in order (later files win). Defaults to
   `keybinds/TabletDeck-StarCitizen.xml`, then your Star Citizen `actionmaps.xml`.
 - `tapMs`: how long a tap holds the key (default 60 ms).
+- `onlyWhenGameFocused`: only press keys while Star Citizen (`StarCitizen.exe`)
+  is the window in front (default `true`). Set it to `false` to send keys to
+  whichever window is in front, e.g. to try buttons out in Notepad.
 
 ## Safety
 
 - Only devices with the pairing code can press keys. Keep the server on your
   home network; don't expose its port to the internet.
 - Held keys are released if the tablet disconnects or goes quiet for 5 seconds.
+- Presses are skipped while another window is in front (see
+  `onlyWhenGameFocused`). Releasing a held button always goes through, so
+  switching windows mid-hold doesn't leave a key stuck down in the game.
 - If Star Citizen runs as administrator, run `start.bat` as administrator too.
   Windows blocks keypresses from a normal program into an elevated one.

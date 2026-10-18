@@ -1,10 +1,13 @@
 // Reads commands from stdin, one per line, and injects keyboard scancodes with SendInput.
 //   d <scancode-hex> <extended 0|1>   key down
 //   u <scancode-hex> <extended 0|1>   key up
+//   focus <process-name>              replies "focus 1" if that process owns the
+//                                     foreground window, else "focus 0"
 //   ping                              replies "pong"
 // Scancodes (not virtual keys) are used because DirectInput/raw-input games such as
 // Star Citizen ignore virtual-key-only events.
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 static class KeySender
@@ -53,6 +56,22 @@ static class KeySender
     [DllImport("user32.dll", SetLastError = true)]
     static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
 
+    [DllImport("user32.dll")]
+    static extern IntPtr GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+
+    // Name of the process that owns the window in front, without ".exe"; "" if unknown.
+    static string ForegroundProcess()
+    {
+        uint pid;
+        GetWindowThreadProcessId(GetForegroundWindow(), out pid);
+        if (pid == 0) return "";
+        try { return Process.GetProcessById((int)pid).ProcessName; }
+        catch { return ""; }
+    }
+
     static void Main()
     {
         string line;
@@ -62,6 +81,13 @@ static class KeySender
             if (parts.Length == 1 && parts[0] == "ping")
             {
                 Console.WriteLine("pong");
+                Console.Out.Flush();
+                continue;
+            }
+            if (parts.Length == 2 && parts[0] == "focus")
+            {
+                bool focused = string.Equals(ForegroundProcess(), parts[1], StringComparison.OrdinalIgnoreCase);
+                Console.WriteLine(focused ? "focus 1" : "focus 0");
                 Console.Out.Flush();
                 continue;
             }

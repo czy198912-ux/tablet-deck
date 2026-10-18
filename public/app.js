@@ -156,9 +156,24 @@
     if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
   }
 
+  // Short notice at the bottom of the screen, e.g. when the PC skipped a press.
+  let toastTimer = null;
+  function toast(text) {
+    const el = $("toast");
+    el.textContent = text;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove("show"), 1800);
+  }
+
   function connect() {
     ws = new WebSocket(`ws://${location.host}/ws?t=${encodeURIComponent(token)}&device=${device}`);
     ws.onopen = () => setOnline(true, "Connected");
+    ws.onmessage = (e) => {
+      let msg;
+      try { msg = JSON.parse(e.data); } catch { return; }
+      if (msg.t === "blocked") { toast("Star Citizen not focused"); buzz([30, 60, 30]); }
+    };
     ws.onclose = () => { setOnline(false, "Reconnecting…"); setTimeout(connect, 1000); };
     ws.onerror = () => ws.close();
   }

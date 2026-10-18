@@ -45,6 +45,7 @@ function loadConfig() {
     changed = true;
   }
   if (!config.tapMs) { config.tapMs = 60; changed = true; }
+  if (config.onlyWhenGameFocused === undefined) { config.onlyWhenGameFocused = true; changed = true; }
   if (changed) fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2) + "\n");
   // Allow a numeric code such as "token": 1234 without quotes; the page sends the code as lowercase text.
   config.token = String(config.token).trim().toLowerCase();
@@ -144,22 +145,50 @@ function loadLayout(device) {
 
 // ---------- key sender ----------
 
+// Process name of the game (StarCitizen.exe). With onlyWhenGameFocused, presses are
+// skipped unless this process owns the window in front.
+const GAME_PROCESS = "StarCitizen";
+
 let sender = null;
+const focusWaiters = []; // pending "focus" queries, answered in order by the key sender
 function startSender() {
   if (DRY_RUN) return;
   const exe = path.join(ROOT, "native", "keysender.exe");
-  if (!fs.existsSync(exe)) {
+  const src = path.join(ROOT, "native", "keysender.cs");
+  // Rebuild when keysender.cs is newer, so an update's new commands reach an existing install.
+  if (!fs.existsSync(exe) || fs.statSync(exe).mtimeMs < fs.statSync(src).mtimeMs) {
     const csc = path.join(process.env.WINDIR || "C:\\Windows", "Microsoft.NET", "Framework64", "v4.0.30319", "csc.exe");
     console.log("Compiling key sender...");
-    execFileSync(csc, ["/nologo", "/optimize", "/target:exe", "/platform:x64", `/out:${exe}`, path.join(ROOT, "native", "keysender.cs")], { stdio: "inherit" });
+    execFileSync(csc, ["/nologo", "/optimize", "/target:exe", "/platform:x64", `/out:${exe}`, src], { stdio: "inherit" });
   }
   sender = spawn(exe, [], { stdio: ["pipe", "pipe", "inherit"] });
+  let pending = "";
   sender.stdout.on("data", (d) => {
-    for (const line of d.toString().split(/\r?\n/)) if (line.startsWith("err")) console.error("key sender:", line);
+    const lines = (pending + d.toString()).split(/\r?\n/);
+    pending = lines.pop();
+    for (const line of lines) {
+      if (line.startsWith("err")) console.error("key sender:", line);
+      else if (line.startsWith("focus ")) focusWaiters.shift()?.(line === "focus 1");
+    }
   });
   sender.on("exit", (code) => {
     console.error(`Key sender exited (${code}); restarting.`);
+    for (const answer of focusWaiters.splice(0)) answer(false);
+    sender = null;
     setTimeout(startSender, 500);
+  });
+}
+
+// Resolves true when keys may be sent: the check is off, it's a dry run, or the game is in front.
+function gameFocused() {
+  if (!config.onlyWhenGameFocused || !sender) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    let done = false;
+    const answer = (focused) => { if (!done) { done = true; resolve(focused); } };
+    focusWaiters.push(answer);
+    sender.stdin.write(`focus ${GAME_PROCESS}\n`);
+    // An unanswered query counts as not focused; its late reply still shifts it off the queue.
+    setTimeout(() => answer(false), 1000);
   });
 }
 
@@ -280,10 +309,15 @@ server.on("upgrade", (req, socket) => {
   const who = socket.remoteAddress;
   console.log(`Tablet connected: ${who}`);
 
-  const held = new Map(); // button id -> scancodes currently pressed by this tablet
+  const held = new Map(); // button id -> { sc } currently pressed by this tablet
   let lastSeen = Date.now();
   const releaseAll = async () => {
-    for (const [id, sc] of held) { held.delete(id); await releaseCombo(sc); }
+    for (const [id, hold] of held) { held.delete(id); await releaseCombo(hold.sc); }
+  };
+  // Tell the tablet a press was skipped because the game isn't the window in front.
+  const blocked = (btn) => {
+    console.log(`${btn.label}: skipped, Star Citizen not focused`);
+    if (!socket.destroyed) wsSend(socket, JSON.stringify({ t: "blocked", id: btn.id }));
   };
   // If the tablet sleeps or drops Wi-Fi mid-hold, don't leave keys stuck down.
   const watchdog = setInterval(() => {
@@ -298,15 +332,25 @@ server.on("upgrade", (req, socket) => {
     const btn = buttons.get(msg.id);
     if (!btn) return;
     if (msg.t === "down" && !held.has(btn.id)) {
-      held.set(btn.id, btn.scancodes);
+      // Claim the hold before the focus check so a quick "up" during it cancels the press.
+      const hold = { sc: btn.scancodes };
+      held.set(btn.id, hold);
+      if (!(await gameFocused())) {
+        if (held.get(btn.id) === hold) held.delete(btn.id);
+        blocked(btn);
+        return;
+      }
+      if (held.get(btn.id) !== hold) return;
       console.log(`${btn.label} (${btn.keys}) down`);
       await pressCombo(btn.scancodes);
     } else if (msg.t === "up" && held.has(btn.id)) {
-      const sc = held.get(btn.id);
+      // Releases always go through, even after the game loses focus, so no key stays stuck.
+      const { sc } = held.get(btn.id);
       held.delete(btn.id);
       console.log(`${btn.label} up`);
       await releaseCombo(sc);
     } else if (msg.t === "tap") {
+      if (!(await gameFocused())) { blocked(btn); return; }
       console.log(`${btn.label} (${btn.keys}) tap`);
       await pressCombo(btn.scancodes);
       await sleep(btn.ms || config.tapMs);
@@ -332,7 +376,9 @@ server.listen(config.port, "0.0.0.0", () => {
   for (const ip of ips) console.log(`   http://${ip}:${config.port}/?t=${config.token}`);
   console.log(`\nPairing code: ${config.token}`);
   console.log(`(You can also open http://${ips[0] || "<this PC's IP>"}:${config.port} and type the code.)`);
-  console.log("\nKeep the game window focused; keys go to whatever window is in front.\n");
+  console.log(config.onlyWhenGameFocused
+    ? "\nKeys are only sent while Star Citizen is the window in front.\n"
+    : "\nKeep the game window focused; keys go to whatever window is in front.\n");
 });
 
 const shutdown = () => {
