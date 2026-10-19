@@ -55,10 +55,12 @@
   <div class="intro-flash"></div>
 </div>
 
+<div id="night" aria-hidden="true"></div>
 <div id="toast" role="status" aria-live="polite"></div>
 
 <div id="picker" role="dialog" aria-label="Choose a manufacturer theme">
-  <div class="bar"><span>Choose manufacturer</span><button id="closePicker" type="button">Close</button></div>
+  <div class="bar"><span>Choose manufacturer</span>
+    <div class="bar-btns"><button id="nightBtn" type="button" aria-pressed="false">Night mode</button><button id="closePicker" type="button">Close</button></div></div>
   <div id="cards" class="cards"></div>
 </div>
 

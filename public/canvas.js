@@ -235,6 +235,9 @@
       }
     }
 
+    // Set while paging, so the region's new panel slides in from that side.
+    let slide = null;
+
     function renderRegion(region) {
       const el = box(make("div", "hud-region"), region);
       const pagerH = region.pager || 44; // pager bar height; phone layouts use a slimmer one
@@ -243,6 +246,7 @@
       const idx = Math.min(state.panels[region.id] || 0, ids.length - 1);
       const panel = layout.panels[ids[idx]];
       const body = make("div", "hud-panel");
+      if (slide && slide.region === region.id) body.classList.add(slide.dir > 0 ? "enter-next" : "enter-prev");
       body.style.height = `${region.h * ky - pagerH - 8}px`;
       renderElements(body, panel.elements);
       el.appendChild(body);
@@ -253,7 +257,13 @@
          <button type="button" class="hud-btn s-pg next" aria-label="Next panel">${D.deckIcon("chev-right")}</button>`);
       text(pager, ".title span", panel.title);
       pager.querySelector(".dots").innerHTML = ids.map((_, i) => `<i class="${i === idx ? "on" : ""}"></i>`).join("");
-      const go = (d) => { state.panels[region.id] = (idx + d + ids.length) % ids.length; save(); render(); };
+      const go = (d) => {
+        state.panels[region.id] = (idx + d + ids.length) % ids.length;
+        save();
+        slide = { region: region.id, dir: d };
+        render();
+        slide = null;
+      };
       pager.querySelector(".prev").onclick = () => go(-1);
       pager.querySelector(".next").onclick = () => go(1);
       el.appendChild(pager);

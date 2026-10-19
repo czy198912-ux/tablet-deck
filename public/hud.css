@@ -195,6 +195,20 @@ body.canvas-mode { overflow: hidden; }
 
 /* ---------- regions, panels, pager ---------- */
 .hud-panel { left: 0; top: 0; right: 0; }
+/* Paging: the new panel slides in from the side you paged towards, with a short flicker. */
+.hud-panel.enter-next { animation: panel-in-next .22s ease-out; }
+.hud-panel.enter-prev { animation: panel-in-prev .22s ease-out; }
+@keyframes panel-in-next {
+  0% { opacity: 0; transform: translateX(18px); }
+  35% { opacity: .7; } 50% { opacity: .35; }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes panel-in-prev {
+  0% { opacity: 0; transform: translateX(-18px); }
+  35% { opacity: .7; } 50% { opacity: .35; }
+  100% { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) { .hud-panel.enter-next, .hud-panel.enter-prev { animation: none; } }
 .hud-pager { left: 0; right: 0; bottom: 0; height: var(--pager-h, 44px); }
 .hud-pager .prev { left: 0; }
 .hud-pager .next { right: 0; }

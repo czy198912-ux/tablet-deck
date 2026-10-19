@@ -6,12 +6,13 @@
 .fx-host > .hud-lbl, .fx-host > .hud-ico, .fx-host > .caret,
 .fx-host > .glyph, .fx-host > .label, .fx-host > .foot { position: relative; z-index: 2; }
 .fx-host > .dial { z-index: 2; }
-.fx-host .hud-lbl, .fx-host .label { text-shadow: 0 1px 6px rgba(0,0,0,.8); }
+/* Themes can override the label shadows; light themes need a lighter one to stay crisp. */
+.fx-host .hud-lbl, .fx-host .label { text-shadow: var(--label-shadow, 0 1px 6px rgba(0,0,0,.8)); }
 
 .fx-state {
   position: absolute; z-index: 2; left: 0; right: 0; bottom: 4px; text-align: center;
   font: 600 9px/1 var(--font-body); letter-spacing: .16em; text-transform: uppercase; color: var(--dim);
-  text-shadow: 0 1px 4px #000; pointer-events: none;
+  text-shadow: var(--state-shadow, 0 1px 4px #000); pointer-events: none;
 }
 .key > .fx-state { left: auto; right: 14px; bottom: auto; top: 14px; font-size: 10px; }
 .fx-on > .fx-state, .fx-charging > .fx-state, .fx-arming > .fx-state, .fx-locked > .fx-state { color: var(--c); }

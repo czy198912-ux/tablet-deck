@@ -138,6 +138,15 @@
   $("themeBtn").onclick = openPicker;
   $("closePicker").onclick = closePicker;
 
+  // Night mode dims the whole deck for playing in a dark room; each device remembers it.
+  function applyNight(on) {
+    document.documentElement.toggleAttribute("data-night", on);
+    $("nightBtn").setAttribute("aria-pressed", String(on));
+    store.set("night", on ? "1" : "");
+  }
+  $("nightBtn").onclick = () => applyNight(!document.documentElement.hasAttribute("data-night"));
+  applyNight(store.get("night") === "1");
+
   // ---------- connection ----------
 
   // Status shows in the header (grid layouts) and in canvas chrome, so update every copy.

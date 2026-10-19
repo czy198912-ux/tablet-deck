@@ -101,6 +101,7 @@
   --key-shadow: 0 8px 22px rgba(30,40,60,.08);
   --icon-stroke: 1.6; --icon-glow: none;
   --tab-radius: 14px 14px 0 0;
+  --label-shadow: 0 1px 0 rgba(255,255,255,.9); --state-shadow: none;
 }
 
 /* ---------- MISC ---------- */
