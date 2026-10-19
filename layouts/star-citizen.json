@@ -1,6 +1,6 @@
 {
   "name": "Star Citizen",
-  "notes": "Binds follow Star Citizen 4.x defaults. keys use Star Citizen key names (lalt+n, np_1, f5 ...). mode: tap = quick press, hold = held while your finger is down, timed = held for ms. scAction: the key comes from the actionmaps/profile files in config.json when they bind that action.",
+  "notes": "Binds follow Star Citizen 4.x defaults plus the Tablet Deck Keyboard profile (keybinds/TabletDeck-StarCitizen.xml; load it in-game under Keybindings > Control Profiles). keys use Star Citizen key names (lalt+n, np_1, f5 ...). mode: tap = quick press, hold = held while your finger is down, timed = held for ms. scAction: the key comes from the actionmaps/profile files in config.json when they bind that action.",
   "pages": [
     {
       "name": "Flight",

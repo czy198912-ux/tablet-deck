@@ -1,6 +1,6 @@
 {
   "name": "Tablet Deck HUD",
-  "notes": "1024x768 two-panel deck. Coordinates are canvas pixels. Keys follow Star Citizen 4.x defaults; buttons marked verify: true use defaults worth checking in your keybinding screen.",
+  "notes": "1024x768 two-panel deck. Coordinates are canvas pixels. Keys follow Star Citizen 4.x defaults plus the Tablet Deck Keyboard profile (keybinds/TabletDeck-StarCitizen.xml); buttons marked verify: true use keys worth checking in your keybinding screen.",
   "canvas": [1024, 768],
   "chrome": [
     { "type": "action", "action": "menu", "icon": "emblem", "x": 14, "y": 14, "w": 58, "h": 52 },

@@ -23,9 +23,9 @@ network, and each button sends real keyboard scancodes that Star Citizen reads.
 - Animated intro screen: the manufacturer emblem draws itself, then tap to
   quantum-jump into the deck
 
-> Fan project. Not affiliated with or endorsed by Cloud Imperium Games.
-> Star Citizen and the manufacturer names belong to their owners;
-> the emblems here are original designs, not the companies' logos.
+> Fan project. Not affiliated with or endorsed by Cloud Imperium Games. Star
+> Citizen and the manufacturer names belong to their owners; the emblems here
+> are original designs, not the companies' logos.
 
 ## How it works
 
@@ -141,7 +141,7 @@ up to date.
 
 `config.json` → `layout` picks what the tablet shows:
 
-- `layouts/deck.json` (default): the 1024×768 two-half HUD. Each half
+- `layouts/hud.json` (default): the 1024×768 two-half HUD. Each half
   pages through panels with the arrows at the bottom: POWER/LANDING, Flight
   Assist, Shields, Targeting, Salvage and Mining on the left; QT/SYSTEMS, Operator
   Modes, Combat, Crew/Doors, On Foot and Emotes on the right.
@@ -150,7 +150,7 @@ up to date.
 ### Phones
 
 Phones get their own layout automatically (`config.json` → `phoneLayout`,
-default `layouts/deck-phone.json`). It is sized for an iPhone 15 Pro in
+default `layouts/hud-phone.json`). It is sized for an iPhone 15 Pro in
 landscape: a 734×372 canvas, which is the 852×393 screen minus the Dynamic
 Island and home indicator, so it shows at full size when opened from the home
 screen. Other phones scale it to fit. The same panels are there, re-flowed for
@@ -161,7 +161,7 @@ The page counts any screen whose short side is under 500 points as a phone. Add
 `&device=tablet` or `&device=phone` to the address to override that.
 
 The phone layout is generated from the tablet one, so keys and animations match.
-After editing `layouts/deck.json`, run `node tools/make-phone-layout.js`.
+After editing `layouts/hud.json`, run `node tools/make-phone-layout.js`.
 
 Canvas layouts place each element at `x`, `y`, `w`, `h` in canvas pixels (panel
 elements are relative to their half). Element types include `button`, `header`,
@@ -197,7 +197,7 @@ it heard, or "Didn't catch that".
   shields"; `+` and `−` are said as "up" and "down", so "shields up").
 - Common commands have extra phrases: "engines on", "disable shields", "gear
   up", "flight ready", "engage quantum", "lights on", "flares", "doors" and more.
-  They're in the `"voice"` lists in `layouts/deck.json`; add your own
+  They're in the `"voice"` lists in `layouts/hud.json`; add your own
   there.
 - Most Star Citizen controls are toggles, so "engines on" and "engines off"
   press the same key. The deck can't see the game, so it can't tell which state

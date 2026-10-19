@@ -4,7 +4,7 @@ config.json
 # Built on first run from native/keysender.cs.
 native/*.exe
 
-# Third-party keybind profiles. Get your own copy; see README.
+# Other keybind profiles you keep locally.
 # The Tablet Deck profile lives in keybinds/ and is committed.
 profiles/
 
