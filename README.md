@@ -36,8 +36,9 @@ on first run with the C# compiler that ships with Windows.
 3. When Windows Firewall asks whether Node.js may use the network, allow
    **Private networks**.
 4. The window prints an address and a pairing code, for example
-   `http://192.168.1.20:8765` and `Pairing code: 1a2b3c4d`. Open the address on
-   your tablet and enter the code. Use "Add to Home Screen" for a full-screen app.
+   `http://192.168.1.20:8765` and `Pairing code: 1a2b3c4d`, plus a QR code.
+   Scan the QR code with the tablet's camera, or open the address on your tablet
+   and enter the code. Use "Add to Home Screen" for a full-screen app.
 5. Click into Star Citizen. Buttons only press keys while Star Citizen is the
    window in front; otherwise the tablet shows "Star Citizen not focused" and
    nothing is typed into the other window.

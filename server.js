@@ -10,6 +10,7 @@ const path = require("path");
 const os = require("os");
 const crypto = require("crypto");
 const { spawn, execFileSync } = require("child_process");
+const qr = require("./qr");
 
 const ROOT = __dirname;
 const DRY_RUN = process.argv.includes("--dry-run");
@@ -374,6 +375,12 @@ server.listen(config.port, "0.0.0.0", () => {
   console.log(`\nTablet Deck running${DRY_RUN ? " (DRY RUN: no keys are sent)" : ""}.`);
   console.log("Open this on your tablet (same Wi-Fi/network):");
   for (const ip of ips) console.log(`   http://${ip}:${config.port}/?t=${config.token}`);
+  // Home networks are usually 192.168.x.x or 10.x.x.x; VPN and virtual adapters come later.
+  const lan = ips.find((ip) => ip.startsWith("192.168.")) || ips.find((ip) => ip.startsWith("10.")) || ips[0];
+  if (lan) {
+    console.log(`\nOr scan this with the tablet's camera (${lan}):\n`);
+    console.log(qr.toTerminal(`http://${lan}:${config.port}/?t=${config.token}`, { color: process.stdout.isTTY }));
+  }
   console.log(`\nPairing code: ${config.token}`);
   console.log(`(You can also open http://${ips[0] || "<this PC's IP>"}:${config.port} and type the code.)`);
   console.log(config.onlyWhenGameFocused
