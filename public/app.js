@@ -173,6 +173,10 @@
       let msg;
       try { msg = JSON.parse(e.data); } catch { return; }
       if (msg.t === "blocked") { toast("Star Citizen not focused"); buzz([30, 60, 30]); }
+      else if (msg.t === "hello") document.body.classList.toggle("no-voice", !msg.voice);
+      else if (msg.t === "heard") toast(`Heard: ${msg.text || msg.label}`);
+      else if (msg.t === "unheard") toast("Didn't catch that");
+      else if (msg.t === "voice-off") toast(msg.reason);
     };
     ws.onclose = () => { setOnline(false, "Reconnecting…"); setTimeout(connect, 1000); };
     ws.onerror = () => ws.close();
@@ -240,6 +244,29 @@
     el.addEventListener("contextmenu", (e) => e.preventDefault());
   }
 
+  // Hold-to-talk: the PC listens for a voice command while this is held down.
+  function bindTalk(el) {
+    let pointer = null;
+    el.addEventListener("pointerdown", (e) => {
+      if (pointer !== null) return;
+      pointer = e.pointerId;
+      el.setPointerCapture(e.pointerId);
+      el.classList.add("listening");
+      buzz();
+      send({ t: "voice", on: true });
+    });
+    const end = (e) => {
+      if (e.pointerId !== pointer) return;
+      pointer = null;
+      el.classList.remove("listening");
+      send({ t: "voice", on: false });
+    };
+    el.addEventListener("pointerup", end);
+    el.addEventListener("pointercancel", end);
+    el.addEventListener("contextmenu", (e) => e.preventDefault());
+  }
+  bindTalk($("talk"));
+
   // ---------- pairing + load ----------
 
   function showPairing(wrong) {
@@ -278,7 +305,7 @@
         if (layout.canvas) {
           document.body.classList.add("canvas-mode");
           window.renderCanvas(layout, {
-            send, bindButton, buzz, store, refreshStatus, openPicker, toggleFullscreen,
+            send, bindButton, bindTalk, buzz, store, refreshStatus, openPicker, toggleFullscreen,
             deckIcon: window.deckIcon,
             emblemHtml: () => emblemSvg((themeById[document.documentElement.dataset.theme] || THEMES[0]).emblem),
           });

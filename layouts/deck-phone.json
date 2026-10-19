@@ -21,10 +21,22 @@
       "y": 12
     },
     {
+      "type": "talk",
+      "x": 390,
+      "y": 0,
+      "w": 44,
+      "h": 36
+    },
+    {
       "type": "button",
       "style": "top",
       "id": "top-atc",
       "label": "ATC",
+      "voice": [
+        "request landing",
+        "call atc",
+        "air traffic control"
+      ],
       "keys": "lalt+n",
       "mode": "tap",
       "x": 440,
@@ -78,6 +90,9 @@
       "id": "top-mobiglas",
       "icon": "mobiglas",
       "label": "mobiGlas",
+      "voice": [
+        "mobi glass"
+      ],
       "keys": "f1",
       "mode": "tap",
       "x": 640,
@@ -180,6 +195,13 @@
           "id": "pl-gear",
           "anim": "gear",
           "label": "Landing Gear",
+          "voice": [
+            "gear",
+            "gear up",
+            "gear down",
+            "deploy landing gear",
+            "retract landing gear"
+          ],
           "keys": "n",
           "mode": "tap",
           "x": 0,
@@ -196,6 +218,9 @@
           "id": "pl-vtol",
           "anim": "streak",
           "label": "VTOL",
+          "voice": [
+            "toggle vtol"
+          ],
           "keys": "k",
           "mode": "tap",
           "x": 184,
@@ -212,6 +237,10 @@
           "style": "dial",
           "id": "pl-autoland",
           "label": "Engage Auto Land",
+          "voice": [
+            "auto land",
+            "land the ship"
+          ],
           "keys": "n",
           "mode": "timed",
           "ms": 1500,
@@ -274,6 +303,11 @@
           "anim": "glow",
           "icon": "lights",
           "label": "Lights",
+          "voice": [
+            "lights on",
+            "lights off",
+            "toggle lights"
+          ],
           "keys": "l",
           "mode": "tap",
           "x": 0,
@@ -316,6 +350,7 @@
           "id": "ph-look-behind",
           "icon": "eye",
           "label": "Look Behind",
+          "voice": false,
           "keys": "lalt+period",
           "scAction": "v_view_look_behind",
           "mode": "hold",
@@ -581,6 +616,9 @@
           "icon": "power-reset",
           "id": "pw-reset",
           "label": "Reset All",
+          "voice": [
+            "reset power"
+          ],
           "keys": "f8",
           "verify": true,
           "mode": "tap",
@@ -607,6 +645,12 @@
           "id": "qt-pwr",
           "anim": "ripple",
           "label": "PWR",
+          "voice": [
+            "power",
+            "power on",
+            "power off",
+            "toggle power"
+          ],
           "keys": "u",
           "mode": "tap",
           "color": "green",
@@ -622,6 +666,13 @@
           "id": "qt-wep",
           "anim": "ripple",
           "label": "WEP",
+          "voice": [
+            "weapons on",
+            "weapons off",
+            "enable weapons",
+            "disable weapons",
+            "toggle weapons"
+          ],
           "keys": "p",
           "verify": true,
           "mode": "tap",
@@ -638,6 +689,16 @@
           "id": "qt-thr",
           "anim": "ripple",
           "label": "THR",
+          "voice": [
+            "engines",
+            "engines on",
+            "engines off",
+            "turn on engines",
+            "turn off engines",
+            "toggle engines",
+            "thrusters on",
+            "thrusters off"
+          ],
           "keys": "i",
           "verify": true,
           "mode": "tap",
@@ -654,6 +715,13 @@
           "id": "qt-shld",
           "anim": "ripple",
           "label": "SHLD",
+          "voice": [
+            "shields on",
+            "shields off",
+            "enable shields",
+            "disable shields",
+            "toggle shields"
+          ],
           "keys": "o",
           "verify": true,
           "mode": "tap",
@@ -669,6 +737,10 @@
           "id": "qt-flight-ready",
           "anim": "ripple",
           "label": "Toggle Flight Ready",
+          "voice": [
+            "flight ready",
+            "ready for flight"
+          ],
           "keys": "r",
           "mode": "tap",
           "color": "green",
@@ -682,6 +754,10 @@
           "id": "qt-scm-nav",
           "anim": "streak",
           "label": "SCM/NAV",
+          "voice": [
+            "switch master mode",
+            "toggle master mode"
+          ],
           "keys": "b",
           "verify": true,
           "mode": "tap",
@@ -771,6 +847,12 @@
           "id": "qt-engage",
           "anim": "charge",
           "label": "Engage Quantum",
+          "voice": [
+            "engage",
+            "quantum jump",
+            "jump"
+          ],
+          "voiceMs": 1500,
           "keys": "b",
           "mode": "hold",
           "color": "blue",
@@ -817,6 +899,10 @@
               "id": "mn-fire",
               "icon": "laser",
               "label": "Fire Laser",
+              "voice": [
+                "fire mining laser",
+                "mining laser"
+              ],
               "keys": "rctrl+f",
               "scAction": "v_toggle_mining_laser_fire",
               "verify": true,
@@ -827,6 +913,11 @@
               "id": "mn-type",
               "icon": "swap",
               "label": "Fracture / Extract",
+              "voice": [
+                "fracture",
+                "extract",
+                "switch laser mode"
+              ],
               "keys": "rctrl+t",
               "scAction": "v_toggle_mining_laser_type",
               "verify": true,
@@ -837,6 +928,7 @@
               "id": "mn-power-down",
               "icon": "chev-down",
               "label": "Laser Power −",
+              "voiceMs": 600,
               "keys": "rctrl+s",
               "scAction": "v_decrease_mining_throttle",
               "verify": true,
@@ -846,6 +938,7 @@
               "id": "mn-power-up",
               "icon": "chev-up",
               "label": "Laser Power +",
+              "voiceMs": 600,
               "keys": "rctrl+w",
               "scAction": "v_increase_mining_throttle",
               "verify": true,
@@ -922,6 +1015,7 @@
           "type": "slider",
           "id": "qt-eject",
           "label": "Slide to eject",
+          "voice": false,
           "keys": "ralt+y",
           "verify": true,
           "mode": "timed",
@@ -938,6 +1032,7 @@
           "anim": "hazard",
           "armMs": 3000,
           "label": "Self-D",
+          "voice": false,
           "keys": "backspace",
           "mode": "hold",
           "color": "red",
@@ -952,6 +1047,10 @@
           "anim": "burst",
           "icon": "decoy",
           "label": "Decoy",
+          "voice": [
+            "flares",
+            "launch decoy"
+          ],
           "keys": "g",
           "mode": "tap",
           "color": "amber",
@@ -966,6 +1065,10 @@
           "anim": "burst",
           "icon": "noise",
           "label": "Noise",
+          "voice": [
+            "chaff",
+            "launch noise"
+          ],
           "keys": "h",
           "mode": "tap",
           "color": "amber",
@@ -980,6 +1083,9 @@
           "anim": "burst",
           "icon": "decoy",
           "label": "Panic Decoys",
+          "voice": [
+            "panic"
+          ],
           "keys": "lctrl+h",
           "scAction": "v_weapon_countermeasure_decoy_launch_panic",
           "mode": "tap",
@@ -1008,6 +1114,10 @@
               "id": "fa-scm",
               "icon": "speed",
               "label": "Master: SCM",
+              "voice": [
+                "scm mode",
+                "combat mode"
+              ],
               "keys": "ralt+insert",
               "scAction": "v_master_mode_set_scm",
               "mode": "tap",
@@ -1018,6 +1128,10 @@
               "anim": "streak",
               "icon": "quantum-mode",
               "label": "Master: NAV",
+              "voice": [
+                "nav mode",
+                "navigation mode"
+              ],
               "keys": "ralt+np_period",
               "scAction": "v_master_mode_set_nav",
               "mode": "tap",
@@ -1086,6 +1200,11 @@
               "anim": "glow",
               "icon": "lights",
               "label": "Lights",
+              "voice": [
+                "lights on",
+                "lights off",
+                "toggle lights"
+              ],
               "keys": "l",
               "mode": "tap"
             },
@@ -1093,6 +1212,7 @@
               "id": "fa-look-behind",
               "icon": "eye",
               "label": "Look Behind",
+              "voice": false,
               "keys": "lalt+period",
               "scAction": "v_view_look_behind",
               "mode": "hold"
@@ -1126,6 +1246,10 @@
               "id": "sh-up",
               "icon": "chev-up",
               "label": "Top",
+              "voice": [
+                "shields top",
+                "top shields"
+              ],
               "keys": "ralt+np_subtract",
               "scAction": "v_shield_raise_level_up",
               "mode": "tap",
@@ -1135,6 +1259,10 @@
               "id": "sh-front",
               "icon": "power-shields",
               "label": "Front",
+              "voice": [
+                "shields front",
+                "front shields"
+              ],
               "keys": "ralt+np_8",
               "scAction": "v_shield_raise_level_forward",
               "mode": "tap",
@@ -1144,6 +1272,10 @@
               "id": "sh-down",
               "icon": "chev-down",
               "label": "Bottom",
+              "voice": [
+                "shields bottom",
+                "bottom shields"
+              ],
               "keys": "ralt+np_add",
               "scAction": "v_shield_raise_level_down",
               "mode": "tap",
@@ -1153,6 +1285,10 @@
               "id": "sh-left",
               "icon": "chev-left",
               "label": "Left",
+              "voice": [
+                "shields left",
+                "left shields"
+              ],
               "keys": "ralt+np_4",
               "scAction": "v_shield_raise_level_left",
               "mode": "tap",
@@ -1162,6 +1298,10 @@
               "id": "sh-reset",
               "icon": "power-reset",
               "label": "Reset",
+              "voice": [
+                "reset shields",
+                "balance shields"
+              ],
               "keys": "ralt+np_5",
               "scAction": "v_shield_reset_level",
               "mode": "tap"
@@ -1170,6 +1310,10 @@
               "id": "sh-right",
               "icon": "chev-right",
               "label": "Right",
+              "voice": [
+                "shields right",
+                "right shields"
+              ],
               "keys": "ralt+np_6",
               "scAction": "v_shield_raise_level_right",
               "mode": "tap",
@@ -1179,6 +1323,10 @@
               "id": "sh-back",
               "icon": "chev-down",
               "label": "Back",
+              "voice": [
+                "shields back",
+                "rear shields"
+              ],
               "keys": "ralt+np_2",
               "scAction": "v_shield_raise_level_back",
               "mode": "tap",
@@ -1402,6 +1550,10 @@
               "anim": "burst",
               "icon": "decoy",
               "label": "Decoy",
+              "voice": [
+                "flares",
+                "launch decoy"
+              ],
               "keys": "g",
               "mode": "tap",
               "color": "amber"
@@ -1411,6 +1563,10 @@
               "anim": "burst",
               "icon": "noise",
               "label": "Noise",
+              "voice": [
+                "chaff",
+                "launch noise"
+              ],
               "keys": "h",
               "mode": "tap",
               "color": "amber"
@@ -1420,6 +1576,9 @@
               "anim": "burst",
               "icon": "decoy",
               "label": "Panic Decoys",
+              "voice": [
+                "panic"
+              ],
               "keys": "lctrl+h",
               "scAction": "v_weapon_countermeasure_decoy_launch_panic",
               "mode": "tap",
@@ -1496,6 +1655,9 @@
               "anim": "doors",
               "icon": "doors",
               "label": "Toggle Doors",
+              "voice": [
+                "doors"
+              ],
               "keys": "np_period",
               "scAction": "v_toggle_all_doors",
               "mode": "tap",
@@ -1568,6 +1730,10 @@
               "id": "ft-camera",
               "icon": "camera",
               "label": "3rd Person",
+              "voice": [
+                "third person",
+                "camera"
+              ],
               "keys": "f4",
               "mode": "tap"
             },
@@ -1600,6 +1766,9 @@
               "id": "ft-escape",
               "icon": "escape",
               "label": "Esc",
+              "voice": [
+                "escape"
+              ],
               "keys": "escape",
               "mode": "tap",
               "color": "red"

@@ -13,6 +13,7 @@ network, and each button sends real keyboard scancodes that Star Citizen reads.
 - Works in any tablet browser (iPad or Android), no app or account needed
 - Phone layout sized for the iPhone 15 Pro in landscape; every layout stretches
   to fill the whole screen
+- Hold-to-talk voice commands ("engines on", "landing gear", "engage quantum")
 - Animated intro screen: the manufacturer emblem draws itself, then tap to
   quantum-jump into the deck
 
@@ -147,6 +148,31 @@ Key names: `a`-`z`, `0`-`9`, `f1`-`f24`, `np_0`-`np_9`, `np_period`, `np_add`,
 `rctrl`, `lshift`, `rshift`, `space`, `tab`, `enter`, `escape`, `backspace`,
 `insert`, `delete`, `home`, `end`, `pgup`, `pgdn`, `up`, `down`, `left`, `right`.
 
+## Voice commands
+
+Hold the mic button at the top of the deck, say a command, and let go. The PC
+listens with Windows' built-in speech recognition (offline, no account) through
+your default microphone, then presses that button's keys. The tablet shows what
+it heard, or "Didn't catch that".
+
+- Every button answers to its name ("landing gear", "fire laser", "max
+  shields"; `+` and `−` are said as "up" and "down", so "shields up").
+- Common commands have extra phrases: "engines on", "disable shields", "gear
+  up", "flight ready", "engage quantum", "lights on", "flares", "doors" and more.
+  They're in the `"voice"` lists in `layouts/deck.json`; add your own
+  there.
+- Most Star Citizen controls are toggles, so "engines on" and "engines off"
+  press the same key. The deck can't see the game, so it can't tell which state
+  you're in.
+- Eject, self-destruct and look behind don't respond to voice.
+- The focus check applies: nothing is pressed unless Star Citizen is in front.
+
+Commands are in English and need the English speech recognizer in Windows. If
+the PC window says "no en-US speech recognizer installed", add it under
+**Settings → Time & Language → Speech** (or Language → English → Options →
+Speech recognition), then restart `start.bat`. If commands are often missed or
+misheard, try a headset mic, or change `voiceConfidence` (see Settings).
+
 ## Themes
 
 Tap the sliders button (top right) to pick a manufacturer theme. Each tablet
@@ -168,6 +194,12 @@ back to system fonts.
 - `onlyWhenGameFocused`: only press keys while Star Citizen (`StarCitizen.exe`)
   is the window in front (default `true`). Set it to `false` to send keys to
   whichever window is in front, e.g. to try buttons out in Notepad.
+- `voice`: voice commands on or off (default `true`).
+- `voiceLanguage`: the Windows speech recognizer to use (default `en-US`; any
+  other English one works too if that's what's installed).
+- `voiceConfidence`: how sure the recognizer must be before a command counts,
+  from 0 to 1 (default 0.6). Raise it if it triggers on the wrong things, lower
+  it if it often says "Didn't catch that".
 
 ## Safety
 

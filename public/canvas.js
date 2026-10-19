@@ -108,6 +108,15 @@
         return el;
       },
 
+      // Hold-to-talk mic for voice commands; hidden when they're turned off on the PC.
+      talk(e) {
+        const el = box(make("button", "hud-btn s-top js-talk", `<span class="hud-ico">${D.deckIcon("mic")}</span>`), e);
+        el.type = "button";
+        el.setAttribute("aria-label", "Hold to talk");
+        D.bindTalk(el);
+        return el;
+      },
+
       status: (e) => box(make("div", "hud-status", `<span class="js-dot dot"></span><span class="js-status">Connecting…</span>`), e),
 
       rule: (e) => box(make("div", "hud-rule", "<i></i><i></i>"), e),

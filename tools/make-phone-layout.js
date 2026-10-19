@@ -51,6 +51,7 @@ const top = (id, i) => at(id, 440 + i * 50, 0, 44, 36);
 const chrome = [
   { type: "action", action: "menu", icon: "emblem", x: 0, y: 0, w: 46, h: 36 },
   { type: "status", x: 56, y: 12 },
+  { type: "talk", x: 390, y: 0, w: 44, h: 36 },
   top("top-atc", 0), top("top-chat", 1), top("top-contacts", 2), top("top-starmap", 3), top("top-mobiglas", 4),
   { type: "action", action: "theme", icon: "sliders", x: 690, y: 0, w: 44, h: 36 },
   { type: "rule", x: 0, y: 42, w: W },

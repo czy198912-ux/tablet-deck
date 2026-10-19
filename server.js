@@ -47,6 +47,9 @@ function loadConfig() {
   }
   if (!config.tapMs) { config.tapMs = 60; changed = true; }
   if (config.onlyWhenGameFocused === undefined) { config.onlyWhenGameFocused = true; changed = true; }
+  if (config.voice === undefined) { config.voice = true; changed = true; }
+  if (!config.voiceLanguage) { config.voiceLanguage = "en-US"; changed = true; }
+  if (!config.voiceConfidence) { config.voiceConfidence = 0.6; changed = true; }
   if (changed) fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2) + "\n");
   // Allow a numeric code such as "token": 1234 without quotes; the page sends the code as lowercase text.
   config.token = String(config.token).trim().toLowerCase();
@@ -150,19 +153,24 @@ function loadLayout(device) {
 // skipped unless this process owns the window in front.
 const GAME_PROCESS = "StarCitizen";
 
+// Builds native/<name>.exe from <name>.cs with the C# compiler that ships with Windows.
+// Rebuilds when the .cs is newer, so an update's changes reach an existing install.
+function buildNative(name, what, refs = []) {
+  const exe = path.join(ROOT, "native", `${name}.exe`);
+  const src = path.join(ROOT, "native", `${name}.cs`);
+  if (!fs.existsSync(exe) || fs.statSync(exe).mtimeMs < fs.statSync(src).mtimeMs) {
+    const csc = path.join(process.env.WINDIR || "C:\\Windows", "Microsoft.NET", "Framework64", "v4.0.30319", "csc.exe");
+    console.log(`Compiling ${what}...`);
+    execFileSync(csc, ["/nologo", "/optimize", "/target:exe", "/platform:x64", ...refs.map((r) => `/r:${r}`), `/out:${exe}`, src], { stdio: "inherit" });
+  }
+  return exe;
+}
+
 let sender = null;
 const focusWaiters = []; // pending "focus" queries, answered in order by the key sender
 function startSender() {
   if (DRY_RUN) return;
-  const exe = path.join(ROOT, "native", "keysender.exe");
-  const src = path.join(ROOT, "native", "keysender.cs");
-  // Rebuild when keysender.cs is newer, so an update's new commands reach an existing install.
-  if (!fs.existsSync(exe) || fs.statSync(exe).mtimeMs < fs.statSync(src).mtimeMs) {
-    const csc = path.join(process.env.WINDIR || "C:\\Windows", "Microsoft.NET", "Framework64", "v4.0.30319", "csc.exe");
-    console.log("Compiling key sender...");
-    execFileSync(csc, ["/nologo", "/optimize", "/target:exe", "/platform:x64", `/out:${exe}`, src], { stdio: "inherit" });
-  }
-  sender = spawn(exe, [], { stdio: ["pipe", "pipe", "inherit"] });
+  sender = spawn(buildNative("keysender", "key sender"), [], { stdio: ["pipe", "pipe", "inherit"] });
   let pending = "";
   sender.stdout.on("data", (d) => {
     const lines = (pending + d.toString()).split(/\r?\n/);
@@ -221,6 +229,103 @@ async function pressCombo(scancodes) {
 }
 async function releaseCombo(scancodes) {
   for (const sc of [...scancodes].reverse()) { keyUp(sc); await sleep(15); }
+}
+
+// Tells a tablet a press was skipped because the game isn't the window in front.
+function skipped(btn, client) {
+  console.log(`${btn.label}: skipped, Star Citizen not focused`);
+  client?.send({ t: "blocked", id: btn.id });
+}
+
+// Presses a button's keys for `ms`, then releases them, unless the game isn't in front.
+async function tapButton(btn, client, ms = btn.ms || config.tapMs) {
+  if (!(await gameFocused())) { skipped(btn, client); return; }
+  console.log(`${btn.label} (${btn.keys}) tap`);
+  await pressCombo(btn.scancodes);
+  await sleep(ms);
+  await releaseCombo(btn.scancodes);
+}
+
+// ---------- voice commands ----------
+
+// Button label as a spoken phrase: "Shields +" -> "shields up", "Master: SCM" -> "master scm".
+function spoken(label) {
+  return String(label).toLowerCase()
+    .replace(/\s*\+$/, " up").replace(/\s*[−-]$/, " down").replace(/&/g, " and ")
+    .replace(/[^a-z0-9' ]+/g, " ").replace(/\s+/g, " ").trim();
+}
+
+// Phrase -> button id: each button's label plus its "voice" phrases. "voice": false leaves a
+// button out (eject, self-destruct). A phrase that fits buttons with different keys is
+// dropped rather than guessed; buttons with the same keys (e.g. Mining in two panels) share it.
+function voiceCommands(buttons) {
+  const byPhrase = new Map(); // phrase -> button, or null when ambiguous
+  for (const btn of buttons.values()) {
+    if (btn.voice === false) continue;
+    for (const phrase of [btn.label, ...(btn.voice || [])].map(spoken).filter(Boolean)) {
+      const other = byPhrase.get(phrase);
+      if (other === undefined) byPhrase.set(phrase, btn);
+      else if (other && other.keys !== btn.keys) {
+        byPhrase.set(phrase, null);
+        console.warn(`Voice: "${phrase}" fits both ${other.label} and ${btn.label}, so it's left out.`);
+      }
+    }
+  }
+  return new Map([...byPhrase].filter(([, btn]) => btn).map(([phrase, btn]) => [phrase, btn.id]));
+}
+
+let voice = null;      // the voice listener, once its grammar is loaded
+let voiceOwner = null; // the tablet holding the talk button; it gets the results
+function startVoice() {
+  if (!config.voice) return;
+  let exe;
+  try { exe = buildNative("voice", "voice commands", ["System.Speech.dll"]); } catch (err) {
+    console.error(`Voice commands unavailable: native/voice.cs didn't compile (${err.message}).`);
+    return;
+  }
+  const commands = voiceCommands(loadLayout().buttons);
+  const proc = spawn(exe, [config.voiceLanguage], { stdio: ["pipe", "pipe", "inherit"] });
+  let pending = "";
+  proc.stdout.on("data", (d) => {
+    const lines = (pending + d.toString()).split(/\r?\n/);
+    pending = lines.pop();
+    for (const line of lines) {
+      if (line.startsWith("ready")) {
+        voice = proc;
+        console.log(`Voice commands ready (${commands.size} phrases, ${line.slice(6)}). Hold the mic button on the tablet and speak.`);
+      } else if (line.startsWith("err")) {
+        console.error(`Voice commands unavailable: ${line.slice(4)}. See "Voice commands" in README.md.`);
+      } else if (line.startsWith("heard ")) {
+        const [, id, confidence, ...words] = line.split(" ");
+        void onVoice(id, Number(confidence), words.join(" "));
+      } else if (line === "none") {
+        void onVoice(null, 0, "");
+      }
+    }
+  });
+  proc.on("exit", (code) => {
+    const wasReady = voice === proc;
+    if (wasReady) voice = null;
+    console.error(`Voice listener exited (${code})${wasReady ? "; restarting" : ""}.`);
+    if (wasReady) setTimeout(startVoice, 2000);
+  });
+  for (const [phrase, id] of commands) proc.stdin.write(`phrase ${id} ${phrase}\n`);
+  proc.stdin.write("ready\n");
+}
+
+// Presses the button for a recognised phrase. The layout is re-read so in-game rebinds count.
+async function onVoice(id, confidence, text) {
+  const client = voiceOwner;
+  const btn = id ? loadLayout().buttons.get(id) : null;
+  if (!btn || confidence < config.voiceConfidence) {
+    console.log(btn ? `Voice: "${text}" ignored (confidence ${confidence.toFixed(2)})` : "Voice: didn't catch that");
+    client?.send({ t: "unheard" });
+    return;
+  }
+  console.log(`Voice: "${text}" -> ${btn.label} (confidence ${confidence.toFixed(2)})`);
+  client?.send({ t: "heard", id: btn.id, label: btn.label, text });
+  // Hold buttons (quantum engage, laser power) get a longer press, set per button.
+  await tapButton(btn, client, btn.voiceMs || btn.ms || config.tapMs);
 }
 
 // ---------- minimal WebSocket server (RFC 6455, text frames) ----------
@@ -309,16 +414,13 @@ server.on("upgrade", (req, socket) => {
   wsAccept(req, socket);
   const who = socket.remoteAddress;
   console.log(`Tablet connected: ${who}`);
+  const client = { send: (obj) => { if (!socket.destroyed) wsSend(socket, JSON.stringify(obj)); } };
+  client.send({ t: "hello", voice: Boolean(config.voice) });
 
   const held = new Map(); // button id -> { sc } currently pressed by this tablet
   let lastSeen = Date.now();
   const releaseAll = async () => {
     for (const [id, hold] of held) { held.delete(id); await releaseCombo(hold.sc); }
-  };
-  // Tell the tablet a press was skipped because the game isn't the window in front.
-  const blocked = (btn) => {
-    console.log(`${btn.label}: skipped, Star Citizen not focused`);
-    if (!socket.destroyed) wsSend(socket, JSON.stringify({ t: "blocked", id: btn.id }));
   };
   // If the tablet sleeps or drops Wi-Fi mid-hold, don't leave keys stuck down.
   const watchdog = setInterval(() => {
@@ -330,6 +432,17 @@ server.on("upgrade", (req, socket) => {
     let msg;
     try { msg = JSON.parse(text); } catch { return; }
     if (msg.t === "hb") return;
+    if (msg.t === "voice") {
+      if (!voice) {
+        client.send({ t: "voice-off", reason: config.voice ? "Voice commands aren't running on the PC" : "Voice commands are turned off" });
+      } else if (msg.on) {
+        voiceOwner = client;
+        voice.stdin.write("listen\n");
+      } else if (voiceOwner === client) {
+        voice.stdin.write("stop\n");
+      }
+      return;
+    }
     const btn = buttons.get(msg.id);
     if (!btn) return;
     if (msg.t === "down" && !held.has(btn.id)) {
@@ -338,7 +451,7 @@ server.on("upgrade", (req, socket) => {
       held.set(btn.id, hold);
       if (!(await gameFocused())) {
         if (held.get(btn.id) === hold) held.delete(btn.id);
-        blocked(btn);
+        skipped(btn, client);
         return;
       }
       if (held.get(btn.id) !== hold) return;
@@ -351,15 +464,12 @@ server.on("upgrade", (req, socket) => {
       console.log(`${btn.label} up`);
       await releaseCombo(sc);
     } else if (msg.t === "tap") {
-      if (!(await gameFocused())) { blocked(btn); return; }
-      console.log(`${btn.label} (${btn.keys}) tap`);
-      await pressCombo(btn.scancodes);
-      await sleep(btn.ms || config.tapMs);
-      await releaseCombo(btn.scancodes);
+      await tapButton(btn, client);
     }
   }, () => {
     clearInterval(watchdog);
     void releaseAll();
+    if (voiceOwner === client) { voice?.stdin.write("stop\n"); voiceOwner = null; }
     console.log(`Tablet disconnected: ${who}`);
   });
 });
@@ -368,6 +478,7 @@ server.on("upgrade", (req, socket) => {
 
 try { loadLayout(); loadLayout("phone"); } catch (err) { console.error("Layout error:", err.message); process.exit(1); }
 startSender();
+startVoice();
 server.listen(config.port, "0.0.0.0", () => {
   const ips = Object.values(os.networkInterfaces()).flat()
     .filter((i) => i && i.family === "IPv4" && !i.internal && !i.address.startsWith("169.254"))

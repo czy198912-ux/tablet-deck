@@ -130,6 +130,9 @@ window.DECK_ICONS = {
   party: `<circle cx="17" cy="17" r="6"/><circle cx="32" cy="18" r="5"/><path d="M5 38c0-7 5-12 12-12s12 5 12 12M29 27c6 0 11 4 11 11"/>`,
   sliders: `<path d="M12 6v36M24 6v36M36 6v36"/><rect x="8" y="12" width="8" height="6" rx="1.5" fill="currentColor" stroke="none"/><rect x="20" y="28" width="8" height="6" rx="1.5" fill="currentColor" stroke="none"/><rect x="32" y="18" width="8" height="6" rx="1.5" fill="currentColor" stroke="none"/>`,
   grid: `<rect x="7" y="7" width="14" height="14" rx="2"/><rect x="27" y="7" width="14" height="14" rx="2"/><rect x="7" y="27" width="14" height="14" rx="2"/><path d="M27 27h6v6h-6zM35 35h6v6h-6z" fill="currentColor" stroke="none"/>`,
+  mic: `<rect x="17" y="5" width="14" height="24" rx="7"/><path d="M10 22a14 14 0 0 0 28 0M24 36v7M17 43h14"/>
+    <path d="M17 15h6M17 21h6" opacity=".55"/>`,
+
   swap: `<path d="M8 16h28m-6-6 6 6-6 6M40 32H12m6-6-6 6 6 6"/>`,
 
   default: `<path d="M24 5 40 14v20L24 43 8 34V14Z"/><circle cx="24" cy="24" r="5" fill="currentColor" stroke="none" opacity=".6"/>`,
