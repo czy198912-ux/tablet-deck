@@ -43,6 +43,10 @@ on first run with the C# compiler that ships with Windows.
    window in front; otherwise the tablet shows "Star Citizen not focused" and
    nothing is typed into the other window.
 
+"Add to Home Screen" gives the deck its own icon and, on iPad and iPhone, opens
+it full screen. On Android, Chrome only makes full-screen apps from `https`
+pages, so there the shortcut opens in a browser tab.
+
 `start.bat --dry-run` logs button presses without sending any keys, which is
 handy for trying the deck out. Dry runs skip the focus check.
 
