@@ -1,8 +1,14 @@
-# Tablet Deck
+<p align="center">
+  <img src="docs/banner.jpg" alt="Tablet Deck: turn any tablet or phone into a touch control panel for Star Citizen" width="100%">
+</p>
 
 Turn any tablet into a touch control panel for Star Citizen. A small server on
 your gaming PC serves a HUD-style button deck to the tablet over your home
 network, and each button sends real keyboard scancodes that Star Citizen reads.
+
+<p align="center">
+  <img src="docs/hero.jpg" alt="The deck on an iPad and an iPhone: landing, power management, ship systems and quantum controls" width="100%">
+</p>
 
 - 1024×768 two-panel HUD with landing, power management, quantum, operator
   modes, shields, targeting, salvage, mining, doors, emotes and more
@@ -20,6 +26,38 @@ network, and each button sends real keyboard scancodes that Star Citizen reads.
 > Fan project. Not affiliated with or endorsed by Cloud Imperium Games.
 > Star Citizen and the manufacturer names belong to their owners;
 > the emblems here are original designs, not the companies' logos.
+
+## How it works
+
+```mermaid
+flowchart LR
+    tablet["📱 Tablet or phone<br/>any browser"]
+    mic["🎙️ PC microphone"]
+    subgraph pc["Gaming PC"]
+        server["Tablet Deck server<br/>start.bat"]
+        voice["Voice listener<br/>Windows speech recognition"]
+        keys["Key sender"]
+    end
+    game["🚀 Star Citizen"]
+
+    tablet -- "button press<br/>over Wi-Fi" --> server
+    tablet -. "hold mic button" .-> server
+    mic -.-> voice
+    server <-. "listen / heard phrase" .-> voice
+    server -- "keys, only while<br/>the game is in front" --> keys
+    keys -- "keyboard<br/>scancodes" --> game
+
+    classDef box fill:#0b1726,stroke:#4fb3ff,stroke-width:2px,color:#e8eef5
+    classDef ends fill:#12253b,stroke:#4fb3ff,stroke-width:2px,color:#ffffff
+    class server,voice,keys,mic box
+    class tablet,game ends
+    style pc fill:transparent,stroke:#4fb3ff,stroke-dasharray:6 4,color:#4fb3ff
+```
+
+The tablet only shows the buttons; everything else happens on the PC. A press
+travels over your home network to the server, which checks that Star Citizen
+is the window in front and has the key sender type the button's keys. Voice
+commands take the same path once the PC has recognised the phrase.
 
 ## Requirements
 
@@ -180,6 +218,10 @@ remembers its own choice. Themes are CSS variables in `public/themes.css`; add
 one by copying a block there and adding an entry to `THEMES` in `public/app.js`.
 Theme fonts come from Google Fonts; without internet access the tablet falls
 back to system fonts.
+
+<p align="center">
+  <img src="docs/themes.jpg" alt="The deck in all 12 manufacturer themes" width="100%">
+</p>
 
 ## Settings (`config.json`, created on first run)
 
