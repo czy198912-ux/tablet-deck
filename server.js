@@ -164,9 +164,10 @@ function buildNative(name, what, refs = []) {
   const exe = path.join(ROOT, "native", `${name}.exe`);
   const src = path.join(ROOT, "native", `${name}.cs`);
   if (!fs.existsSync(exe) || fs.statSync(exe).mtimeMs < fs.statSync(src).mtimeMs) {
-    const csc = path.join(process.env.WINDIR || "C:\\Windows", "Microsoft.NET", "Framework64", "v4.0.30319", "csc.exe");
+    const fw = path.join(process.env.WINDIR || "C:\\Windows", "Microsoft.NET", "Framework64", "v4.0.30319");
     console.log(`Compiling ${what}...`);
-    execFileSync(csc, ["/nologo", "/optimize", "/target:exe", "/platform:x64", ...refs.map((r) => `/r:${r}`), `/out:${exe}`, src], { stdio: "inherit" });
+    // WPF holds System.Speech.dll, which csc doesn't search by default.
+    execFileSync(path.join(fw, "csc.exe"), ["/nologo", "/optimize", "/target:exe", "/platform:x64", `/lib:${path.join(fw, "WPF")}`, ...refs.map((r) => `/r:${r}`), `/out:${exe}`, src], { stdio: "inherit" });
   }
   return exe;
 }
