@@ -214,7 +214,8 @@ misheard, try a headset mic, or change `voiceConfidence` (see Settings).
 ## Themes
 
 Tap the sliders button (top right) to pick a manufacturer theme. Each tablet
-remembers its own choice. Themes are CSS variables in `public/themes.css`; add
+remembers its own choice. **Night mode** in the same screen dims the whole deck
+for playing in a dark room. Themes are CSS variables in `public/themes.css`; add
 one by copying a block there and adding an entry to `THEMES` in `public/app.js`.
 Theme fonts come from Google Fonts; without internet access the tablet falls
 back to system fonts.
