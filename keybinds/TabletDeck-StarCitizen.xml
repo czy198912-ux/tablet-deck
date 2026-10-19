@@ -196,6 +196,29 @@
    <rebind input="kb1_lalt+u"/>
   </action>
  </actionmap>
+ <actionmap name="spaceship_mining">
+  <action name="v_decrease_mining_throttle">
+   <rebind input="kb1_rctrl+s"/>
+  </action>
+  <action name="v_increase_mining_throttle">
+   <rebind input="kb1_rctrl+w"/>
+  </action>
+  <action name="v_mining_use_consumable1">
+   <rebind input="kb1_lalt+1"/>
+  </action>
+  <action name="v_mining_use_consumable2">
+   <rebind input="kb1_lalt+2"/>
+  </action>
+  <action name="v_mining_use_consumable3">
+   <rebind input="kb1_lalt+3"/>
+  </action>
+  <action name="v_toggle_mining_laser_fire">
+   <rebind input="kb1_rctrl+f"/>
+  </action>
+  <action name="v_toggle_mining_laser_type">
+   <rebind input="kb1_rctrl+t"/>
+  </action>
+ </actionmap>
  <actionmap name="spaceship_missiles">
   <action name="v_weapon_decrease_max_missiles">
    <rebind input="kb1_lctrl+g"/>

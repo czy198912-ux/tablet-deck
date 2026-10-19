@@ -15,7 +15,7 @@
     { "type": "divider", "x": 511, "y": 92, "h": 660 }
   ],
   "regions": [
-    { "id": "left", "x": 14, "y": 88, "w": 480, "h": 664, "panels": ["power-landing", "flight-assist", "shields", "targets", "salvage"] },
+    { "id": "left", "x": 14, "y": 88, "w": 480, "h": 664, "panels": ["power-landing", "flight-assist", "shields", "targets", "salvage", "mining"] },
     { "id": "right", "x": 528, "y": 88, "w": 480, "h": 664, "panels": ["qt-systems", "modes", "combat", "crew", "on-foot", "emotes"] }
   ],
   "panels": {
@@ -151,6 +151,26 @@
           { "id": "sv-mod-right", "icon": "chev-right", "label": "Modifier Right", "keys": "ralt+r", "scAction": "v_salvage_cycle_modifiers_right", "mode": "tap", "color": "amber" },
           { "id": "sv-spacing-down", "icon": "chev-down", "label": "Beam Spacing −", "keys": "ralt+comma", "scAction": "v_salvage_decrease_beam_spacing", "mode": "tap" },
           { "id": "sv-spacing-up", "icon": "chev-up", "label": "Beam Spacing +", "keys": "ralt+period", "scAction": "v_salvage_increase_beam_spacing", "mode": "tap" }
+        ] }
+      ]
+    },
+
+    "mining": {
+      "title": "Mining",
+      "elements": [
+        { "type": "button", "id": "mn-mode", "icon": "mining", "label": "Mining Mode", "keys": "ralt+m", "scAction": "v_set_mining_mode", "mode": "tap", "color": "amber", "x": 0, "y": 8, "w": 480, "h": 64 },
+        { "type": "header", "text": "Laser", "x": 2, "y": 92 },
+        { "type": "grid", "x": 0, "y": 116, "w": 480, "h": 252, "cols": 2, "buttons": [
+          { "id": "mn-fire", "icon": "laser", "label": "Fire Laser", "keys": "rctrl+f", "scAction": "v_toggle_mining_laser_fire", "verify": true, "mode": "tap", "color": "red" },
+          { "id": "mn-type", "icon": "swap", "label": "Fracture / Extract", "keys": "rctrl+t", "scAction": "v_toggle_mining_laser_type", "verify": true, "mode": "tap", "color": "amber" },
+          { "id": "mn-power-down", "icon": "chev-down", "label": "Laser Power −", "keys": "rctrl+s", "scAction": "v_decrease_mining_throttle", "verify": true, "mode": "hold" },
+          { "id": "mn-power-up", "icon": "chev-up", "label": "Laser Power +", "keys": "rctrl+w", "scAction": "v_increase_mining_throttle", "verify": true, "mode": "hold" }
+        ] },
+        { "type": "header", "text": "Modules", "x": 2, "y": 392 },
+        { "type": "grid", "x": 0, "y": 416, "w": 480, "h": 120, "cols": 3, "buttons": [
+          { "id": "mn-module-1", "icon": "module", "label": "Module 1", "keys": "lalt+1", "scAction": "v_mining_use_consumable1", "verify": true, "mode": "tap", "color": "blue" },
+          { "id": "mn-module-2", "icon": "module", "label": "Module 2", "keys": "lalt+2", "scAction": "v_mining_use_consumable2", "verify": true, "mode": "tap", "color": "blue" },
+          { "id": "mn-module-3", "icon": "module", "label": "Module 3", "keys": "lalt+3", "scAction": "v_mining_use_consumable3", "verify": true, "mode": "tap", "color": "blue" }
         ] }
       ]
     },

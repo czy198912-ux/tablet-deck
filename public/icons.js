@@ -56,6 +56,14 @@ window.DECK_ICONS = {
   mining: `<path d="m28 18 10 5-3 17H23l-4-12Z"/><path d="m28 18-3 10 10 12M25 28l-6 0" opacity=".55"/>
     <path d="M5 8 21 22"/><path d="M5 14l6-6" opacity=".6"/><circle cx="21" cy="22" r="2" fill="currentColor" stroke="none"/>`,
 
+  // Mining laser: an emitter firing a beam into a rock.
+  laser: `<path d="M5 33 15 23l6 6-10 10Z"/><path d="M18 26 31 13" stroke-width="4" opacity=".55"/>
+    <path d="m33 7 9 5-2 11-9 2-5-8Z"/><circle cx="31" cy="13" r="2.4" fill="currentColor" stroke="none"/>`,
+
+  // Mining module: a consumable canister.
+  module: `<rect x="15" y="10" width="18" height="30" rx="4"/><path d="M19 6h10M24 6v4"/>
+    <path d="M15 20h18M15 30h18" opacity=".55"/><circle cx="24" cy="25" r="2.4" fill="currentColor" stroke="none"/>`,
+
   scanning: `<circle cx="24" cy="24" r="18"/><circle cx="24" cy="24" r="10" opacity=".55"/>
     <path d="M24 24 37 11"/><path d="M24 6v4M24 38v4M6 24h4M38 24h4" opacity=".55"/>
     <circle cx="31" cy="29" r="2" fill="currentColor" stroke="none"/><circle cx="17" cy="16" r="1.5" fill="currentColor" stroke="none"/>`,

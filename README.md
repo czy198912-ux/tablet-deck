@@ -5,7 +5,7 @@ your gaming PC serves a HUD-style button deck to the tablet over your home
 network, and each button sends real keyboard scancodes that Star Citizen reads.
 
 - 1024×768 two-panel HUD with landing, power management, quantum, operator
-  modes, shields, targeting, salvage, doors, emotes and more
+  modes, shields, targeting, salvage, mining, doors, emotes and more
 - 12 ship-manufacturer themes (RSI, Drake, Aegis, Anvil, Origin, MISC, Crusader,
   Banu, Aopoa, Argo, Consolidated Outland, Esperia)
 - Press animations: landing-gear struts, quantum charge ring, decoy sparks,
@@ -74,6 +74,13 @@ Buttons marked `"verify": true` in the layout use Star Citizen defaults that the
 profile doesn't set (power management, system power toggles, SCM/NAV, eject,
 chat, docking camera). Check those against your keybinding screen.
 
+The mining buttons are marked too: the profile binds them to keys, but their
+Star Citizen action names couldn't be confirmed against the game's files. After
+loading the profile, check that **Options → Keybindings → Vehicles → Mining**
+shows Fire Laser on RCtrl+F, Fracture/Extract on RCtrl+T, laser power on
+RCtrl+W / RCtrl+S and the modules on LAlt+1-3. If one is missing, the game
+didn't recognise that action; rebind it there to the same key.
+
 ### Rebuilding the profile
 
 The profile is generated from the layouts. After you add or change a button
@@ -97,7 +104,7 @@ up to date.
 
 - `layouts/deck.json` (default): the 1024×768 two-half HUD. Each half
   pages through panels with the arrows at the bottom: POWER/LANDING, Flight
-  Assist, Shields, Targeting and Salvage on the left; QT/SYSTEMS, Operator
+  Assist, Shields, Targeting, Salvage and Mining on the left; QT/SYSTEMS, Operator
   Modes, Combat, Crew/Doors, On Foot and Emotes on the right.
 - `layouts/star-citizen.json`: a simpler tabbed grid of buttons.
 

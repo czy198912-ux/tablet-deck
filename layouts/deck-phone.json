@@ -121,7 +121,8 @@
         "flight-assist",
         "shields",
         "targets",
-        "salvage"
+        "salvage",
+        "mining"
       ]
     },
     {
@@ -777,6 +778,127 @@
           "y": 200,
           "w": 291,
           "h": 74
+        }
+      ]
+    },
+    "mining": {
+      "title": "Mining",
+      "elements": [
+        {
+          "type": "button",
+          "id": "mn-mode",
+          "icon": "mining",
+          "label": "Mining Mode",
+          "keys": "ralt+m",
+          "scAction": "v_set_mining_mode",
+          "mode": "tap",
+          "color": "amber",
+          "x": 0,
+          "y": 0,
+          "w": 359,
+          "h": 40
+        },
+        {
+          "type": "header",
+          "text": "Laser",
+          "x": 2,
+          "y": 50
+        },
+        {
+          "type": "grid",
+          "x": 0,
+          "y": 70,
+          "w": 359,
+          "h": 112,
+          "cols": 2,
+          "compact": true,
+          "buttons": [
+            {
+              "id": "mn-fire",
+              "icon": "laser",
+              "label": "Fire Laser",
+              "keys": "rctrl+f",
+              "scAction": "v_toggle_mining_laser_fire",
+              "verify": true,
+              "mode": "tap",
+              "color": "red"
+            },
+            {
+              "id": "mn-type",
+              "icon": "swap",
+              "label": "Fracture / Extract",
+              "keys": "rctrl+t",
+              "scAction": "v_toggle_mining_laser_type",
+              "verify": true,
+              "mode": "tap",
+              "color": "amber"
+            },
+            {
+              "id": "mn-power-down",
+              "icon": "chev-down",
+              "label": "Laser Power −",
+              "keys": "rctrl+s",
+              "scAction": "v_decrease_mining_throttle",
+              "verify": true,
+              "mode": "hold"
+            },
+            {
+              "id": "mn-power-up",
+              "icon": "chev-up",
+              "label": "Laser Power +",
+              "keys": "rctrl+w",
+              "scAction": "v_increase_mining_throttle",
+              "verify": true,
+              "mode": "hold"
+            }
+          ]
+        },
+        {
+          "type": "header",
+          "text": "Modules",
+          "x": 2,
+          "y": 192
+        },
+        {
+          "type": "grid",
+          "x": 0,
+          "y": 212,
+          "w": 359,
+          "h": 64,
+          "cols": 3,
+          "compact": true,
+          "buttons": [
+            {
+              "id": "mn-module-1",
+              "icon": "module",
+              "label": "Module 1",
+              "keys": "lalt+1",
+              "scAction": "v_mining_use_consumable1",
+              "verify": true,
+              "mode": "tap",
+              "color": "blue"
+            },
+            {
+              "id": "mn-module-2",
+              "icon": "module",
+              "label": "Module 2",
+              "keys": "lalt+2",
+              "scAction": "v_mining_use_consumable2",
+              "verify": true,
+              "mode": "tap",
+              "color": "blue"
+            },
+            {
+              "id": "mn-module-3",
+              "icon": "module",
+              "label": "Module 3",
+              "keys": "lalt+3",
+              "scAction": "v_mining_use_consumable3",
+              "verify": true,
+              "mode": "tap",
+              "color": "blue"
+            }
+          ]
         }
       ]
     },

@@ -116,6 +116,20 @@ const panels = {
     ],
   },
 
+  mining: (() => {
+    const [laser, modules] = tablet.panels.mining.elements.filter((e) => e.type === "grid");
+    return {
+      title: "Mining",
+      elements: [
+        at("mn-mode", 0, 0, 359, 40),
+        el({ type: "header", text: "Laser", x: 2, y: 50 }),
+        { type: "grid", x: 0, y: 70, w: 359, h: 112, cols: 2, compact: true, buttons: laser.buttons },
+        el({ type: "header", text: "Modules", x: 2, y: 192 }),
+        { type: "grid", x: 0, y: 212, w: 359, h: 64, cols: 3, compact: true, buttons: modules.buttons },
+      ],
+    };
+  })(),
+
   emergency: {
     title: "Emergency",
     elements: [
@@ -154,7 +168,7 @@ const phone = {
   chrome,
   regions: [
     { id: "left", x: 0, y: REGION.y, w: REGION.w, h: REGION.h, pager: REGION.pager,
-      panels: ["landing", "power", "flight-assist", "shields", "targets", "salvage"] },
+      panels: ["landing", "power", "flight-assist", "shields", "targets", "salvage", "mining"] },
     { id: "right", x: 375, y: REGION.y, w: REGION.w, h: REGION.h, pager: REGION.pager,
       panels: ["systems", "emergency", "modes", "combat", "crew", "on-foot", "emotes-1", "emotes-2"] },
   ],

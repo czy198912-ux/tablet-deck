@@ -88,6 +88,15 @@ const ACTIONMAPS = {
   v_salvage_cycle_modifiers_right: ["spaceship_salvage"],
   v_salvage_decrease_beam_spacing: ["spaceship_salvage"],
   v_salvage_increase_beam_spacing: ["spaceship_salvage"],
+
+  // Mining
+  v_decrease_mining_throttle: ["spaceship_mining"],
+  v_increase_mining_throttle: ["spaceship_mining"],
+  v_mining_use_consumable1: ["spaceship_mining"],
+  v_mining_use_consumable2: ["spaceship_mining"],
+  v_mining_use_consumable3: ["spaceship_mining"],
+  v_toggle_mining_laser_fire: ["spaceship_mining"],
+  v_toggle_mining_laser_type: ["spaceship_mining"],
 };
 
 // Maps that are active together. A key combo bound to two actions in the same context
@@ -103,6 +112,7 @@ const CONTEXTS = {
   spaceship_missiles: "vehicle",
   spaceship_targeting_advanced: "vehicle",
   spaceship_salvage: "vehicle",
+  spaceship_mining: "vehicle",
   vehicle_general: "vehicle",
 };
 
