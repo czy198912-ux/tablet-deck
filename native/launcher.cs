@@ -133,10 +133,21 @@ class DeckWindow : Form
     readonly Label tablets = new Label();
     readonly Label voice = new Label();
     readonly Label keys = new Label();
+    readonly Button voiceListButton = new Button();
+    readonly Label strictnessCaption = new Label();
+    readonly TrackBar strictness = new TrackBar();
+    readonly Label strictnessValue = new Label();
+    readonly Label strictnessHelp = new Label();
+    readonly Label lastHeard = new Label();
     readonly RichTextBox log = new RichTextBox();
     readonly NotifyIcon tray = new NotifyIcon();
     readonly ToolTip tips = new ToolTip();
     readonly System.Windows.Forms.Timer copiedTimer = new System.Windows.Forms.Timer();
+    // Sends the slider's value once it has stopped moving, not on every step of a drag.
+    readonly System.Windows.Forms.Timer strictnessTimer = new System.Windows.Forms.Timer();
+    bool showingServerStrictness; // the slider is being set from the server, not by the player
+    readonly List<string[]> voiceCommands = new List<string[]>(); // [phrase, button label]
+    VoiceCommandsWindow commandsWindow;
 
     public DeckWindow(string[] args)
     {
@@ -154,8 +165,8 @@ class DeckWindow : Form
         BackColor = Back;
         ForeColor = Ink;
         Font = new Font("Segoe UI", 9.75f);
-        ClientSize = new Size(760, 520);
-        MinimumSize = new Size(776, 480);
+        ClientSize = new Size(760, 590);
+        MinimumSize = new Size(776, 560);
         StartPosition = FormStartPosition.CenterScreen;
 
         Place(qr, 20, 20, 260, 260);
@@ -209,11 +220,50 @@ class DeckWindow : Form
 
         tablets.Text = "Tablets connected: 0";
         Place(tablets, 20, 296, 240, 20);
+        keys.ForeColor = Dim;
+        Place(keys, 20, 318, 720, 20);
+
         voice.Text = "Voice commands: starting...";
         voice.ForeColor = Dim;
-        Place(voice, 20, 318, 720, 20);
-        keys.ForeColor = Dim;
-        Place(keys, 20, 340, 720, 20);
+        Place(voice, 20, 350, 570, 20);
+        StyleButton(voiceListButton, "Voice commands...", 600, 344, 140);
+        voiceListButton.Enabled = false;
+        voiceListButton.Click += delegate { ShowVoiceCommands(); };
+        tips.SetToolTip(voiceListButton, "Everything you can say, and the button each one presses");
+
+        // How sure Windows' speech recognition must be before a command counts (voiceConfidence).
+        strictnessCaption.Text = "Voice strictness";
+        Place(strictnessCaption, 20, 386, 120, 20);
+        strictness.Minimum = 20;
+        strictness.Maximum = 95;
+        strictness.SmallChange = 1;
+        strictness.LargeChange = 5;
+        strictness.TickStyle = TickStyle.None;
+        strictness.BackColor = Back;
+        strictness.Enabled = false;
+        strictness.ValueChanged += delegate
+        {
+            strictnessValue.Text = strictness.Value + "%";
+            if (showingServerStrictness) return;
+            strictnessTimer.Stop();
+            strictnessTimer.Start();
+        };
+        Place(strictness, 136, 380, 300, 30);
+        strictnessValue.Font = new Font("Segoe UI", 9.75f, FontStyle.Bold);
+        Place(strictnessValue, 440, 386, 50, 20);
+        strictnessHelp.Text = "Lower accepts more but may mishear. Higher is stricter.";
+        strictnessHelp.ForeColor = Dim;
+        strictnessHelp.Font = new Font("Segoe UI", 8.25f);
+        Place(strictnessHelp, 494, 380, 246, 32);
+        lastHeard.ForeColor = Dim;
+        Place(lastHeard, 20, 418, 720, 20);
+
+        strictnessTimer.Interval = 400;
+        strictnessTimer.Tick += delegate
+        {
+            strictnessTimer.Stop();
+            SendToServer("set voiceConfidence " + (strictness.Value / 100.0).ToString("0.00", CultureInfo.InvariantCulture));
+        };
 
         log.ReadOnly = true;
         log.BackColor = Panel;
@@ -223,7 +273,7 @@ class DeckWindow : Form
         log.DetectUrls = false;
         log.WordWrap = true;
         log.ScrollBars = RichTextBoxScrollBars.Vertical;
-        Place(log, 20, 368, 720, 132);
+        Place(log, 20, 446, 720, 124);
         log.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
 
         tray.Icon = Icon;
@@ -276,6 +326,11 @@ class DeckWindow : Form
         others.Text = "";
         code.Text = "-";
         qr.Rows = null;
+        lastHeard.Text = "";
+        strictness.Enabled = false;
+        voiceCommands.Clear();
+        voiceListButton.Enabled = false;
+        if (commandsWindow != null) commandsWindow.Fill();
         hint.Visible = true;
         state.Height = hint.Top - state.Top;
         SetState("Starting...", Dim);
@@ -341,6 +396,18 @@ class DeckWindow : Form
         }
     }
 
+    void SendToServer(string line)
+    {
+        var proc = server;
+        if (proc == null || proc.HasExited) return;
+        try
+        {
+            proc.StandardInput.WriteLine(line);
+            proc.StandardInput.Flush();
+        }
+        catch (Exception) { }
+    }
+
     void OnServerExit(Process proc)
     {
         if (quitting || proc != server) return;
@@ -401,6 +468,39 @@ class DeckWindow : Form
                     : Bool(ev, "focusCheck") ? "Keys are only sent while Star Citizen is the window in front."
                     : "Keys go to whatever window is in front.";
                 tray.Text = "Tablet Deck " + version + (dryRun ? " (test mode)" : "");
+                ShowStrictness(Num(ev, "voiceConfidence"));
+                break;
+            case "voiceConfidence":
+                ShowStrictness(Num(ev, "value"));
+                break;
+            case "voice-commands":
+                voiceCommands.Clear();
+                foreach (var pair in List(ev, "commands"))
+                {
+                    var p = pair as object[];
+                    if (p != null && p.Length == 2) voiceCommands.Add(new[] { Convert.ToString(p[0], CultureInfo.InvariantCulture), Convert.ToString(p[1], CultureInfo.InvariantCulture) });
+                }
+                voiceListButton.Enabled = voiceCommands.Count > 0;
+                if (commandsWindow != null) commandsWindow.Fill();
+                break;
+            case "heard":
+                string result = Str(ev, "result");
+                int sure = (int)Math.Round(Num(ev, "confidence") * 100);
+                if (result == "accepted")
+                {
+                    lastHeard.Text = "Last heard: \"" + Str(ev, "text") + "\", " + sure + "% sure. Pressed " + Str(ev, "label") + ".";
+                    lastHeard.ForeColor = Good;
+                }
+                else if (result == "ignored")
+                {
+                    lastHeard.Text = "Last heard: \"" + Str(ev, "text") + "\", " + sure + "% sure. Below " + strictness.Value + "%, so it was ignored.";
+                    lastHeard.ForeColor = Warn;
+                }
+                else
+                {
+                    lastHeard.Text = "Last heard: something that isn't one of the commands.";
+                    lastHeard.ForeColor = Dim;
+                }
                 break;
             case "clients":
                 tablets.Text = "Tablets connected: " + Str(ev, "count");
@@ -447,10 +547,41 @@ class DeckWindow : Form
         return d.TryGetValue(key, out v) && v is bool && (bool)v;
     }
 
+    static double Num(Dictionary<string, object> d, string key)
+    {
+        object v;
+        if (!d.TryGetValue(key, out v) || v == null) return 0;
+        try { return Convert.ToDouble(v, CultureInfo.InvariantCulture); }
+        catch (Exception) { return 0; }
+    }
+
     static object[] List(Dictionary<string, object> d, string key)
     {
         object v;
         return d.TryGetValue(key, out v) && v is object[] ? (object[])v : new object[0];
+    }
+
+    // Moves the slider to the server's value without sending it back.
+    void ShowStrictness(double value)
+    {
+        int percent = Math.Max(strictness.Minimum, Math.Min(strictness.Maximum, (int)Math.Round(value * 100)));
+        showingServerStrictness = true;
+        strictness.Value = percent;
+        strictnessValue.Text = percent + "%";
+        showingServerStrictness = false;
+        strictness.Enabled = true;
+    }
+
+    void ShowVoiceCommands()
+    {
+        if (commandsWindow == null)
+        {
+            commandsWindow = new VoiceCommandsWindow(voiceCommands, Icon);
+            commandsWindow.FormClosed += delegate { commandsWindow = null; };
+            commandsWindow.Fill();
+            commandsWindow.Show(this);
+        }
+        else commandsWindow.Activate();
     }
 
     void SetState(string text, Color color)
@@ -559,5 +690,93 @@ class DeckWindow : Form
     {
         if (m.Msg == Program.ShowWindowMessage) ShowFromTray();
         base.WndProc(ref m);
+    }
+}
+
+// Everything the voice listener understands, with a search box: what to say and which
+// button it presses. The list comes from the server, so it matches the current layout.
+class VoiceCommandsWindow : Form
+{
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, string lParam);
+
+    readonly List<string[]> commands;
+    readonly Label note = new Label();
+    readonly TextBox search = new TextBox();
+    readonly ListView list = new ListView();
+
+    public VoiceCommandsWindow(List<string[]> commands, Icon icon)
+    {
+        this.commands = commands;
+        SuspendLayout();
+        Text = "Voice commands";
+        Icon = icon;
+        ShowInTaskbar = false;
+        BackColor = DeckWindow.Back;
+        ForeColor = DeckWindow.Ink;
+        Font = new Font("Segoe UI", 9.75f);
+        ClientSize = new Size(520, 560);
+        MinimumSize = new Size(420, 320);
+        StartPosition = FormStartPosition.CenterScreen;
+
+        note.Text = "Hold the mic button on the tablet and say one of these. Most Star Citizen controls are toggles, " +
+            "so \"engines on\" and \"engines off\" press the same key.";
+        note.ForeColor = DeckWindow.Dim;
+        note.Bounds = new Rectangle(12, 10, 496, 40);
+        note.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+
+        search.Bounds = new Rectangle(12, 56, 496, 24);
+        search.BackColor = DeckWindow.Panel;
+        search.ForeColor = DeckWindow.Ink;
+        search.BorderStyle = BorderStyle.FixedSingle;
+        search.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+        search.TextChanged += delegate { Fill(); };
+        search.HandleCreated += delegate { SendMessage(search.Handle, 0x1501, (IntPtr)1, "Search, e.g. shields or quantum"); }; // EM_SETCUEBANNER
+
+        list.Bounds = new Rectangle(12, 90, 496, 458);
+        list.View = View.Details;
+        list.FullRowSelect = true;
+        list.HeaderStyle = ColumnHeaderStyle.Nonclickable;
+        list.BackColor = DeckWindow.Panel;
+        list.ForeColor = DeckWindow.Ink;
+        list.BorderStyle = BorderStyle.None;
+        list.Columns.Add("Say", 270);
+        list.Columns.Add("Presses", 200);
+        list.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+
+        Controls.Add(note);
+        Controls.Add(search);
+        Controls.Add(list);
+        AutoScaleDimensions = new SizeF(96f, 96f);
+        AutoScaleMode = AutoScaleMode.Dpi;
+        ResumeLayout(false);
+    }
+
+    protected override void OnLoad(EventArgs e)
+    {
+        base.OnLoad(e);
+        // Column widths aren't scaled with the window, so scale them for the screen's DPI.
+        using (var g = CreateGraphics())
+        {
+            float scale = g.DpiX / 96f;
+            list.Columns[0].Width = (int)(270 * scale);
+            list.Columns[1].Width = (int)(200 * scale);
+        }
+        search.Focus();
+    }
+
+    // Shows the commands matching the search box, by phrase or button name.
+    public void Fill()
+    {
+        string q = search.Text.Trim().ToLowerInvariant();
+        list.BeginUpdate();
+        list.Items.Clear();
+        foreach (var c in commands)
+            if (q == "" || c[0].Contains(q) || c[1].ToLowerInvariant().Contains(q))
+                list.Items.Add(new ListViewItem(new[] { c[0], c[1] }));
+        list.EndUpdate();
+        Text = commands.Count == 0 ? "Voice commands (not running)"
+            : q == "" ? "Voice commands (" + commands.Count + ")"
+            : "Voice commands (" + list.Items.Count + " of " + commands.Count + ")";
     }
 }

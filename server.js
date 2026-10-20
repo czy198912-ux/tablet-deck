@@ -409,7 +409,14 @@ function startVoice() {
     ui({ t: "voice", state: "error", text: err.message });
     return;
   }
-  const commands = voiceCommands(loadLayout().buttons);
+  const { buttons } = loadLayout();
+  const commands = voiceCommands(buttons);
+  // The app window's voice commands list: [phrase, button label] pairs, by label.
+  ui({
+    t: "voice-commands",
+    commands: [...commands].map(([phrase, id]) => [phrase, buttons.get(id).label])
+      .sort((a, b) => a[1].localeCompare(b[1]) || a[0].localeCompare(b[0])),
+  });
   const proc = spawn(exe, [config.voiceLanguage], { stdio: ["pipe", "pipe", "inherit"] });
   let pending = "";
   proc.stdout.on("data", (d) => {
@@ -449,11 +456,13 @@ async function onVoice(id, confidence, text) {
   if (!btn || confidence < config.voiceConfidence) {
     console.log(btn ? `Voice: "${text}" ignored (confidence ${confidence.toFixed(2)})` : "Voice: didn't catch that");
     emit(btn ? { t: "voice", result: "ignored", text, label: btn.label, confidence } : { t: "voice", result: "unheard" });
+    ui(btn ? { t: "heard", result: "ignored", text, label: btn.label, confidence } : { t: "heard", result: "unheard" });
     client?.send({ t: "unheard" });
     return;
   }
   console.log(`Voice: "${text}" -> ${btn.label} (confidence ${confidence.toFixed(2)})`);
   emit({ t: "voice", result: "heard", text, label: btn.label, confidence });
+  ui({ t: "heard", result: "accepted", text, label: btn.label, confidence });
   client?.send({ t: "heard", id: btn.id, label: btn.label, text });
   // Hold buttons (quantum engage, laser power) get a longer press, set per button.
   await tapButton(btn, client, btn.voiceMs || btn.ms || config.tapMs, "voice");
@@ -644,7 +653,7 @@ server.listen(config.port, "0.0.0.0", () => {
       t: "ready", version: VERSION, port: config.port, token: config.token, link, settings: CONFIG_PATH,
       others: ips.filter((ip) => ip !== lan).map((ip) => `http://${ip}:${config.port}`),
       qr: link ? qr.matrix(link).map((row) => row.map((dark) => (dark ? "1" : "0")).join("")) : [],
-      dryRun: DRY_RUN, focusCheck: Boolean(config.onlyWhenGameFocused),
+      dryRun: DRY_RUN, focusCheck: Boolean(config.onlyWhenGameFocused), voiceConfidence: config.voiceConfidence,
     });
     return;
   }
@@ -673,8 +682,25 @@ process.on("SIGHUP", shutdown);
 process.on("SIGBREAK", shutdown);
 // The app window asks the server to stop with "quit"; if the window itself goes away,
 // stdin closes, which stops the server the same way.
+// "set voiceConfidence 0.55" comes from the window's strictness slider: it applies to the
+// next command at once and is saved to config.json.
 if (UI) {
   process.stdin.setEncoding("utf8");
-  process.stdin.on("data", (text) => { if (/^quit\s*$/m.test(text)) shutdown(); });
+  process.stdin.on("data", (text) => {
+    if (/^quit\s*$/m.test(text)) { shutdown(); return; }
+    const set = /^set voiceConfidence ([\d.]+)\s*$/m.exec(text);
+    if (set) setVoiceConfidence(Number(set[1]));
+  });
   process.stdin.on("end", shutdown);
+}
+
+function setVoiceConfidence(value) {
+  if (!(value >= 0 && value <= 1)) return;
+  config.voiceConfidence = Math.round(value * 100) / 100;
+  // Rewrite only this setting, keeping the rest of the file as the player wrote it.
+  const saved = JSON.parse(fs.readFileSync(CONFIG_PATH, "utf8"));
+  saved.voiceConfidence = config.voiceConfidence;
+  fs.writeFileSync(CONFIG_PATH, JSON.stringify(saved, null, 2) + "\n");
+  console.log(`Voice strictness set to ${Math.round(config.voiceConfidence * 100)}%.`);
+  ui({ t: "voiceConfidence", value: config.voiceConfidence });
 }

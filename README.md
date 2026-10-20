@@ -317,11 +317,19 @@ it heard, or "Didn't catch that".
 - Eject, self-destruct and look behind don't respond to voice.
 - The focus check applies: nothing is pressed unless Star Citizen is in front.
 
+In the installed app, **Voice commands...** in the window lists every phrase
+and the button it presses, with a search box. The **Voice strictness** slider
+sets how sure the recognizer must be before a command counts (the
+`voiceConfidence` setting), and takes effect straight away. Under it, the window
+shows the last thing it heard and how sure it was, so you can speak a few
+commands and set the slider just below the numbers you get for correct ones.
+
 Commands are in English and need the English speech recognizer in Windows. If
 the PC window says "no en-US speech recognizer installed", add it under
 **Settings → Time & Language → Speech** (or Language → English → Options →
 Speech recognition), then restart Tablet Deck. If commands are often missed or
-misheard, try a headset mic, or change `voiceConfidence` (see Settings).
+misheard, try a headset mic, or change the strictness (the slider, or
+`voiceConfidence` in Settings).
 
 ## Themes
 
@@ -359,7 +367,8 @@ the settings folder first, then among the built-in files.
   other English one works too if that's what's installed).
 - `voiceConfidence`: how sure the recognizer must be before a command counts,
   from 0 to 1 (default 0.6). Raise it if it triggers on the wrong things, lower
-  it if it often says "Didn't catch that".
+  it if it often says "Didn't catch that". The app window's Voice strictness
+  slider changes it too.
 
 ## Safety
 
