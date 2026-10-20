@@ -1,5 +1,5 @@
 // Builds the starter layouts for different kinds of flying from the HUD layouts, by
-// picking and ordering their panels. Run it after changing layouts/hud.json or
+// putting the panels for that kind of flying first. Run it after changing layouts/hud.json or
 // layouts/hud-phone.json (tools/make-phone-layout.js), so the starters keep up.
 //
 //   node tools/make-starter-layouts.js
@@ -13,7 +13,7 @@ const path = require("path");
 const ROOT = path.join(__dirname, "..");
 const read = (file) => JSON.parse(fs.readFileSync(path.join(ROOT, "layouts", file), "utf8"));
 
-// Panels for each half (left, right), first on the list shows first.
+// The panels each half starts on, in order; the half's other panels follow.
 const STARTERS = [
   {
     id: "combat", name: "Combat",
@@ -32,18 +32,14 @@ const STARTERS = [
   },
 ];
 
+// Every panel stays: each half shows the starter's panels first, then the rest of that
+// half's panels in the HUD's order, so nothing (emotes, on foot...) is ever out of reach.
 function starter(base, name, halves, note) {
-  const regions = base.regions.map((r, i) => ({ ...r, panels: halves[i] }));
-  const used = new Set(halves.flat());
-  for (const id of used) if (!base.panels[id]) throw new Error(`No panel "${id}" in ${base.name}`);
-  return {
-    name,
-    notes: note,
-    canvas: base.canvas,
-    chrome: base.chrome,
-    regions,
-    panels: Object.fromEntries(Object.entries(base.panels).filter(([id]) => used.has(id))),
-  };
+  const regions = base.regions.map((r, i) => {
+    for (const id of halves[i]) if (!r.panels.includes(id)) throw new Error(`Panel "${id}" isn't in the ${r.id} half of ${base.name}`);
+    return { ...r, panels: [...halves[i], ...r.panels.filter((id) => !halves[i].includes(id))] };
+  });
+  return { name, notes: note, canvas: base.canvas, chrome: base.chrome, regions, panels: base.panels };
 }
 
 const tablet = read("hud.json"), phone = read("hud-phone.json");

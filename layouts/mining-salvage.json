@@ -141,7 +141,9 @@
         "mining",
         "salvage",
         "power-landing",
-        "flight-assist"
+        "flight-assist",
+        "shields",
+        "targets"
       ]
     },
     {
@@ -154,7 +156,9 @@
         "modes",
         "qt-systems",
         "crew",
-        "on-foot"
+        "on-foot",
+        "combat",
+        "emotes"
       ]
     }
   ],
@@ -971,6 +975,177 @@
         }
       ]
     },
+    "shields": {
+      "title": "Shields",
+      "elements": [
+        {
+          "type": "grid",
+          "x": 0,
+          "y": 8,
+          "w": 480,
+          "h": 604,
+          "cols": 3,
+          "buttons": [
+            {
+              "id": "sh-up",
+              "icon": "chev-up",
+              "label": "Top",
+              "voice": [
+                "shields top",
+                "top shields"
+              ],
+              "keys": "ralt+np_subtract",
+              "scAction": "v_shield_raise_level_up",
+              "mode": "tap",
+              "color": "green"
+            },
+            {
+              "id": "sh-front",
+              "icon": "power-shields",
+              "label": "Front",
+              "voice": [
+                "shields front",
+                "front shields"
+              ],
+              "keys": "ralt+np_8",
+              "scAction": "v_shield_raise_level_forward",
+              "mode": "tap",
+              "color": "green"
+            },
+            {
+              "id": "sh-down",
+              "icon": "chev-down",
+              "label": "Bottom",
+              "voice": [
+                "shields bottom",
+                "bottom shields"
+              ],
+              "keys": "ralt+np_add",
+              "scAction": "v_shield_raise_level_down",
+              "mode": "tap",
+              "color": "green"
+            },
+            {
+              "id": "sh-left",
+              "icon": "chev-left",
+              "label": "Left",
+              "voice": [
+                "shields left",
+                "left shields"
+              ],
+              "keys": "ralt+np_4",
+              "scAction": "v_shield_raise_level_left",
+              "mode": "tap",
+              "color": "green"
+            },
+            {
+              "id": "sh-reset",
+              "icon": "power-reset",
+              "label": "Reset",
+              "voice": [
+                "reset shields",
+                "balance shields"
+              ],
+              "keys": "ralt+np_5",
+              "scAction": "v_shield_reset_level",
+              "mode": "tap"
+            },
+            {
+              "id": "sh-right",
+              "icon": "chev-right",
+              "label": "Right",
+              "voice": [
+                "shields right",
+                "right shields"
+              ],
+              "keys": "ralt+np_6",
+              "scAction": "v_shield_raise_level_right",
+              "mode": "tap",
+              "color": "green"
+            },
+            {
+              "id": "sh-back",
+              "icon": "chev-down",
+              "label": "Back",
+              "voice": [
+                "shields back",
+                "rear shields"
+              ],
+              "keys": "ralt+np_2",
+              "scAction": "v_shield_raise_level_back",
+              "mode": "tap",
+              "color": "green"
+            }
+          ]
+        }
+      ]
+    },
+    "targets": {
+      "title": "Targeting",
+      "elements": [
+        {
+          "type": "grid",
+          "x": 0,
+          "y": 8,
+          "w": 480,
+          "h": 604,
+          "cols": 2,
+          "buttons": [
+            {
+              "id": "tg-hostile",
+              "icon": "target",
+              "label": "Prev Hostile",
+              "keys": "lalt+5",
+              "scAction": "v_target_cycle_hostile_back",
+              "mode": "tap",
+              "color": "red"
+            },
+            {
+              "id": "tg-attacker",
+              "icon": "target",
+              "label": "Prev Attacker",
+              "keys": "lalt+4",
+              "scAction": "v_target_cycle_attacker_back",
+              "mode": "tap",
+              "color": "red"
+            },
+            {
+              "id": "tg-friendly",
+              "icon": "target",
+              "label": "Prev Friendly",
+              "keys": "lalt+6",
+              "scAction": "v_target_cycle_friendly_back",
+              "mode": "tap",
+              "color": "green"
+            },
+            {
+              "id": "tg-all",
+              "icon": "target",
+              "label": "Prev Any",
+              "keys": "lalt+7",
+              "scAction": "v_target_cycle_all_back",
+              "mode": "tap"
+            },
+            {
+              "id": "tg-sub",
+              "icon": "target",
+              "label": "Prev Subtarget",
+              "keys": "lalt+8",
+              "scAction": "v_target_cycle_subitem_back",
+              "mode": "tap"
+            },
+            {
+              "id": "tg-view",
+              "icon": "target",
+              "label": "Prev In View",
+              "keys": "lalt+v",
+              "scAction": "v_target_cycle_in_view_back",
+              "mode": "tap"
+            }
+          ]
+        }
+      ]
+    },
     "salvage": {
       "title": "Salvage",
       "elements": [
@@ -1229,6 +1404,86 @@
         }
       ]
     },
+    "combat": {
+      "title": "Combat",
+      "elements": [
+        {
+          "type": "grid",
+          "x": 0,
+          "y": 8,
+          "w": 480,
+          "h": 604,
+          "cols": 2,
+          "buttons": [
+            {
+              "id": "cb-decoy",
+              "anim": "burst",
+              "icon": "decoy",
+              "label": "Decoy",
+              "voice": [
+                "flares",
+                "launch decoy"
+              ],
+              "keys": "g",
+              "mode": "tap",
+              "color": "amber"
+            },
+            {
+              "id": "cb-noise",
+              "anim": "burst",
+              "icon": "noise",
+              "label": "Noise",
+              "voice": [
+                "chaff",
+                "launch noise"
+              ],
+              "keys": "h",
+              "mode": "tap",
+              "color": "amber"
+            },
+            {
+              "id": "cb-panic",
+              "anim": "burst",
+              "icon": "decoy",
+              "label": "Panic Decoys",
+              "voice": [
+                "panic"
+              ],
+              "keys": "lctrl+h",
+              "scAction": "v_weapon_countermeasure_decoy_launch_panic",
+              "mode": "tap",
+              "color": "red"
+            },
+            {
+              "id": "cb-missile",
+              "anim": "recoil",
+              "icon": "missile",
+              "label": "Launch Missile",
+              "keys": "ralt+backslash",
+              "scAction": "v_weapon_launch_missile_cinematic",
+              "mode": "tap",
+              "color": "red"
+            },
+            {
+              "id": "cb-fewer",
+              "icon": "missile",
+              "label": "Fewer Missiles",
+              "keys": "lctrl+g",
+              "scAction": "v_weapon_decrease_max_missiles",
+              "mode": "tap"
+            },
+            {
+              "id": "cb-pips",
+              "icon": "power-weapons",
+              "label": "Lead / Lag Pips",
+              "keys": "lalt+np_7",
+              "scAction": "v_weapon_pip_toggle_lead_lag",
+              "mode": "tap"
+            }
+          ]
+        }
+      ]
+    },
     "crew": {
       "title": "Crew/Doors",
       "elements": [
@@ -1385,6 +1640,260 @@
               "keys": "escape",
               "mode": "tap",
               "color": "red"
+            }
+          ]
+        }
+      ]
+    },
+    "emotes": {
+      "title": "Emotes",
+      "elements": [
+        {
+          "type": "grid",
+          "x": 0,
+          "y": 8,
+          "w": 480,
+          "h": 604,
+          "cols": 4,
+          "compact": true,
+          "buttons": [
+            {
+              "id": "em-agree",
+              "label": "Agree",
+              "keys": "rctrl+np_1",
+              "scAction": "emote_agree",
+              "mode": "tap"
+            },
+            {
+              "id": "em-angry",
+              "label": "Angry",
+              "keys": "rctrl+np_2",
+              "scAction": "emote_angry",
+              "mode": "tap"
+            },
+            {
+              "id": "em-atease",
+              "label": "At Ease",
+              "keys": "rctrl+np_3",
+              "scAction": "emote_atease",
+              "mode": "tap"
+            },
+            {
+              "id": "em-attention",
+              "label": "Attention",
+              "keys": "rctrl+np_4",
+              "scAction": "emote_attention",
+              "mode": "tap"
+            },
+            {
+              "id": "em-blah",
+              "label": "Blah",
+              "keys": "rctrl+np_5",
+              "scAction": "emote_blah",
+              "mode": "tap"
+            },
+            {
+              "id": "em-bored",
+              "label": "Bored",
+              "keys": "rctrl+np_6",
+              "scAction": "emote_bored",
+              "mode": "tap"
+            },
+            {
+              "id": "em-bow",
+              "label": "Bow",
+              "keys": "rctrl+np_7",
+              "scAction": "emote_bow",
+              "mode": "tap"
+            },
+            {
+              "id": "em-burp",
+              "label": "Burp",
+              "keys": "rctrl+np_8",
+              "scAction": "emote_burp",
+              "mode": "tap"
+            },
+            {
+              "id": "em-cheer",
+              "label": "Cheer",
+              "keys": "rctrl+np_9",
+              "scAction": "emote_cheer",
+              "mode": "tap"
+            },
+            {
+              "id": "em-chicken",
+              "label": "Chicken",
+              "keys": "rctrl+p",
+              "scAction": "emote_chicken",
+              "mode": "tap"
+            },
+            {
+              "id": "em-clap",
+              "label": "Clap",
+              "keys": "rctrl+o",
+              "scAction": "emote_clap",
+              "mode": "tap"
+            },
+            {
+              "id": "em-come",
+              "label": "Come",
+              "keys": "rctrl+i",
+              "scAction": "emote_come",
+              "mode": "tap"
+            },
+            {
+              "id": "em-cry",
+              "label": "Cry",
+              "keys": "rctrl+u",
+              "scAction": "emote_cry",
+              "mode": "tap"
+            },
+            {
+              "id": "em-dance",
+              "label": "Dance",
+              "keys": "rctrl+y",
+              "scAction": "emote_dance",
+              "mode": "tap"
+            },
+            {
+              "id": "em-disagree",
+              "label": "Disagree",
+              "keys": "rctrl+l",
+              "scAction": "emote_disagree",
+              "mode": "tap"
+            },
+            {
+              "id": "em-failure",
+              "label": "Failure",
+              "keys": "rctrl+k",
+              "scAction": "emote_failure",
+              "mode": "tap"
+            },
+            {
+              "id": "em-flex",
+              "label": "Flex",
+              "keys": "rctrl+end",
+              "scAction": "emote_flex",
+              "mode": "tap"
+            },
+            {
+              "id": "em-flirt",
+              "label": "Flirt",
+              "keys": "rctrl+j",
+              "scAction": "emote_flirt",
+              "mode": "tap"
+            },
+            {
+              "id": "em-gasp",
+              "label": "Gasp",
+              "keys": "rctrl+g",
+              "scAction": "emote_gasp",
+              "mode": "tap"
+            },
+            {
+              "id": "em-gloat",
+              "label": "Gloat",
+              "keys": "rctrl+m",
+              "scAction": "emote_gloat",
+              "mode": "tap"
+            },
+            {
+              "id": "em-greet",
+              "label": "Greet",
+              "keys": "rctrl+n",
+              "scAction": "emote_greet",
+              "mode": "tap"
+            },
+            {
+              "id": "em-laugh",
+              "label": "Laugh",
+              "keys": "rctrl+b",
+              "scAction": "emote_laugh",
+              "mode": "tap"
+            },
+            {
+              "id": "em-launch",
+              "label": "Launch",
+              "keys": "rctrl+f5",
+              "scAction": "emote_launch",
+              "mode": "tap"
+            },
+            {
+              "id": "em-point",
+              "label": "Point",
+              "keys": "rctrl+f6",
+              "scAction": "emote_point",
+              "mode": "tap"
+            },
+            {
+              "id": "em-rude",
+              "label": "Rude",
+              "keys": "rctrl+f7",
+              "scAction": "emote_rude",
+              "mode": "tap"
+            },
+            {
+              "id": "em-salute",
+              "label": "Salute",
+              "keys": "rctrl+f10",
+              "scAction": "emote_salute",
+              "mode": "tap"
+            },
+            {
+              "id": "em-sit",
+              "label": "Sit",
+              "keys": "rctrl+f11",
+              "scAction": "emote_sit",
+              "mode": "tap"
+            },
+            {
+              "id": "em-sleep",
+              "label": "Sleep",
+              "keys": "rctrl+pgup",
+              "scAction": "emote_sleep",
+              "mode": "tap"
+            },
+            {
+              "id": "em-smell",
+              "label": "Smell",
+              "keys": "rctrl+minus",
+              "scAction": "emote_smell",
+              "mode": "tap"
+            },
+            {
+              "id": "em-taunt",
+              "label": "Taunt",
+              "keys": "rctrl+backslash",
+              "scAction": "emote_taunt",
+              "mode": "tap"
+            },
+            {
+              "id": "em-threaten",
+              "label": "Threaten",
+              "keys": "rctrl+backspace",
+              "scAction": "emote_threaten",
+              "mode": "tap"
+            },
+            {
+              "id": "em-wait",
+              "label": "Wait",
+              "keys": "rctrl+7",
+              "scAction": "emote_wait",
+              "mode": "tap"
+            },
+            {
+              "id": "em-wave",
+              "label": "Wave",
+              "keys": "rctrl+f9",
+              "scAction": "emote_wave",
+              "mode": "tap"
+            },
+            {
+              "id": "em-whistle",
+              "label": "Whistle",
+              "keys": "rctrl+8",
+              "scAction": "emote_whistle",
+              "mode": "tap"
             }
           ]
         }

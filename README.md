@@ -229,22 +229,23 @@ there to the same key.
 Tap the sliders button (top right) on the tablet and choose under **Layout**.
 Each tablet and phone remembers its own choice:
 
-| Layout | What's on it |
+| Layout | Opens on |
 |---|---|
-| **Tablet Deck HUD** (default) | Everything: Power/Landing, Flight Assist, Shields, Targeting, Salvage and Mining on the left; QT/Systems, Operator Modes, Combat, Crew/Doors, On Foot and Emotes on the right |
-| **Combat** | Power, shields, targeting and flight assist; combat, quantum, operator modes and crew |
-| **Mining & Salvage** | Mining and salvage first, with landing and flight assist; operator modes, quantum, crew and on foot |
-| **Hauling & Exploration** | Landing, flight assist and targeting; quantum, crew, on foot and emotes |
+| **Tablet Deck HUD** (default) | Power/Landing, Flight Assist, Shields, Targeting, Salvage and Mining on the left; QT/Systems, Operator Modes, Combat, Crew/Doors, On Foot and Emotes on the right |
+| **Combat** | Power/Landing, Shields, Targeting and Flight Assist first; Combat, QT/Systems, Operator Modes and Crew first |
+| **Mining & Salvage** | Mining and Salvage first; Operator Modes, QT/Systems, Crew and On Foot first |
+| **Hauling & Exploration** | Power/Landing, Flight Assist and Targeting first; QT/Systems, Crew, On Foot and Emotes first |
 | **Star Citizen** | A simpler tabbed grid of buttons |
 
-Phones get versions sized for an iPhone 15 Pro in landscape that scale to fit
-other phones. Hold the phone sideways. Layouts you make in the editor show up in
-the list too.
+The starter layouts have every panel too; they just put the ones for that kind of
+flying first, so Emotes and the rest are always a few arrow taps away. Phones get
+versions sized for an iPhone 15 Pro in landscape that scale to fit other phones.
+Hold the phone sideways. Layouts you make in the editor show up in the list too.
 
-**Swipe sideways with two fingers** to flip to the next or previous layout. So a
-swipe never presses anything, a press waits a moment (60 ms) in case a second
-finger follows; turn **2-finger swipe** off in the sliders sheet for instant
-presses.
+**Two-finger swipe** (turn it on in the sliders sheet): swipe sideways with two
+fingers over a half to flip it to its next or previous panel, like its arrows. So
+a swipe never presses anything, a press then waits a moment (60 ms) in case a
+second finger follows; with it off, presses are instant.
 
 ### Open websites on the PC
 

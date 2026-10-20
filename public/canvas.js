@@ -253,8 +253,21 @@
     // Set while paging, so the region's new panel slides in from that side.
     let slide = null;
 
+    // Moves a region (one half of the HUD) d panels on, as its pager arrows do.
+    function page(regionId, d) {
+      const region = layout.regions.find((r) => r.id === regionId);
+      if (!region) return;
+      const n = region.panels.length;
+      state.panels[regionId] = (Math.min(state.panels[regionId] || 0, n - 1) + d + n) % n;
+      save();
+      slide = { region: regionId, dir: d };
+      render();
+      slide = null;
+    }
+
     function renderRegion(region) {
       const el = box(make("div", "hud-region"), region);
+      el.dataset.region = region.id;
       const pagerH = region.pager || 44; // pager bar height; phone layouts use a slimmer one
       el.style.setProperty("--pager-h", `${pagerH}px`);
       const ids = region.panels;
@@ -272,13 +285,7 @@
          <button type="button" class="hud-btn s-pg next" aria-label="Next panel">${D.deckIcon("chev-right")}</button>`);
       text(pager, ".title span", panel.title);
       pager.querySelector(".dots").innerHTML = ids.map((_, i) => `<i class="${i === idx ? "on" : ""}"></i>`).join("");
-      const go = (d) => {
-        state.panels[region.id] = (idx + d + ids.length) % ids.length;
-        save();
-        slide = { region: region.id, dir: d };
-        render();
-        slide = null;
-      };
+      const go = (d) => page(region.id, d);
       pager.querySelector(".prev").onclick = () => go(-1);
       pager.querySelector(".next").onclick = () => go(1);
       el.appendChild(pager);
@@ -298,6 +305,14 @@
     current = {
       render,
       panelShown: (regionId) => state.panels[regionId] || 0,
+      // Pages the half at screen point (x, y), for the two-finger swipe; false if none is there.
+      pageAt(x, y, d) {
+        for (const el of canvas.querySelectorAll(".hud-region")) {
+          const r = el.getBoundingClientRect();
+          if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) { page(el.dataset.region, d); return true; }
+        }
+        return false;
+      },
       scale: scaleNow,
       // Stops this deck redrawing itself, before another layout is drawn or a grid layout shown.
       dispose() {

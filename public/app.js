@@ -208,17 +208,18 @@
     useLayout(e.target.value);
   };
 
-  // ---------- two-finger swipe between layouts ----------
+  // ---------- two-finger swipe between panels ----------
 
-  // Swiping sideways with two fingers switches to the next or previous layout in the
-  // Layout list. The first finger usually lands on a button, so while swiping is on, a
-  // press waits SWIPE_WAIT_MS; if a second finger lands meanwhile, it's a swipe and
-  // nothing is pressed. Each device can turn it off in the sliders sheet.
+  // Swiping sideways with two fingers over one half of the HUD flips that half to its next
+  // or previous panel, like its arrows (on tabbed layouts, to the next or previous tab).
+  // The first finger usually lands on a button, so while swiping is on, a press waits
+  // SWIPE_WAIT_MS; if a second finger lands meanwhile, it's a swipe and nothing is
+  // pressed. Off unless turned on in the sliders sheet, so presses are instant by default.
   const SWIPE_WAIT_MS = 60;
   const swipeKey = `swipe-${device}`;
-  const swipeOn = () => store.get(swipeKey) !== "off";
+  const swipeOn = () => store.get(swipeKey) === "on";
   const pendingPresses = new Set(); // cancel functions of presses still waiting
-  const fingers = new Map();        // pointerId -> { x, y } where it went down
+  const fingers = new Map();        // pointerId -> { x, y } for fingers now down
   let swipe = null;                 // { startX, startY, x, y } while two fingers are down
 
   function centre() {
@@ -228,6 +229,9 @@
   }
   document.addEventListener("pointerdown", (e) => {
     if (!swipeOn() || e.pointerType === "mouse") return;
+    // The first finger of a new touch: forget any finger whose lift was missed, so a stale
+    // one can't turn every later tap into a "second finger" and swallow it.
+    if (e.isPrimary) { fingers.clear(); swipe = null; }
     fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (fingers.size === 2) {
       for (const cancel of [...pendingPresses]) cancel();
@@ -243,29 +247,21 @@
   }, true);
   const lift = (e) => {
     if (!fingers.delete(e.pointerId) || !swipe || fingers.size > 0) return;
-    const dx = swipe.x - swipe.startX, dy = swipe.y - swipe.startY;
+    const s = swipe;
     swipe = null;
-    if (Math.abs(dx) > 90 && Math.abs(dy) < Math.abs(dx) * 0.6) switchLayout(dx < 0 ? 1 : -1);
+    const dx = s.x - s.startX, dy = s.y - s.startY;
+    if (Math.abs(dx) < 90 || Math.abs(dy) > Math.abs(dx) * 0.6) return;
+    const step = dx < 0 ? 1 : -1; // swipe left: next panel, as on a phone
+    if (deckCanvas) deckCanvas.pageAt(s.startX, s.startY, step);
+    else if (layout && layout.pages) {
+      pageIndex = (pageIndex + step + layout.pages.length) % layout.pages.length;
+      store.set("page", pageIndex);
+      renderTabs();
+      renderPage();
+    }
   };
   document.addEventListener("pointerup", lift, true);
   document.addEventListener("pointercancel", lift, true);
-
-  // The layouts this device can show, as in the Layout picker: [{ file, name }].
-  function layoutChoices() {
-    if (DEMO) return Promise.resolve({ list: DEMO_LAYOUTS.map(([file, name]) => ({ file, name })), current: chosenLayout || DEMO_LAYOUTS[0][0] });
-    return fetch(`/layouts.json?t=${encodeURIComponent(token)}&device=${device}`)
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((data) => ({ list: data.layouts, current: data.layouts.some((l) => l.file === chosenLayout) ? chosenLayout : data.pcChoice }));
-  }
-
-  function switchLayout(step) {
-    layoutChoices().then(({ list, current }) => {
-      if (list.length < 2) return;
-      const i = Math.max(0, list.findIndex((l) => l.file === current));
-      const next = list[(i + step + list.length) % list.length];
-      useLayout(next.file, next.name);
-    }).catch(() => {});
-  }
 
   function applySwipe(on) {
     store.set(swipeKey, on ? "on" : "off");
@@ -391,8 +387,16 @@
     });
     const end = (e) => {
       if (e.pointerId !== pointer) return;
-      // Lifted before the wait was over: still a press, just a quick one.
-      if (waiting) { clearTimeout(waiting.timer); pendingPresses.delete(waiting.cancel); press(e); }
+      if (waiting) {
+        // Lifted before the wait was over: still a press, just a quick one. A touch the
+        // browser cancelled presses nothing.
+        const { cancel } = waiting;
+        cancel();
+        pendingPresses.delete(cancel);
+        if (e.type === "pointercancel") return;
+        pointer = e.pointerId;
+        press(e);
+      }
       pointer = null;
       el.classList.remove("pressed");
       if (btn.mode === "hold") send({ t: "up", id: btn.id });

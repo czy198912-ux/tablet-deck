@@ -5,6 +5,19 @@ section becomes the notes of its
 [GitHub release](https://github.com/nodieCode/tablet-deck/releases), so add one
 before tagging a release.
 
+## 1.4.1 (2026-10-21)
+
+- The starter layouts (Combat, Mining & Salvage, Hauling & Exploration) now
+  keep every panel; they just open on the panels for that kind of flying. So
+  Emotes, On Foot and the rest are always a few arrow taps away.
+- The two-finger swipe now flips the panel of the half you swipe over (like its
+  arrows), instead of changing the whole layout. Change layouts in the sliders
+  sheet.
+- The swipe is now off unless you turn it on (**2-finger swipe** in the sliders
+  sheet), so presses are instant by default.
+- Fixed: with swiping on, a missed finger lift could make later taps get
+  ignored, and a touch the browser cancelled could still press its button.
+
 ## 1.4.0 (2026-10-20)
 
 - **Push-to-talk from a PC key:** in **Settings**, pick any key or mouse button

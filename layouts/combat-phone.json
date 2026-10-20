@@ -143,7 +143,9 @@
         "power",
         "shields",
         "targets",
-        "flight-assist"
+        "flight-assist",
+        "salvage",
+        "mining"
       ]
     },
     {
@@ -158,7 +160,10 @@
         "systems",
         "emergency",
         "modes",
-        "crew"
+        "crew",
+        "on-foot",
+        "emotes-1",
+        "emotes-2"
       ]
     }
   ],
@@ -866,6 +871,138 @@
         }
       ]
     },
+    "mining": {
+      "title": "Mining",
+      "elements": [
+        {
+          "type": "button",
+          "id": "mn-mode",
+          "icon": "mining",
+          "label": "Mining Mode",
+          "keys": "ralt+m",
+          "scAction": "v_set_mining_mode",
+          "mode": "tap",
+          "color": "amber",
+          "x": 0,
+          "y": 0,
+          "w": 359,
+          "h": 40
+        },
+        {
+          "type": "header",
+          "text": "Laser",
+          "x": 2,
+          "y": 50
+        },
+        {
+          "type": "grid",
+          "x": 0,
+          "y": 70,
+          "w": 359,
+          "h": 112,
+          "cols": 2,
+          "compact": true,
+          "buttons": [
+            {
+              "id": "mn-fire",
+              "icon": "laser",
+              "label": "Fire Laser",
+              "voice": [
+                "fire mining laser",
+                "mining laser"
+              ],
+              "keys": "rctrl+f",
+              "scAction": "v_toggle_mining_laser_fire",
+              "verify": true,
+              "mode": "tap",
+              "color": "red"
+            },
+            {
+              "id": "mn-type",
+              "icon": "swap",
+              "label": "Fracture / Extract",
+              "voice": [
+                "fracture",
+                "extract",
+                "switch laser mode"
+              ],
+              "keys": "rctrl+t",
+              "scAction": "v_toggle_mining_laser_type",
+              "verify": true,
+              "mode": "tap",
+              "color": "amber"
+            },
+            {
+              "id": "mn-power-down",
+              "icon": "chev-down",
+              "label": "Laser Power −",
+              "voiceMs": 600,
+              "keys": "rctrl+s",
+              "scAction": "v_decrease_mining_throttle",
+              "verify": true,
+              "mode": "hold"
+            },
+            {
+              "id": "mn-power-up",
+              "icon": "chev-up",
+              "label": "Laser Power +",
+              "voiceMs": 600,
+              "keys": "rctrl+w",
+              "scAction": "v_increase_mining_throttle",
+              "verify": true,
+              "mode": "hold"
+            }
+          ]
+        },
+        {
+          "type": "header",
+          "text": "Modules",
+          "x": 2,
+          "y": 192
+        },
+        {
+          "type": "grid",
+          "x": 0,
+          "y": 212,
+          "w": 359,
+          "h": 64,
+          "cols": 3,
+          "compact": true,
+          "buttons": [
+            {
+              "id": "mn-module-1",
+              "icon": "module",
+              "label": "Module 1",
+              "keys": "lalt+1",
+              "scAction": "v_mining_use_consumable1",
+              "verify": true,
+              "mode": "tap",
+              "color": "blue"
+            },
+            {
+              "id": "mn-module-2",
+              "icon": "module",
+              "label": "Module 2",
+              "keys": "lalt+2",
+              "scAction": "v_mining_use_consumable2",
+              "verify": true,
+              "mode": "tap",
+              "color": "blue"
+            },
+            {
+              "id": "mn-module-3",
+              "icon": "module",
+              "label": "Module 3",
+              "keys": "lalt+3",
+              "scAction": "v_mining_use_consumable3",
+              "verify": true,
+              "mode": "tap",
+              "color": "blue"
+            }
+          ]
+        }
+      ]
+    },
     "emergency": {
       "title": "Emergency",
       "elements": [
@@ -1274,6 +1411,56 @@
         }
       ]
     },
+    "salvage": {
+      "title": "Salvage",
+      "elements": [
+        {
+          "type": "grid",
+          "x": 0,
+          "y": 0,
+          "w": 359,
+          "h": 278,
+          "cols": 2,
+          "compact": true,
+          "buttons": [
+            {
+              "id": "sv-mod-left",
+              "icon": "chev-left",
+              "label": "Modifier Left",
+              "keys": "ralt+l",
+              "scAction": "v_salvage_cycle_modifiers_left",
+              "mode": "tap",
+              "color": "amber"
+            },
+            {
+              "id": "sv-mod-right",
+              "icon": "chev-right",
+              "label": "Modifier Right",
+              "keys": "ralt+r",
+              "scAction": "v_salvage_cycle_modifiers_right",
+              "mode": "tap",
+              "color": "amber"
+            },
+            {
+              "id": "sv-spacing-down",
+              "icon": "chev-down",
+              "label": "Beam Spacing −",
+              "keys": "ralt+comma",
+              "scAction": "v_salvage_decrease_beam_spacing",
+              "mode": "tap"
+            },
+            {
+              "id": "sv-spacing-up",
+              "icon": "chev-up",
+              "label": "Beam Spacing +",
+              "keys": "ralt+period",
+              "scAction": "v_salvage_increase_beam_spacing",
+              "mode": "tap"
+            }
+          ]
+        }
+      ]
+    },
     "modes": {
       "title": "Operator Modes",
       "elements": [
@@ -1523,6 +1710,346 @@
               "scAction": "v_unlock_all_doors",
               "mode": "tap",
               "color": "green"
+            }
+          ]
+        }
+      ]
+    },
+    "on-foot": {
+      "title": "On Foot",
+      "elements": [
+        {
+          "type": "grid",
+          "x": 0,
+          "y": 0,
+          "w": 359,
+          "h": 278,
+          "cols": 2,
+          "compact": true,
+          "buttons": [
+            {
+              "id": "ft-inventory",
+              "icon": "inventory",
+              "label": "Inventory",
+              "keys": "i",
+              "mode": "tap"
+            },
+            {
+              "id": "ft-camera",
+              "icon": "camera",
+              "label": "3rd Person",
+              "voice": [
+                "third person",
+                "camera"
+              ],
+              "keys": "f4",
+              "mode": "tap"
+            },
+            {
+              "id": "ft-walk",
+              "icon": "walk",
+              "label": "Walk",
+              "keys": "ralt+w",
+              "scAction": "walk",
+              "mode": "tap"
+            },
+            {
+              "id": "ft-drop",
+              "icon": "drop",
+              "label": "Drop Item",
+              "keys": "ralt+d",
+              "scAction": "drop",
+              "mode": "tap",
+              "color": "amber"
+            },
+            {
+              "id": "ft-inspect",
+              "icon": "eye",
+              "label": "Inspect Item",
+              "keys": "ralt+i",
+              "scAction": "inspect",
+              "mode": "tap"
+            },
+            {
+              "id": "ft-escape",
+              "icon": "escape",
+              "label": "Esc",
+              "voice": [
+                "escape"
+              ],
+              "keys": "escape",
+              "mode": "tap",
+              "color": "red"
+            }
+          ]
+        }
+      ]
+    },
+    "emotes-1": {
+      "title": "Emotes 1",
+      "elements": [
+        {
+          "type": "grid",
+          "x": 0,
+          "y": 0,
+          "w": 359,
+          "h": 278,
+          "cols": 4,
+          "compact": true,
+          "buttons": [
+            {
+              "id": "em-agree",
+              "label": "Agree",
+              "keys": "rctrl+np_1",
+              "scAction": "emote_agree",
+              "mode": "tap"
+            },
+            {
+              "id": "em-angry",
+              "label": "Angry",
+              "keys": "rctrl+np_2",
+              "scAction": "emote_angry",
+              "mode": "tap"
+            },
+            {
+              "id": "em-atease",
+              "label": "At Ease",
+              "keys": "rctrl+np_3",
+              "scAction": "emote_atease",
+              "mode": "tap"
+            },
+            {
+              "id": "em-attention",
+              "label": "Attention",
+              "keys": "rctrl+np_4",
+              "scAction": "emote_attention",
+              "mode": "tap"
+            },
+            {
+              "id": "em-blah",
+              "label": "Blah",
+              "keys": "rctrl+np_5",
+              "scAction": "emote_blah",
+              "mode": "tap"
+            },
+            {
+              "id": "em-bored",
+              "label": "Bored",
+              "keys": "rctrl+np_6",
+              "scAction": "emote_bored",
+              "mode": "tap"
+            },
+            {
+              "id": "em-bow",
+              "label": "Bow",
+              "keys": "rctrl+np_7",
+              "scAction": "emote_bow",
+              "mode": "tap"
+            },
+            {
+              "id": "em-burp",
+              "label": "Burp",
+              "keys": "rctrl+np_8",
+              "scAction": "emote_burp",
+              "mode": "tap"
+            },
+            {
+              "id": "em-cheer",
+              "label": "Cheer",
+              "keys": "rctrl+np_9",
+              "scAction": "emote_cheer",
+              "mode": "tap"
+            },
+            {
+              "id": "em-chicken",
+              "label": "Chicken",
+              "keys": "rctrl+p",
+              "scAction": "emote_chicken",
+              "mode": "tap"
+            },
+            {
+              "id": "em-clap",
+              "label": "Clap",
+              "keys": "rctrl+o",
+              "scAction": "emote_clap",
+              "mode": "tap"
+            },
+            {
+              "id": "em-come",
+              "label": "Come",
+              "keys": "rctrl+i",
+              "scAction": "emote_come",
+              "mode": "tap"
+            },
+            {
+              "id": "em-cry",
+              "label": "Cry",
+              "keys": "rctrl+u",
+              "scAction": "emote_cry",
+              "mode": "tap"
+            },
+            {
+              "id": "em-dance",
+              "label": "Dance",
+              "keys": "rctrl+y",
+              "scAction": "emote_dance",
+              "mode": "tap"
+            },
+            {
+              "id": "em-disagree",
+              "label": "Disagree",
+              "keys": "rctrl+l",
+              "scAction": "emote_disagree",
+              "mode": "tap"
+            },
+            {
+              "id": "em-failure",
+              "label": "Failure",
+              "keys": "rctrl+k",
+              "scAction": "emote_failure",
+              "mode": "tap"
+            },
+            {
+              "id": "em-flex",
+              "label": "Flex",
+              "keys": "rctrl+end",
+              "scAction": "emote_flex",
+              "mode": "tap"
+            }
+          ]
+        }
+      ]
+    },
+    "emotes-2": {
+      "title": "Emotes 2",
+      "elements": [
+        {
+          "type": "grid",
+          "x": 0,
+          "y": 0,
+          "w": 359,
+          "h": 278,
+          "cols": 4,
+          "compact": true,
+          "buttons": [
+            {
+              "id": "em-flirt",
+              "label": "Flirt",
+              "keys": "rctrl+j",
+              "scAction": "emote_flirt",
+              "mode": "tap"
+            },
+            {
+              "id": "em-gasp",
+              "label": "Gasp",
+              "keys": "rctrl+g",
+              "scAction": "emote_gasp",
+              "mode": "tap"
+            },
+            {
+              "id": "em-gloat",
+              "label": "Gloat",
+              "keys": "rctrl+m",
+              "scAction": "emote_gloat",
+              "mode": "tap"
+            },
+            {
+              "id": "em-greet",
+              "label": "Greet",
+              "keys": "rctrl+n",
+              "scAction": "emote_greet",
+              "mode": "tap"
+            },
+            {
+              "id": "em-laugh",
+              "label": "Laugh",
+              "keys": "rctrl+b",
+              "scAction": "emote_laugh",
+              "mode": "tap"
+            },
+            {
+              "id": "em-launch",
+              "label": "Launch",
+              "keys": "rctrl+f5",
+              "scAction": "emote_launch",
+              "mode": "tap"
+            },
+            {
+              "id": "em-point",
+              "label": "Point",
+              "keys": "rctrl+f6",
+              "scAction": "emote_point",
+              "mode": "tap"
+            },
+            {
+              "id": "em-rude",
+              "label": "Rude",
+              "keys": "rctrl+f7",
+              "scAction": "emote_rude",
+              "mode": "tap"
+            },
+            {
+              "id": "em-salute",
+              "label": "Salute",
+              "keys": "rctrl+f10",
+              "scAction": "emote_salute",
+              "mode": "tap"
+            },
+            {
+              "id": "em-sit",
+              "label": "Sit",
+              "keys": "rctrl+f11",
+              "scAction": "emote_sit",
+              "mode": "tap"
+            },
+            {
+              "id": "em-sleep",
+              "label": "Sleep",
+              "keys": "rctrl+pgup",
+              "scAction": "emote_sleep",
+              "mode": "tap"
+            },
+            {
+              "id": "em-smell",
+              "label": "Smell",
+              "keys": "rctrl+minus",
+              "scAction": "emote_smell",
+              "mode": "tap"
+            },
+            {
+              "id": "em-taunt",
+              "label": "Taunt",
+              "keys": "rctrl+backslash",
+              "scAction": "emote_taunt",
+              "mode": "tap"
+            },
+            {
+              "id": "em-threaten",
+              "label": "Threaten",
+              "keys": "rctrl+backspace",
+              "scAction": "emote_threaten",
+              "mode": "tap"
+            },
+            {
+              "id": "em-wait",
+              "label": "Wait",
+              "keys": "rctrl+7",
+              "scAction": "emote_wait",
+              "mode": "tap"
+            },
+            {
+              "id": "em-wave",
+              "label": "Wave",
+              "keys": "rctrl+f9",
+              "scAction": "emote_wave",
+              "mode": "tap"
+            },
+            {
+              "id": "em-whistle",
+              "label": "Whistle",
+              "keys": "rctrl+8",
+              "scAction": "emote_whistle",
+              "mode": "tap"
             }
           ]
         }
