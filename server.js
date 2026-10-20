@@ -706,7 +706,9 @@ const server = http.createServer((req, res) => {
   }
   if (url.pathname.startsWith("/editor/")) { handleEditor(req, res, url); return; }
   const rel = path.posix.normalize(`public/${url.pathname === "/" ? "index.html" : url.pathname.slice(1)}`);
-  const body = rel.startsWith("public/") ? readBundled(rel) : null;
+  // /layouts/ serves the built-in layouts as files, for the deck's demo mode (?demo).
+  const body = rel.startsWith("public/layouts/") ? readBundled(rel.slice("public/".length))
+    : rel.startsWith("public/") ? readBundled(rel) : null;
   if (!body) { res.writeHead(404); res.end("not found"); return; }
   res.writeHead(200, { "Content-Type": MIME[path.extname(rel)] || "application/octet-stream" });
   res.end(body);

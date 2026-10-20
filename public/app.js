@@ -94,6 +94,15 @@
   const device = new URLSearchParams(location.search).get("device")
     || (Math.min(screen.width, screen.height) < 500 ? "phone" : "tablet");
   document.documentElement.dataset.device = device;
+  // Demo mode (?demo, or the website's "Try it" page): no PC at all. Layouts come from the
+  // layouts/ folder next to the page, and presses only play their animations.
+  const DEMO = new URLSearchParams(location.search).has("demo") || window.DECK_DEMO === true;
+  const DEMO_LAYOUTS = [
+    [device === "phone" ? "layouts/hud-phone.json" : "layouts/hud.json", "Tablet Deck HUD"],
+    ...[["combat", "Combat"], ["mining-salvage", "Mining & Salvage"], ["hauling-exploration", "Hauling & Exploration"]]
+      .map(([id, name]) => [`layouts/${id}${device === "phone" ? "-phone" : ""}.json`, name]),
+    ["layouts/star-citizen.json", "Star Citizen (tabbed grid)"],
+  ];
   // ?safe=top,right,bottom,left (CSS px) stands in for the screen's safe-area insets. Pages
   // in an iframe always see zero insets, so the showcase frame passes the phone's here.
   const safe = (new URLSearchParams(location.search).get("safe") || "").split(",").map(Number);
@@ -151,6 +160,13 @@
   const layoutKey = `layout-${device}`;
   let chosenLayout = store.get(layoutKey) || "";
   function fillLayoutPick() {
+    if (DEMO) {
+      const pick = $("layoutPick");
+      pick.innerHTML = "";
+      for (const [file, name] of DEMO_LAYOUTS) { const o = document.createElement("option"); o.value = file; o.textContent = name; pick.appendChild(o); }
+      pick.value = DEMO_LAYOUTS.some(([f]) => f === chosenLayout) ? chosenLayout : DEMO_LAYOUTS[0][0];
+      return;
+    }
     fetch(`/layouts.json?t=${encodeURIComponent(token)}&device=${device}`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data) => {
@@ -198,12 +214,12 @@
 
   // Short notice at the bottom of the screen, e.g. when the PC skipped a press.
   let toastTimer = null;
-  function toast(text) {
+  function toast(text, ms = 1800) {
     const el = $("toast");
     el.textContent = text;
     el.classList.add("show");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.remove("show"), 1800);
+    toastTimer = setTimeout(() => el.classList.remove("show"), ms);
   }
 
   function connect() {
@@ -294,6 +310,7 @@
       el.setPointerCapture(e.pointerId);
       el.classList.add("listening");
       buzz();
+      if (DEMO) toast("Voice commands work with Tablet Deck on your PC", 2600);
       send({ t: "voice", on: true });
     });
     const end = (e) => {
@@ -316,12 +333,32 @@
     $("voiceHelp").classList.add("open");
     $("voiceSearch").value = "";
     voiceNote("Loading…");
+    if (DEMO) { voiceData = { on: true, commands: phrasesInLayout() }; renderVoiceList(); return; }
     fetch(`/voice.json?t=${encodeURIComponent(token)}`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data) => { voiceData = data; renderVoiceList(); })
       .catch(() => voiceNote("Couldn't load the list from the PC."));
   }
   const closeVoiceHelp = () => $("voiceHelp").classList.remove("open");
+
+  // Demo mode has no PC to ask, so the list comes from the layout, the way server.js
+  // builds it: each button's label as said aloud ("Shields +" is "shields up") plus its
+  // "voice" phrases, leaving out buttons with "voice": false.
+  const spoken = (label) => String(label).toLowerCase()
+    .replace(/\s*\+$/, " up").replace(/\s*[−-]$/, " down").replace(/&/g, " and ")
+    .replace(/[^a-z0-9' ]+/g, " ").replace(/\s+/g, " ").trim();
+  function phrasesInLayout() {
+    const seen = new Map();
+    (function walk(n) {
+      if (Array.isArray(n)) { n.forEach(walk); return; }
+      if (!n || typeof n !== "object") return;
+      if (typeof n.id === "string" && typeof n.keys === "string" && n.voice !== false) {
+        for (const p of [n.label, ...(Array.isArray(n.voice) ? n.voice : [])].map(spoken)) if (p && !seen.has(p)) seen.set(p, n.label);
+      }
+      for (const v of Object.values(n)) if (v && typeof v === "object") walk(v);
+    })(layout);
+    return [...seen].sort((a, b) => a[1].localeCompare(b[1]) || a[0].localeCompare(b[0]));
+  }
 
   function voiceNote(text) {
     const list = $("voiceList");
@@ -385,14 +422,15 @@
   }
 
   function load() {
-    fetch(`/layout.json?t=${encodeURIComponent(token)}&device=${device}&layout=${encodeURIComponent(chosenLayout)}`)
+    const demoFile = (DEMO_LAYOUTS.find(([f]) => f === chosenLayout) || DEMO_LAYOUTS[0])[0];
+    fetch(DEMO ? demoFile : `/layout.json?t=${encodeURIComponent(token)}&device=${device}&layout=${encodeURIComponent(chosenLayout)}`)
       .then((r) => {
         if (r.status === 403) return Promise.reject("pair");
         return r.ok ? r.json() : Promise.reject(`Layout error (${r.status})`);
       })
       .then((l) => {
         layout = l;
-        store.set("token", token);
+        if (!DEMO) store.set("token", token);
         $("title").textContent = layout.name;
         document.title = layout.name;
         if (layout.canvas) {
@@ -407,7 +445,10 @@
           renderTabs();
           renderPage();
         }
-        if (!ws) connect();
+        if (DEMO) {
+          setOnline(true, "Demo");
+          setTimeout(() => toast("Demo: taps play their animations; with the app, they press keys in Star Citizen", 4500), 400);
+        } else if (!ws) connect();
       })
       .catch((err) => {
         if (err === "pair") { showPairing(Boolean(token)); return; }
@@ -426,5 +467,5 @@
 
   buildPicker();
   applyTheme(store.get("theme") || "rsi");
-  if (token) load(); else showPairing(false);
+  if (DEMO || token) load(); else showPairing(false);
 })();
