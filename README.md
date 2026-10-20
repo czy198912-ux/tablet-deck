@@ -27,6 +27,46 @@ network, and each button sends real keyboard scancodes that Star Citizen reads.
 > Citizen and the manufacturer names belong to their owners; the emblems here
 > are original designs, not the companies' logos.
 
+## Download
+
+You need Windows 10 or 11 on the gaming PC and a tablet or phone on the same
+Wi-Fi or network. Nothing else: no Node.js, no account.
+
+1. Download **TabletDeck-Setup-&lt;version&gt;.exe** from the
+   [latest release](https://github.com/nodieCode/tablet-deck/releases/latest)
+   and run it.
+2. The installer isn't code-signed yet, so Windows may show **"Windows
+   protected your PC"** with an unknown publisher. Click **More info**, then
+   **Run anyway**. Your browser may also warn that the file isn't commonly
+   downloaded; choose **Keep**. Each release lists the file's SHA-256 checksum
+   if you want to check your download.
+3. Setup installs Tablet Deck to Program Files, adds it to the Start menu (and
+   the desktop, if you tick that), and lets it through Windows Firewall on
+   private networks. Tick **Install the Star Citizen keybind profile** to copy
+   the deck's keybinds into your game folder (see [Keybinds](#keybinds)).
+4. Open **Tablet Deck** from the Start menu. Its window prints an address and a
+   pairing code, for example `http://192.168.1.20:8765` and
+   `Pairing code: 1a2b3c4d`, plus a QR code. Scan the QR code with the tablet's
+   camera, or open the address on your tablet and enter the code. Use "Add to
+   Home Screen" for a full-screen app.
+5. Click into Star Citizen. Buttons only press keys while Star Citizen is the
+   window in front; otherwise the tablet shows "Star Citizen not focused" and
+   nothing is typed into the other window.
+
+If the tablet can't connect, check that Windows treats your network as
+**Private** (Settings → Network & Internet → your network). The firewall rule
+only covers private networks, so the deck isn't reachable on public Wi-Fi.
+
+The tablet's screen stays on while the deck is open, so it doesn't dim or lock
+mid-flight. "Add to Home Screen" gives the deck its own icon and, on iPad and
+iPhone, opens it full screen. On Android, Chrome only makes full-screen apps
+from `https` pages, so there the shortcut opens in a browser tab.
+
+Your settings are in `%APPDATA%\TabletDeck\config.json` (see
+[Settings](#settings-configjson-created-on-first-run)). To uninstall, use
+**Settings → Apps**. It removes the firewall rule and asks whether to delete
+your settings too.
+
 ## How it works
 
 ```mermaid
@@ -34,7 +74,7 @@ flowchart LR
     tablet["📱 Tablet or phone<br/>any browser"]
     mic["🎙️ PC microphone"]
     subgraph pc["Gaming PC"]
-        server["Tablet Deck server<br/>start.bat"]
+        server["Tablet Deck server<br/>TabletDeck.exe or start.bat"]
         voice["Voice listener<br/>Windows speech recognition"]
         keys["Key sender"]
     end
@@ -59,7 +99,9 @@ travels over your home network to the server, which checks that Star Citizen
 is the window in front and has the key sender type the button's keys. Voice
 commands take the same path once the PC has recognised the phrase.
 
-## Requirements
+## Run from source (developers)
+
+To change the deck or run it without the installer:
 
 - Windows 10 or 11 on the gaming PC
 - [Node.js](https://nodejs.org) 18 or newer
@@ -68,27 +110,20 @@ commands take the same path once the PC has recognised the phrase.
 Nothing else to install. The key sender (`native/keysender.cs`) compiles itself
 on first run with the C# compiler that ships with Windows.
 
-## Setup
-
 1. Download this repository (**Code → Download ZIP**, then extract it) or clone it.
-2. Double-click `start.bat`.
+2. Double-click `start.bat` (or run `node server.js`).
 3. When Windows Firewall asks whether Node.js may use the network, allow
    **Private networks**.
-4. The window prints an address and a pairing code, for example
-   `http://192.168.1.20:8765` and `Pairing code: 1a2b3c4d`, plus a QR code.
-   Scan the QR code with the tablet's camera, or open the address on your tablet
-   and enter the code. Use "Add to Home Screen" for a full-screen app.
-5. Click into Star Citizen. Buttons only press keys while Star Citizen is the
-   window in front; otherwise the tablet shows "Star Citizen not focused" and
-   nothing is typed into the other window.
+4. Pair the tablet and click into Star Citizen as in steps 4 and 5 of
+   [Download](#download).
 
-The tablet's screen stays on while the deck is open, so it doesn't dim or lock
-mid-flight. "Add to Home Screen" gives the deck its own icon and, on iPad and
-iPhone, opens it full screen. On Android, Chrome only makes full-screen apps
-from `https` pages, so there the shortcut opens in a browser tab.
+Running from source keeps `config.json` next to `server.js` instead of in
+`%APPDATA%`.
 
 `start.bat --dry-run` logs button presses without sending any keys, which is
-handy for trying the deck out. Dry runs skip the focus check.
+handy for trying the deck out. Dry runs skip the focus check. `--port <n>`
+overrides the port in `config.json`. The installed app takes the same options:
+`"C:\Program Files\Tablet Deck\TabletDeck.exe" --dry-run`.
 
 ### Showcase / sandbox
 
@@ -117,6 +152,40 @@ a normal server the page warns that taps send real keys.
 In Claude Code, `.claude/launch.json` has this as the **deck-sandbox** config,
 so the built-in browser can start it with `preview_start`.
 
+### Building the installer
+
+```
+npm install
+npm run build
+```
+
+This makes `dist/TabletDeck-Setup-<version>.exe` (the version comes from
+`package.json`). It needs [Inno Setup 6](https://jrsoftware.org/isinfo.php)
+and Node.js 20 or newer. `scripts/build.js` checks the keybind profile is up to
+date, compiles the key sender and voice listener, and packs `server.js`, `qr.js`,
+`public/`, `layouts/` and `keybinds/` into `TabletDeck.exe` with Node's
+[single executable application](https://nodejs.org/api/single-executable-applications.html)
+feature. `installer/TabletDeck.iss` is the Inno Setup script.
+
+To publish a release, set `version` in `package.json`, commit, then push a
+matching tag:
+
+```
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+The **Release** workflow (`.github/workflows/release.yml`) builds the installer
+on GitHub and attaches it to a new release. You can also run it by hand from the
+Actions tab to build without publishing.
+
+Builds are unsigned until code signing is set up. The workflow has a marked spot
+for a code signing certificate in repo secrets (`SIGNING_CERT_PFX_BASE64`,
+`SIGNING_CERT_PASSWORD`) or Azure Trusted Signing. Signing the app, its helpers
+and the installer stops the "unknown publisher" warning and makes antivirus
+false alarms less likely. The key sender types keys into other programs, which
+some antivirus tools treat as suspicious.
+
 ## Keybinds
 
 The deck uses Star Citizen 4.x default keys where they exist. Actions with no
@@ -126,7 +195,9 @@ and so on) get keys from the **Tablet Deck Keyboard** profile in
 
 1. Copy `keybinds/TabletDeck-StarCitizen.xml` into
    `StarCitizen\LIVE\user\client\0\Controls\Mappings` (create the `Mappings`
-   folder if it doesn't exist).
+   folder if it doesn't exist). The installer does this for you if you tick
+   **Install the Star Citizen keybind profile** and it finds your game folder.
+   Otherwise the file is also in `C:\Program Files\Tablet Deck\keybinds`.
 2. In-game, open **Options → Keybindings → Control Profiles** and load
    **Tablet Deck Keyboard**. This replaces your current custom binds, so note
    any you want to keep and set them again afterwards.
@@ -197,7 +268,11 @@ decorations.
 
 ## Changing buttons
 
-Edit a layout file, then reload the page on the tablet. Button fields:
+Edit a layout file, then reload the page on the tablet. With the installed
+app, put your layout in `%APPDATA%\TabletDeck\layouts`. A file there with the
+same name as a built-in one (e.g. `hud.json`, copied from this repository's
+`layouts` folder) replaces it; one with a new name needs `layout` set in
+`config.json`. Button fields:
 
 | field      | meaning |
 |------------|---------|
@@ -235,7 +310,7 @@ it heard, or "Didn't catch that".
 Commands are in English and need the English speech recognizer in Windows. If
 the PC window says "no en-US speech recognizer installed", add it under
 **Settings → Time & Language → Speech** (or Language → English → Options →
-Speech recognition), then restart `start.bat`. If commands are often missed or
+Speech recognition), then restart Tablet Deck. If commands are often missed or
 misheard, try a headset mic, or change `voiceConfidence` (see Settings).
 
 ## Themes
@@ -252,6 +327,11 @@ back to system fonts.
 </p>
 
 ## Settings (`config.json`, created on first run)
+
+The installed app keeps it in `%APPDATA%\TabletDeck\config.json`; the window
+prints the path when it starts. Running from source, it's next to `server.js`.
+File paths in it can be absolute, or relative: `layouts/my.json` is looked up in
+the settings folder first, then among the built-in files.
 
 - `port`: server port (default 8765).
 - `token`: the pairing code. Change it to anything you like, or delete it to
@@ -279,5 +359,6 @@ back to system fonts.
 - Presses are skipped while another window is in front (see
   `onlyWhenGameFocused`). Releasing a held button always goes through, so
   switching windows mid-hold doesn't leave a key stuck down in the game.
-- If Star Citizen runs as administrator, run `start.bat` as administrator too.
+- If Star Citizen runs as administrator, run Tablet Deck (or `start.bat`) as
+  administrator too.
   Windows blocks keypresses from a normal program into an elevated one.

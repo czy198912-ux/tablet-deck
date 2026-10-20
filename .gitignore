@@ -9,3 +9,7 @@ native/*.exe
 profiles/
 
 node_modules/
+
+# npm run build: intermediate files and the finished installer.
+build/
+dist/

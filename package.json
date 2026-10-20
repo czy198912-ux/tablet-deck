@@ -1,0 +1,17 @@
+{
+  "name": "tablet-deck",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Turn any tablet into a touch control panel for Star Citizen. Fan project, not affiliated with Cloud Imperium Games.",
+  "license": "MIT",
+  "repository": "github:nodieCode/tablet-deck",
+  "scripts": {
+    "start": "node server.js",
+    "check-profile": "node tools/make-profile.js --check",
+    "build": "node scripts/build.js"
+  },
+  "devDependencies": {
+    "postject": "1.0.0-alpha.6",
+    "rcedit": "5.0.2"
+  }
+}

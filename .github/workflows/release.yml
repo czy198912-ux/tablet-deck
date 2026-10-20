@@ -1,0 +1,120 @@
+# Builds the Windows installer and publishes it as a GitHub Release.
+#
+#   git tag v1.0.0 && git push origin v1.0.0    build and publish "Tablet Deck 1.0.0"
+#   Actions tab -> Release -> Run workflow       build only; download it from the run's artifacts
+#
+# The tag must match "version" in package.json.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write # create the release and upload the installer
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      # ---- Code signing (optional) ----
+      # Builds are unsigned until one of these is set up. Unsigned installers work, but
+      # Windows SmartScreen shows an "unknown publisher" warning.
+      #
+      # Option A, a code signing certificate (.pfx) stored in repo secrets:
+      #   SIGNING_CERT_PFX_BASE64   the .pfx file, base64-encoded
+      #                             (PowerShell: [Convert]::ToBase64String([IO.File]::ReadAllBytes("cert.pfx")))
+      #   SIGNING_CERT_PASSWORD     its password
+      SIGNING_CERT_PFX_BASE64: ${{ secrets.SIGNING_CERT_PFX_BASE64 }}
+      SIGNING_CERT_PASSWORD: ${{ secrets.SIGNING_CERT_PASSWORD }}
+      # Option B, Azure Trusted Signing: see the commented-out step below.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Check the tag matches package.json
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          if ("${{ github.ref_name }}" -ne "v$version") {
+            throw "Tag ${{ github.ref_name }} doesn't match package.json version $version. Update package.json or the tag."
+          }
+
+      - name: Install Inno Setup if missing
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe") -and -not (Get-Command ISCC.exe -ErrorAction SilentlyContinue)) {
+            choco install innosetup -y --no-progress
+          }
+
+      # ---- Code signing, option A: certificate in repo secrets ----
+      # Runs only when SIGNING_CERT_PFX_BASE64 is set. scripts/build.js signs TabletDeck.exe
+      # and the native helpers with SIGN_CMD, and Inno Setup signs the installer and
+      # uninstaller with it ($f is the file to sign).
+      - name: Set up signing (certificate)
+        if: env.SIGNING_CERT_PFX_BASE64 != ''
+        shell: pwsh
+        run: |
+          $pfx = Join-Path $env:RUNNER_TEMP "signing.pfx"
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:SIGNING_CERT_PFX_BASE64))
+          $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.*\x64\signtool.exe" | Sort-Object FullName | Select-Object -Last 1
+          "SIGN_CMD=`"$($signtool.FullName)`" sign /fd sha256 /tr http://timestamp.digicert.com /td sha256 /f `"$pfx`" /p `"$env:SIGNING_CERT_PASSWORD`" `$f" >> $env:GITHUB_ENV
+
+      # ---- Code signing, option B: Azure Trusted Signing ----
+      # To use it: create a Trusted Signing account and certificate profile in Azure, add
+      # an app registration with the "Trusted Signing Certificate Profile Signer" role, store
+      # its AZURE_TENANT_ID, AZURE_CLIENT_ID and AZURE_CLIENT_SECRET as repo secrets, fill in
+      # the three values in metadata below, and uncomment this step.
+      #
+      # - name: Set up signing (Azure Trusted Signing)
+      #   shell: pwsh
+      #   env:
+      #     AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      #     AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      #     AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      #   run: |
+      #     nuget install Microsoft.Trusted.Signing.Client -OutputDirectory "$env:RUNNER_TEMP\ts" -ExcludeVersion
+      #     $dlib = "$env:RUNNER_TEMP\ts\Microsoft.Trusted.Signing.Client\bin\x64\Azure.CodeSigning.Dlib.dll"
+      #     $metadata = "$env:RUNNER_TEMP\ts\metadata.json"
+      #     @{ Endpoint = "https://eus.codesigning.azure.net"; CodeSigningAccountName = "<account>"; CertificateProfileName = "<profile>" } | ConvertTo-Json | Set-Content $metadata
+      #     $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.*\x64\signtool.exe" | Sort-Object FullName | Select-Object -Last 1
+      #     "SIGN_CMD=`"$($signtool.FullName)`" sign /fd sha256 /tr http://timestamp.acs.microsoft.com /td sha256 /dlib `"$dlib`" /dmdf `"$metadata`" `$f" >> $env:GITHUB_ENV
+      #     "AZURE_TENANT_ID=$env:AZURE_TENANT_ID", "AZURE_CLIENT_ID=$env:AZURE_CLIENT_ID", "AZURE_CLIENT_SECRET=$env:AZURE_CLIENT_SECRET" | Add-Content $env:GITHUB_ENV
+
+      - name: Build the installer
+        run: npm run build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TabletDeck-Setup
+          path: |
+            dist/*.exe
+            dist/*.sha256
+
+      - name: Publish the release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          $setup = "dist/TabletDeck-Setup-$version.exe"
+          $hash = (Get-Content "$setup.sha256").Split(" ")[0]
+          $notes = @"
+          Download **TabletDeck-Setup-$version.exe** below and run it. No Node.js needed.
+
+          If Windows shows "Windows protected your PC" (unknown publisher), click **More info**, then **Run anyway**. See the README for details.
+
+          SHA-256: ``$hash``
+
+          > Fan project. Not affiliated with or endorsed by Cloud Imperium Games.
+          "@
+          gh release create "${{ github.ref_name }}" $setup "$setup.sha256" --title "Tablet Deck $version" --notes $notes

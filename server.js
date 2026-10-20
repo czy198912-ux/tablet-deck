@@ -4,21 +4,64 @@
 //   node server.js            normal mode
 //   node server.js --dry-run  log key events instead of sending them, and stream them
 //                             to the sandbox page (public/showcase.html)
+//
+// The installer ships this as TabletDeck.exe, a Node single executable (scripts/build.js).
 "use strict";
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
 const crypto = require("crypto");
-const { spawn, execFileSync } = require("child_process");
+const { spawn, spawnSync, execFileSync } = require("child_process");
 const qr = require("./qr");
 
-const ROOT = __dirname;
+// node:sea is missing before Node 20; that's never the installed app.
+const sea = (() => { try { return require("node:sea"); } catch { return null; } })();
+const INSTALLED = Boolean(sea && sea.isSea());
+// Running from source, everything lives in the repo folder. The installed app keeps
+// public/, layouts/ and keybinds/ inside TabletDeck.exe, the native helpers next to it in
+// Program Files (read-only), and config.json plus the player's own files in %APPDATA%.
+const APP_DIR = INSTALLED ? path.dirname(process.execPath) : __dirname;
+const DATA_DIR = INSTALLED ? path.join(process.env.APPDATA || os.homedir(), "TabletDeck") : __dirname;
 const DRY_RUN = process.argv.includes("--dry-run");
 // --port <n> overrides config.json, e.g. to run a dry-run copy next to the real one.
 const portArg = process.argv.indexOf("--port");
 const PORT_OVERRIDE = portArg > -1 ? Number(process.argv[portArg + 1]) : null;
-const CONFIG_PATH = path.join(ROOT, "config.json");
+const CONFIG_PATH = path.join(DATA_DIR, "config.json");
+
+// The installed app has its own console window, which closes as soon as the process
+// ends. Like start.bat's "pause", keep it open after a fatal error so it can be read.
+function fatal(message) {
+  console.error(message);
+  if (INSTALLED && process.stdin.isTTY) spawnSync("cmd.exe", ["/c", "pause"], { stdio: "inherit" });
+  process.exit(1);
+}
+if (INSTALLED) {
+  process.title = "Tablet Deck";
+  process.on("uncaughtException", (err) => fatal(err.stack || String(err)));
+}
+
+// ---------- files ----------
+
+// A bundled file (e.g. "public/index.html") as a Buffer, or null if there's no such file.
+function readBundled(rel) {
+  if (INSTALLED) {
+    try { return Buffer.from(sea.getAsset(rel)); } catch { return null; }
+  }
+  const file = path.join(__dirname, rel);
+  return fs.existsSync(file) && fs.statSync(file).isFile() ? fs.readFileSync(file) : null;
+}
+
+// A file named in config.json (layouts, actionmaps) as a Buffer, or null if it's missing.
+// Absolute paths are used as they are. Relative ones come from the data folder first, so
+// a player's own layouts/my.json works, then from the bundled files.
+function readConfigFile(file) {
+  const own = path.resolve(DATA_DIR, file);
+  if (fs.existsSync(own) && fs.statSync(own).isFile()) return fs.readFileSync(own);
+  return path.isAbsolute(file) ? null : readBundled(file.replace(/\\/g, "/"));
+}
+
+const VERSION = (() => { try { return JSON.parse(readBundled("package.json")).version; } catch { return ""; } })();
 
 // ---------- config ----------
 
@@ -56,7 +99,10 @@ function loadConfig() {
   if (config.voice === undefined) { config.voice = true; changed = true; }
   if (!config.voiceLanguage) { config.voiceLanguage = "en-US"; changed = true; }
   if (!config.voiceConfidence) { config.voiceConfidence = 0.6; changed = true; }
-  if (changed) fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2) + "\n");
+  if (changed) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2) + "\n");
+  }
   // Allow a numeric code such as "token": 1234 without quotes; the page sends the code as lowercase text.
   config.token = String(config.token).trim().toLowerCase();
   return config;
@@ -110,9 +156,8 @@ function parseCombo(combo) {
 function readActionmapOverrides(files) {
   const overrides = {};
   for (const file of [].concat(files || [])) {
-    const full = path.resolve(ROOT, file);
-    if (!fs.existsSync(full)) continue;
-    const xml = fs.readFileSync(full, "utf8");
+    const xml = readConfigFile(file)?.toString("utf8");
+    if (!xml) continue;
     const actionRe = /<action name="([^"]+)"[^>]*>([\s\S]*?)<\/action>/g;
     let m;
     while ((m = actionRe.exec(xml))) {
@@ -130,13 +175,10 @@ function readActionmapOverrides(files) {
 // (grid pages, canvas panels, menus), so both layout styles share one code path.
 // The page asks for device=phone on small screens; phones get config.phoneLayout
 // when that file exists, everything else gets config.layout.
-function layoutFile(device) {
-  if (device === "phone" && config.phoneLayout && fs.existsSync(path.join(ROOT, config.phoneLayout))) return config.phoneLayout;
-  return config.layout;
-}
-
 function loadLayout(device) {
-  const layout = JSON.parse(fs.readFileSync(path.join(ROOT, layoutFile(device)), "utf8"));
+  const text = (device === "phone" && config.phoneLayout && readConfigFile(config.phoneLayout)) || readConfigFile(config.layout);
+  if (!text) throw new Error(`Layout file not found: ${config.layout}`);
+  const layout = JSON.parse(text.toString("utf8"));
   const overrides = readActionmapOverrides(config.actionmaps);
   const buttons = new Map();
   (function collect(node) {
@@ -159,16 +201,25 @@ function loadLayout(device) {
 // skipped unless this process owns the window in front.
 const GAME_PROCESS = "StarCitizen";
 
-// Builds native/<name>.exe from <name>.cs with the C# compiler that ships with Windows.
-// Rebuilds when the .cs is newer, so an update's changes reach an existing install.
+// Returns the path to native/<name>.exe. The installer ships it prebuilt next to
+// TabletDeck.exe. From source, it's built from <name>.cs with the C# compiler that ships
+// with Windows, and rebuilt when the .cs is newer, so an update's changes reach it.
 function buildNative(name, what, refs = []) {
-  const exe = path.join(ROOT, "native", `${name}.exe`);
-  const src = path.join(ROOT, "native", `${name}.cs`);
+  const exe = path.join(APP_DIR, "native", `${name}.exe`);
+  if (INSTALLED) {
+    if (!fs.existsSync(exe)) throw new Error(`${exe} is missing; reinstall Tablet Deck`);
+    return exe;
+  }
+  const src = path.join(APP_DIR, "native", `${name}.cs`);
   if (!fs.existsSync(exe) || fs.statSync(exe).mtimeMs < fs.statSync(src).mtimeMs) {
     const fw = path.join(process.env.WINDIR || "C:\\Windows", "Microsoft.NET", "Framework64", "v4.0.30319");
     console.log(`Compiling ${what}...`);
     // WPF holds System.Speech.dll, which csc doesn't search by default.
-    execFileSync(path.join(fw, "csc.exe"), ["/nologo", "/optimize", "/target:exe", "/platform:x64", `/lib:${path.join(fw, "WPF")}`, ...refs.map((r) => `/r:${r}`), `/out:${exe}`, src], { stdio: "inherit" });
+    try {
+      execFileSync(path.join(fw, "csc.exe"), ["/nologo", "/optimize", "/target:exe", "/platform:x64", `/lib:${path.join(fw, "WPF")}`, ...refs.map((r) => `/r:${r}`), `/out:${exe}`, src], { stdio: "inherit" });
+    } catch (err) {
+      throw new Error(`native/${name}.cs didn't compile (${err.message})`);
+    }
   }
   return exe;
 }
@@ -345,7 +396,7 @@ function startVoice() {
   if (!config.voice) return;
   let exe;
   try { exe = buildNative("voice", "voice commands", ["System.Speech.dll"]); } catch (err) {
-    console.error(`Voice commands unavailable: native/voice.cs didn't compile (${err.message}).`);
+    console.error(`Voice commands unavailable: ${err.message}.`);
     return;
   }
   const commands = voiceCommands(loadLayout().buttons);
@@ -359,7 +410,7 @@ function startVoice() {
         voice = proc;
         console.log(`Voice commands ready (${commands.size} phrases, ${line.slice(6)}). Hold the mic button on the tablet and speak.`);
       } else if (line.startsWith("err")) {
-        console.error(`Voice commands unavailable: ${line.slice(4)}. See "Voice commands" in README.md.`);
+        console.error(`Voice commands unavailable: ${line.slice(4)}. See "Voice commands" at https://github.com/nodieCode/tablet-deck#voice-commands`);
       } else if (line.startsWith("heard ")) {
         const [, id, confidence, ...words] = line.split(" ");
         void onVoice(id, Number(confidence), words.join(" "));
@@ -469,13 +520,11 @@ const server = http.createServer((req, res) => {
     }
     return;
   }
-  const rel = url.pathname === "/" ? "index.html" : url.pathname.slice(1);
-  const file = path.join(ROOT, "public", rel);
-  if (!file.startsWith(path.join(ROOT, "public")) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
-    res.writeHead(404); res.end("not found"); return;
-  }
-  res.writeHead(200, { "Content-Type": MIME[path.extname(file)] || "application/octet-stream" });
-  fs.createReadStream(file).pipe(res);
+  const rel = path.posix.normalize(`public/${url.pathname === "/" ? "index.html" : url.pathname.slice(1)}`);
+  const body = rel.startsWith("public/") ? readBundled(rel) : null;
+  if (!body) { res.writeHead(404); res.end("not found"); return; }
+  res.writeHead(200, { "Content-Type": MIME[path.extname(rel)] || "application/octet-stream" });
+  res.end(body);
 });
 
 server.on("upgrade", (req, socket) => {
@@ -558,14 +607,15 @@ server.on("upgrade", (req, socket) => {
 
 // ---------- start ----------
 
-try { loadLayout(); loadLayout("phone"); } catch (err) { console.error("Layout error:", err.message); process.exit(1); }
+try { loadLayout(); loadLayout("phone"); } catch (err) { fatal(`Layout error: ${err.message}`); }
 startSender();
 startVoice();
 server.listen(config.port, "0.0.0.0", () => {
   const ips = Object.values(os.networkInterfaces()).flat()
     .filter((i) => i && i.family === "IPv4" && !i.internal && !i.address.startsWith("169.254"))
     .map((i) => i.address);
-  console.log(`\nTablet Deck running${DRY_RUN ? " (DRY RUN: no keys are sent)" : ""}.`);
+  console.log(`\nTablet Deck${VERSION ? ` ${VERSION}` : ""} running${DRY_RUN ? " (DRY RUN: no keys are sent)" : ""}.`);
+  if (INSTALLED) console.log(`Settings: ${CONFIG_PATH}`);
   console.log("Open this on your tablet (same Wi-Fi/network):");
   for (const ip of ips) console.log(`   http://${ip}:${config.port}/?t=${config.token}`);
   // Home networks are usually 192.168.x.x or 10.x.x.x; VPN and virtual adapters come later.
@@ -587,3 +637,6 @@ const shutdown = () => {
 };
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
+// Closing the console window (SIGHUP) or Ctrl+Break also releases held keys first.
+process.on("SIGHUP", shutdown);
+process.on("SIGBREAK", shutdown);
