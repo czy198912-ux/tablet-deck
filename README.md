@@ -7,6 +7,10 @@ your gaming PC serves a HUD-style button deck to the tablet over your home
 network, and each button sends real keyboard scancodes that Star Citizen reads.
 
 <p align="center">
+  <img src="docs/demo.png" alt="The deck in action: landing gear, shields, flight ready and a quantum charge, then switching to the Drake theme" width="100%">
+</p>
+
+<p align="center">
   <img src="docs/hero.jpg" alt="The deck on an iPad and an iPhone: landing, power management, ship systems and quantum controls" width="100%">
 </p>
 
@@ -168,6 +172,18 @@ a normal server the page warns that taps send real keys.
 
 In Claude Code, `.claude/launch.json` has this as the **deck-sandbox** config,
 so the built-in browser can start it with `preview_start`.
+
+### Recording the demo
+
+`docs/demo.png` (the animation at the top) is recorded by
+`tools/record-demo.js`: it opens the deck in Microsoft Edge or Google Chrome
+without a window, taps through a short script and saves the result as an
+animated PNG. Run a dry-run server first so no keys are pressed:
+
+```
+node server.js --dry-run --port 8790
+node tools/record-demo.js "http://localhost:8790/?t=<pairing code>"
+```
 
 ### Building the installer
 
