@@ -28,7 +28,13 @@ jobs:
       #   SIGNING_CERT_PASSWORD     its password
       SIGNING_CERT_PFX_BASE64: ${{ secrets.SIGNING_CERT_PFX_BASE64 }}
       SIGNING_CERT_PASSWORD: ${{ secrets.SIGNING_CERT_PASSWORD }}
-      # Option B, Azure Trusted Signing: see the commented-out step below.
+      #
+      # Option B, SignPath Foundation (free for open source; see CODE_SIGNING.md):
+      #   secret   SIGNPATH_API_TOKEN         the CI user's API token from SignPath
+      #   variable SIGNPATH_ORGANIZATION_ID   your SignPath organization ID
+      #   variable SIGNPATH_PROJECT_SLUG      optional, default "tablet-deck"
+      #   variable SIGNPATH_POLICY_SLUG       optional, default "release-signing"
+      SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
     steps:
       - uses: actions/checkout@v7
 
@@ -70,29 +76,70 @@ jobs:
           $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.*\x64\signtool.exe" | Sort-Object FullName | Select-Object -Last 1
           "SIGN_CMD=`"$($signtool.FullName)`" sign /fd sha256 /tr http://timestamp.digicert.com /td sha256 /f `"$pfx`" /p `"$env:SIGNING_CERT_PASSWORD`" `$f" >> $env:GITHUB_ENV
 
-      # ---- Code signing, option B: Azure Trusted Signing ----
-      # To use it: create a Trusted Signing account and certificate profile in Azure, add
-      # an app registration with the "Trusted Signing Certificate Profile Signer" role, store
-      # its AZURE_TENANT_ID, AZURE_CLIENT_ID and AZURE_CLIENT_SECRET as repo secrets, fill in
-      # the three values in metadata below, and uncomment this step.
-      #
-      # - name: Set up signing (Azure Trusted Signing)
-      #   shell: pwsh
-      #   env:
-      #     AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      #     AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      #     AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-      #   run: |
-      #     nuget install Microsoft.Trusted.Signing.Client -OutputDirectory "$env:RUNNER_TEMP\ts" -ExcludeVersion
-      #     $dlib = "$env:RUNNER_TEMP\ts\Microsoft.Trusted.Signing.Client\bin\x64\Azure.CodeSigning.Dlib.dll"
-      #     $metadata = "$env:RUNNER_TEMP\ts\metadata.json"
-      #     @{ Endpoint = "https://eus.codesigning.azure.net"; CodeSigningAccountName = "<account>"; CertificateProfileName = "<profile>" } | ConvertTo-Json | Set-Content $metadata
-      #     $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.*\x64\signtool.exe" | Sort-Object FullName | Select-Object -Last 1
-      #     "SIGN_CMD=`"$($signtool.FullName)`" sign /fd sha256 /tr http://timestamp.acs.microsoft.com /td sha256 /dlib `"$dlib`" /dmdf `"$metadata`" `$f" >> $env:GITHUB_ENV
-      #     "AZURE_TENANT_ID=$env:AZURE_TENANT_ID", "AZURE_CLIENT_ID=$env:AZURE_CLIENT_ID", "AZURE_CLIENT_SECRET=$env:AZURE_CLIENT_SECRET" | Add-Content $env:GITHUB_ENV
+      # The build runs in two stages so SignPath (option B) can sign the app files before
+      # they go into the installer, and then the installer itself. Without SignPath the
+      # signing steps are skipped; with option A, SIGN_CMD signs everything in the build.
+      - name: Build the app files
+        run: npm run build -- --app
+
+      # ---- Code signing, option B: SignPath ----
+      # Runs only when SIGNPATH_API_TOKEN is set. The artifact configurations "app" and
+      # "installer" in SignPath are copies of .signpath/artifact-configurations/*.xml.
+      - name: Upload the app files for signing
+        id: unsigned-app
+        if: env.SIGNPATH_API_TOKEN != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: app-unsigned
+          path: build/app
+
+      - name: Sign the app files (SignPath)
+        if: env.SIGNPATH_API_TOKEN != ''
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'tablet-deck' }}
+          signing-policy-slug: ${{ vars.SIGNPATH_POLICY_SLUG || 'release-signing' }}
+          artifact-configuration-slug: app
+          github-artifact-id: ${{ steps.unsigned-app.outputs.artifact-id }}
+          output-artifact-directory: build/app-signed
+
+      - name: Use the signed app files
+        if: env.SIGNPATH_API_TOKEN != ''
+        shell: pwsh
+        run: Copy-Item build/app-signed/* build/app -Recurse -Force
 
       - name: Build the installer
-        run: npm run build
+        run: npm run build -- --installer
+
+      - name: Upload the installer for signing
+        id: unsigned-setup
+        if: env.SIGNPATH_API_TOKEN != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: setup-unsigned
+          path: dist/*.exe
+
+      - name: Sign the installer (SignPath)
+        if: env.SIGNPATH_API_TOKEN != ''
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'tablet-deck' }}
+          signing-policy-slug: ${{ vars.SIGNPATH_POLICY_SLUG || 'release-signing' }}
+          artifact-configuration-slug: installer
+          github-artifact-id: ${{ steps.unsigned-setup.outputs.artifact-id }}
+          output-artifact-directory: dist-signed
+
+      # Signing changes the installer, so its checksum (which the app's updater checks) is redone.
+      - name: Use the signed installer
+        if: env.SIGNPATH_API_TOKEN != ''
+        shell: pwsh
+        run: |
+          Copy-Item dist-signed/*.exe dist -Force
+          npm run build -- --checksum
 
       - uses: actions/upload-artifact@v7
         with:

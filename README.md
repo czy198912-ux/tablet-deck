@@ -200,12 +200,20 @@ The **Release** workflow (`.github/workflows/release.yml`) builds the installer
 on GitHub and attaches it to a new release. You can also run it by hand from the
 Actions tab to build without publishing.
 
-Builds are unsigned until code signing is set up. The workflow has a marked spot
-for a code signing certificate in repo secrets (`SIGNING_CERT_PFX_BASE64`,
-`SIGNING_CERT_PASSWORD`) or Azure Trusted Signing. Signing the app, its helpers
+Builds are unsigned until code signing is set up. Signing the app, its helpers
 and the installer stops the "unknown publisher" warning and makes antivirus
 false alarms less likely. The key sender types keys into other programs, which
-some antivirus tools treat as suspicious.
+some antivirus tools treat as suspicious. The workflow supports two ways:
+
+- **SignPath Foundation** (free for open source, applied for): set the
+  `SIGNPATH_API_TOKEN` secret and the `SIGNPATH_ORGANIZATION_ID` variable. The
+  build then runs in two stages (`npm run build -- --app`, then
+  `-- --installer`) so SignPath signs the app files before they go into the
+  installer, and then the installer. The artifact configurations to paste into
+  SignPath are in `.signpath/artifact-configurations/`. See
+  [CODE_SIGNING.md](CODE_SIGNING.md) for the signing policy.
+- **Your own certificate:** a `.pfx` in the `SIGNING_CERT_PFX_BASE64` and
+  `SIGNING_CERT_PASSWORD` secrets.
 
 ## Keybinds
 
