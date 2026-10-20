@@ -140,6 +140,8 @@ class DeckWindow : Form
     readonly Button copyButton = new Button();
     readonly Button settingsButton = new Button();
     readonly Button restartButton = new Button();
+    readonly Button optionsButton = new Button();
+    bool serverReady; // the server has said "ready" and takes settings on stdin
     readonly CheckBox startWithWindows = new CheckBox();
     readonly Label tablets = new Label();
     readonly Label voice = new Label();
@@ -240,7 +242,10 @@ class DeckWindow : Form
         copyButton.Click += delegate { CopyLink(); };
         StyleButton(settingsButton, "Settings folder", 420, 236, 130);
         settingsButton.Click += delegate { OpenSettingsFolder(); };
-        StyleButton(restartButton, "Restart", 558, 236, 90);
+        StyleButton(optionsButton, "Settings", 558, 236, 90);
+        optionsButton.Click += delegate { OpenSettings(); };
+        tips.SetToolTip(optionsButton, "Pairing code, port, focus check, tap length and voice language");
+        StyleButton(restartButton, "Restart", 656, 236, 84);
         restartButton.Visible = false;
         restartButton.Click += delegate { StartServer(); };
 
@@ -398,6 +403,7 @@ class DeckWindow : Form
 
     void StartServer()
     {
+        serverReady = false;
         fatalText = "";
         restartButton.Visible = false;
         link = "";
@@ -497,6 +503,7 @@ class DeckWindow : Form
 
     void Stopped(string why)
     {
+        serverReady = false;
         // The address lines mean nothing now; the reason gets their space.
         hint.Visible = false;
         linkLabel.Text = "";
@@ -529,6 +536,7 @@ class DeckWindow : Form
         switch (Str(ev, "t"))
         {
             case "ready":
+                serverReady = true;
                 link = Str(ev, "link");
                 settingsPath = Str(ev, "settings");
                 linkLabel.Text = link != "" ? link : "No network found. Connect this PC to Wi-Fi or a network.";
@@ -905,6 +913,62 @@ class DeckWindow : Form
         catch (Exception) { }
     }
 
+    // ---------- settings ----------
+
+    string ConfigFile()
+    {
+        return settingsPath != "" ? settingsPath
+            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "TabletDeck", "config.json");
+    }
+
+    // The settings dialog. It starts from config.json; changes go to the running server
+    // ("set name value" on stdin), or, while it's stopped, through TabletDeckServer.exe --set.
+    void OpenSettings()
+    {
+        Dictionary<string, object> current = null;
+        try { current = new JavaScriptSerializer().DeserializeObject(File.ReadAllText(ConfigFile())) as Dictionary<string, object>; }
+        catch (Exception) { }
+        using (var dialog = new SettingsWindow(current ?? new Dictionary<string, object>(), serverArgs.Contains("--port"), Icon))
+        {
+            if (dialog.ShowDialog(this) != DialogResult.OK || dialog.Changes.Count == 0) return;
+            if (serverReady && server != null && !server.HasExited)
+            {
+                foreach (var change in dialog.Changes) SendToServer("set " + change.Key + " " + change.Value);
+                if (dialog.NeedsRestart)
+                {
+                    AppendLog("Restarting the server for the new settings...", Dim);
+                    StopServer();
+                    StartServer();
+                }
+                return;
+            }
+            var pairs = new List<string>();
+            foreach (var change in dialog.Changes) pairs.Add(change.Key + "=" + change.Value);
+            try
+            {
+                var psi = new ProcessStartInfo(Path.Combine(appDir, "TabletDeckServer.exe"), "--set " + string.Join(" ", pairs.ToArray()))
+                {
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardError = true,
+                    StandardErrorEncoding = Encoding.UTF8,
+                };
+                using (var proc = Process.Start(psi))
+                {
+                    string errors = proc.StandardError.ReadToEnd();
+                    proc.WaitForExit(10000);
+                    if (errors.Trim() != "") AppendLog(errors.Trim(), Warn);
+                }
+            }
+            catch (Exception ex)
+            {
+                AppendLog("Couldn't save the settings: " + ex.Message, Warn);
+                return;
+            }
+            if (server == null) StartServer();
+        }
+    }
+
     // ---------- buttons ----------
 
     void CopyLink()
@@ -1077,5 +1141,180 @@ class VoiceCommandsWindow : Form
         Text = commands.Count == 0 ? "Voice commands (not running)"
             : q == "" ? "Voice commands (" + commands.Count + ")"
             : "Voice commands (" + list.Items.Count + " of " + commands.Count + ")";
+    }
+}
+
+// Settings that would otherwise mean editing config.json. Only what changed ends up in
+// Changes, as setting name -> text value (see SETTINGS in server.js).
+class SettingsWindow : Form
+{
+    public readonly List<KeyValuePair<string, string>> Changes = new List<KeyValuePair<string, string>>();
+    public bool NeedsRestart; // port or voice changes take a server restart
+
+    readonly Dictionary<string, object> current;
+    readonly TextBox code = new TextBox();
+    readonly NumericUpDown port = new NumericUpDown();
+    readonly CheckBox focus = new CheckBox();
+    readonly NumericUpDown tap = new NumericUpDown();
+    readonly CheckBox voiceOn = new CheckBox();
+    readonly ComboBox language = new ComboBox();
+
+    public SettingsWindow(Dictionary<string, object> current, bool portFromCommandLine, Icon icon)
+    {
+        this.current = current;
+        SuspendLayout();
+        Text = "Tablet Deck settings";
+        Icon = icon;
+        ShowInTaskbar = false;
+        FormBorderStyle = FormBorderStyle.FixedDialog;
+        MaximizeBox = false;
+        MinimizeBox = false;
+        StartPosition = FormStartPosition.CenterParent;
+        BackColor = DeckWindow.Back;
+        ForeColor = DeckWindow.Ink;
+        Font = new Font("Segoe UI", 9.75f);
+        ClientSize = new Size(480, 446);
+
+        Caption("Pairing code", 14);
+        Field(code, 12, 36, 200);
+        code.Font = new Font("Consolas", 11f);
+        code.MaxLength = 32;
+        code.Text = Get("token", "");
+        AddButton("New random code", 222, 34, 150, delegate { code.Text = RandomCode(); });
+        Hint("Letters and numbers. Tablets already paired keep working until they reload; new ones need the new code.", 12, 66, 456);
+
+        Caption("Port", 108);
+        Field(port, 12, 130, 90);
+        port.Minimum = 1024;
+        port.Maximum = 65535;
+        port.Value = Math.Max(1024, Math.Min(65535, GetNumber("port", 8765)));
+        port.Enabled = !portFromCommandLine;
+        Hint(portFromCommandLine ? "Set with --port when Tablet Deck was started, so it can't be changed here."
+            : "Changing it restarts the server. Tablets then need the new address or QR code.", 112, 128, 356);
+
+        focus.Text = "Only press keys while Star Citizen is the window in front";
+        focus.Checked = GetBool("onlyWhenGameFocused", true);
+        focus.Bounds = new Rectangle(12, 176, 456, 24);
+        Controls.Add(focus);
+
+        Caption("Tap length", 212);
+        Field(tap, 12, 234, 70);
+        tap.Minimum = 20;
+        tap.Maximum = 1000;
+        tap.Value = Math.Max(20, Math.Min(1000, GetNumber("tapMs", 60)));
+        Hint("milliseconds a tap holds the key. Raise it if the game misses taps.", 90, 236, 378);
+
+        voiceOn.Text = "Voice commands";
+        voiceOn.Checked = GetBool("voice", true);
+        voiceOn.Bounds = new Rectangle(12, 276, 456, 24);
+        voiceOn.CheckedChanged += delegate { language.Enabled = voiceOn.Checked; };
+        Controls.Add(voiceOn);
+        Caption("Voice language", 306);
+        Field(language, 12, 328, 110);
+        language.DropDownStyle = ComboBoxStyle.DropDown;
+        language.FlatStyle = FlatStyle.Flat;
+        language.Items.AddRange(new object[] { "en-US", "en-GB", "en-AU", "en-CA", "en-IN" });
+        language.Text = Get("voiceLanguage", "en-US");
+        language.Enabled = voiceOn.Checked;
+        Hint("Needs that English speech recognizer installed in Windows (Settings > Time & Language > Speech).", 130, 326, 338);
+
+        var save = AddButton("Save", 280, 400, 90, delegate { Save(); });
+        var cancel = AddButton("Cancel", 378, 400, 90, delegate { DialogResult = DialogResult.Cancel; });
+        AcceptButton = save;
+        CancelButton = cancel;
+
+        AutoScaleDimensions = new SizeF(96f, 96f);
+        AutoScaleMode = AutoScaleMode.Dpi;
+        ResumeLayout(false);
+    }
+
+    void Caption(string text, int y)
+    {
+        Controls.Add(new Label { Text = text, ForeColor = DeckWindow.Ink, Font = new Font("Segoe UI", 9.75f, FontStyle.Bold), Bounds = new Rectangle(12, y, 456, 20) });
+    }
+
+    void Hint(string text, int x, int y, int w)
+    {
+        Controls.Add(new Label { Text = text, UseMnemonic = false, ForeColor = DeckWindow.Dim, Font = new Font("Segoe UI", 8.25f), Bounds = new Rectangle(x, y, w, 34) });
+    }
+
+    void Field(Control c, int x, int y, int w)
+    {
+        c.BackColor = DeckWindow.Panel;
+        c.ForeColor = DeckWindow.Ink;
+        c.Bounds = new Rectangle(x, y, w, 26);
+        Controls.Add(c);
+    }
+
+    Button AddButton(string text, int x, int y, int w, EventHandler click)
+    {
+        var b = new Button { Text = text, FlatStyle = FlatStyle.Flat, BackColor = DeckWindow.Panel, ForeColor = DeckWindow.Ink, Cursor = Cursors.Hand, Bounds = new Rectangle(x, y, w, 30) };
+        b.FlatAppearance.BorderColor = DeckWindow.Accent;
+        b.Click += click;
+        Controls.Add(b);
+        return b;
+    }
+
+    string Get(string key, string fallback)
+    {
+        object v;
+        return current.TryGetValue(key, out v) && v != null ? Convert.ToString(v, CultureInfo.InvariantCulture) : fallback;
+    }
+
+    int GetNumber(string key, int fallback)
+    {
+        int n;
+        return int.TryParse(Get(key, ""), out n) ? n : fallback;
+    }
+
+    bool GetBool(string key, bool fallback)
+    {
+        object v;
+        return current.TryGetValue(key, out v) && v is bool ? (bool)v : fallback;
+    }
+
+    static string RandomCode()
+    {
+        var bytes = new byte[4];
+        using (var rng = new RNGCryptoServiceProvider()) rng.GetBytes(bytes);
+        return BitConverter.ToString(bytes).Replace("-", "").ToLowerInvariant();
+    }
+
+    // Checks the fields, records what changed, and closes.
+    void Save()
+    {
+        string newCode = code.Text.Trim().ToLowerInvariant();
+        if (!System.Text.RegularExpressions.Regex.IsMatch(newCode, "^[a-z0-9]{1,32}$"))
+        {
+            MessageBox.Show(this, "The pairing code can only have letters and numbers (up to 32).", "Tablet Deck", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            code.Focus();
+            return;
+        }
+        string newLanguage = language.Text.Trim();
+        if (!System.Text.RegularExpressions.Regex.IsMatch(newLanguage, "^[a-z]{2}(-[A-Za-z]{2,4})?$"))
+        {
+            MessageBox.Show(this, "The voice language should look like en-US.", "Tablet Deck", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            language.Focus();
+            return;
+        }
+        Change("token", Get("token", "").Trim().ToLowerInvariant(), newCode, false);
+        if (port.Enabled) Change("port", GetNumber("port", 8765).ToString(), ((int)port.Value).ToString(), true);
+        Change("onlyWhenGameFocused", OnOff(GetBool("onlyWhenGameFocused", true)), OnOff(focus.Checked), false);
+        Change("tapMs", GetNumber("tapMs", 60).ToString(), ((int)tap.Value).ToString(), false);
+        Change("voice", OnOff(GetBool("voice", true)), OnOff(voiceOn.Checked), true);
+        Change("voiceLanguage", Get("voiceLanguage", "en-US"), newLanguage, true);
+        DialogResult = DialogResult.OK;
+    }
+
+    void Change(string name, string before, string after, bool restart)
+    {
+        if (before == after) return;
+        Changes.Add(new KeyValuePair<string, string>(name, after));
+        if (restart) NeedsRestart = true;
+    }
+
+    static string OnOff(bool on)
+    {
+        return on ? "on" : "off";
     }
 }

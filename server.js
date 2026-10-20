@@ -121,6 +121,35 @@ function loadConfig() {
 const config = loadConfig();
 if (PORT_OVERRIDE) config.port = PORT_OVERRIDE;
 
+// Settings the app window may change, each turning its text into a value, or undefined
+// when it isn't valid. See applySetting() and --set below.
+const onOff = (v) => (v === "on" ? true : v === "off" ? false : undefined);
+const wholeNumber = (min, max) => (v) => (/^\d+$/.test(v) && +v >= min && +v <= max ? +v : undefined);
+const SETTINGS = {
+  voiceConfidence: (v) => (/^[\d.]+$/.test(v) && +v >= 0 && +v <= 1 ? Math.round(+v * 100) / 100 : undefined),
+  autoUpdate: onOff,
+  onlyWhenGameFocused: onOff,
+  voice: onOff,
+  token: (v) => (/^[a-z0-9]{1,32}$/i.test(v) ? v.toLowerCase() : undefined),
+  port: wholeNumber(1024, 65535),
+  tapMs: wholeNumber(20, 1000),
+  voiceLanguage: (v) => (/^[a-z]{2}(-[A-Za-z]{2,4})?$/.test(v) ? v : undefined),
+};
+
+// --set name=value ...: save settings to config.json and exit without starting. The app
+// window uses this while the server is stopped, e.g. to change a port that's taken.
+const setArg = process.argv.indexOf("--set");
+if (setArg > -1) {
+  let ok = true;
+  for (const pair of process.argv.slice(setArg + 1)) {
+    const [name, ...rest] = pair.split("=");
+    const value = SETTINGS[name] ? SETTINGS[name](rest.join("=")) : undefined;
+    if (value === undefined) { console.error(`"${pair}" isn't a valid setting.`); ok = false; continue; }
+    saveSetting(name, value);
+  }
+  process.exit(ok ? 0 : 1);
+}
+
 // ---------- scancodes (set 1). [code, extended] ----------
 
 const SCANCODES = {
@@ -641,25 +670,36 @@ server.on("error", (err) => {
   if (err.code !== "EADDRINUSE") throw err;
   fatal(`Port ${config.port} is already in use. Is Tablet Deck already running? Otherwise change "port" in ${CONFIG_PATH}.`);
 });
-server.listen(config.port, "0.0.0.0", () => {
+// This PC's network addresses, and the one a tablet most likely shares.
+function addresses() {
   const ips = Object.values(os.networkInterfaces()).flat()
     .filter((i) => i && i.family === "IPv4" && !i.internal && !i.address.startsWith("169.254"))
     .map((i) => i.address);
   // Home networks are usually 192.168.x.x or 10.x.x.x; VPN and virtual adapters come later.
   const lan = ips.find((ip) => ip.startsWith("192.168.")) || ips.find((ip) => ip.startsWith("10.")) || ips[0];
+  return { ips, lan };
+}
+
+// Everything the app window shows and its settings dialog edits. Sent again after a
+// setting changes, so a new pairing code gets a new QR code.
+function sendReady() {
+  const { ips, lan } = addresses();
+  const link = lan ? `http://${lan}:${config.port}/?t=${config.token}` : null;
+  ui({
+    t: "ready", version: VERSION, port: config.port, token: config.token, link, settings: CONFIG_PATH,
+    others: ips.filter((ip) => ip !== lan).map((ip) => `http://${ip}:${config.port}`),
+    // The window draws the QR code itself; rows of "1" (dark) and "0".
+    qr: link ? qr.matrix(link).map((row) => row.map((dark) => (dark ? "1" : "0")).join("")) : [],
+    dryRun: DRY_RUN, focusCheck: Boolean(config.onlyWhenGameFocused), voiceConfidence: config.voiceConfidence,
+    autoUpdate: config.autoUpdate !== false, tapMs: config.tapMs, voice: Boolean(config.voice),
+    voiceLanguage: config.voiceLanguage, portFromCommandLine: Boolean(PORT_OVERRIDE),
+  });
+}
+
+server.listen(config.port, "0.0.0.0", () => {
+  const { ips, lan } = addresses();
   console.log(`\nTablet Deck${VERSION ? ` ${VERSION}` : ""} running${DRY_RUN ? " (DRY RUN: no keys are sent)" : ""}.`);
-  if (UI) {
-    // The window shows the address, code and QR code itself; rows of "1" (dark) and "0".
-    const link = lan ? `http://${lan}:${config.port}/?t=${config.token}` : null;
-    ui({
-      t: "ready", version: VERSION, port: config.port, token: config.token, link, settings: CONFIG_PATH,
-      others: ips.filter((ip) => ip !== lan).map((ip) => `http://${ip}:${config.port}`),
-      qr: link ? qr.matrix(link).map((row) => row.map((dark) => (dark ? "1" : "0")).join("")) : [],
-      dryRun: DRY_RUN, focusCheck: Boolean(config.onlyWhenGameFocused), voiceConfidence: config.voiceConfidence,
-      autoUpdate: config.autoUpdate !== false,
-    });
-    return;
-  }
+  if (UI) { sendReady(); return; }
   if (INSTALLED) console.log(`Settings: ${CONFIG_PATH}`);
   console.log("Open this on your tablet (same Wi-Fi/network):");
   for (const ip of ips) console.log(`   http://${ip}:${config.port}/?t=${config.token}`);
@@ -685,27 +725,34 @@ process.on("SIGHUP", shutdown);
 process.on("SIGBREAK", shutdown);
 // The app window asks the server to stop with "quit"; if the window itself goes away,
 // stdin closes, which stops the server the same way.
-// Settings changed in the window: "set voiceConfidence 0.55" from the strictness slider
-// applies to the next command at once; "set autoUpdate on|off" from the update checkbox.
-// Both are saved to config.json.
+// Commands from the app window, one per line: "quit", or "set <name> <value>" from its
+// slider, checkboxes and settings dialog. Each setting is checked (SETTINGS), saved to
+// config.json and applied at once; the window restarts the server after port or voice ones.
+function applySetting(name, text) {
+  const value = SETTINGS[name] ? SETTINGS[name](text) : undefined;
+  if (value === undefined) { console.error(`Setting not changed: "${text}" isn't a valid ${name}.`); return; }
+  saveSetting(name, value);
+  // The port only changes when the server restarts, as the window does next.
+  if (name !== "port") config[name] = value;
+  if (name === "voiceConfidence") {
+    console.log(`Voice strictness set to ${Math.round(value * 100)}%.`);
+    ui({ t: "voiceConfidence", value });
+    return;
+  }
+  console.log(`Saved ${name}: ${value === true ? "on" : value === false ? "off" : value}.`);
+  sendReady();
+}
+
 if (UI) {
+  let pendingInput = "";
   process.stdin.setEncoding("utf8");
   process.stdin.on("data", (text) => {
-    if (/^quit\s*$/m.test(text)) { shutdown(); return; }
-    const strictness = /^set voiceConfidence ([\d.]+)\s*$/m.exec(text);
-    if (strictness) {
-      const value = Number(strictness[1]);
-      if (!(value >= 0 && value <= 1)) return;
-      config.voiceConfidence = Math.round(value * 100) / 100;
-      saveSetting("voiceConfidence", config.voiceConfidence);
-      console.log(`Voice strictness set to ${Math.round(config.voiceConfidence * 100)}%.`);
-      ui({ t: "voiceConfidence", value: config.voiceConfidence });
-    }
-    const update = /^set autoUpdate (on|off)\s*$/m.exec(text);
-    if (update) {
-      config.autoUpdate = update[1] === "on";
-      saveSetting("autoUpdate", config.autoUpdate);
-      console.log(`Automatic update checks turned ${update[1]}.`);
+    const lines = (pendingInput + text).split(/\r?\n/);
+    pendingInput = lines.pop();
+    for (const line of lines.map((l) => l.trim())) {
+      if (line === "quit") { shutdown(); return; }
+      const set = /^set (\w+) (.+)$/.exec(line);
+      if (set) applySetting(set[1], set[2].trim());
     }
   });
   process.stdin.on("end", shutdown);

@@ -365,8 +365,12 @@ back to system fonts.
 
 ## Settings (`config.json`, created on first run)
 
-The installed app keeps it in `%APPDATA%\TabletDeck\config.json`; the window
-prints the path when it starts. Running from source, it's next to `server.js`.
+The installed app keeps it in `%APPDATA%\TabletDeck\config.json` (the window's
+**Settings folder** button opens it). Most settings below can be changed with
+the window's **Settings** button instead of editing the file: the pairing code,
+port, focus check, tap length, and voice on/off and language. The app checks
+them, saves them and applies them; changing the port or voice restarts the
+server. Running from source, `config.json` is next to `server.js`.
 File paths in it can be absolute, or relative: `layouts/my.json` is looked up in
 the settings folder first, then among the built-in files.
 

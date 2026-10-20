@@ -5,6 +5,14 @@ section becomes the notes of its
 [GitHub release](https://github.com/nodieCode/tablet-deck/releases), so add one
 before tagging a release.
 
+## 1.3.0 (not released yet)
+
+- **Settings** button in the window: change the pairing code (or make a new
+  random one), the port, the "only while Star Citizen is in front" check, how
+  long a tap holds the key, and voice commands and their language, without
+  editing `config.json`. Settings also work when Tablet Deck couldn't start,
+  for example to pick another port when yours is taken.
+
 ## 1.2.1 (2026-10-20)
 
 - Behind the scenes: the release build uses current versions of GitHub's build
