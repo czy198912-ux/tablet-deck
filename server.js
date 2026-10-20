@@ -108,6 +108,8 @@ function loadConfig() {
   if (config.voice === undefined) { config.voice = true; changed = true; }
   if (!config.voiceLanguage) { config.voiceLanguage = "en-US"; changed = true; }
   if (!config.voiceConfidence) { config.voiceConfidence = 0.6; changed = true; }
+  // The installed app window checks GitHub for new versions unless this is false.
+  if (INSTALLED && config.autoUpdate === undefined) { config.autoUpdate = true; changed = true; }
   if (changed) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
     fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2) + "\n");
@@ -654,6 +656,7 @@ server.listen(config.port, "0.0.0.0", () => {
       others: ips.filter((ip) => ip !== lan).map((ip) => `http://${ip}:${config.port}`),
       qr: link ? qr.matrix(link).map((row) => row.map((dark) => (dark ? "1" : "0")).join("")) : [],
       dryRun: DRY_RUN, focusCheck: Boolean(config.onlyWhenGameFocused), voiceConfidence: config.voiceConfidence,
+      autoUpdate: config.autoUpdate !== false,
     });
     return;
   }
@@ -682,25 +685,35 @@ process.on("SIGHUP", shutdown);
 process.on("SIGBREAK", shutdown);
 // The app window asks the server to stop with "quit"; if the window itself goes away,
 // stdin closes, which stops the server the same way.
-// "set voiceConfidence 0.55" comes from the window's strictness slider: it applies to the
-// next command at once and is saved to config.json.
+// Settings changed in the window: "set voiceConfidence 0.55" from the strictness slider
+// applies to the next command at once; "set autoUpdate on|off" from the update checkbox.
+// Both are saved to config.json.
 if (UI) {
   process.stdin.setEncoding("utf8");
   process.stdin.on("data", (text) => {
     if (/^quit\s*$/m.test(text)) { shutdown(); return; }
-    const set = /^set voiceConfidence ([\d.]+)\s*$/m.exec(text);
-    if (set) setVoiceConfidence(Number(set[1]));
+    const strictness = /^set voiceConfidence ([\d.]+)\s*$/m.exec(text);
+    if (strictness) {
+      const value = Number(strictness[1]);
+      if (!(value >= 0 && value <= 1)) return;
+      config.voiceConfidence = Math.round(value * 100) / 100;
+      saveSetting("voiceConfidence", config.voiceConfidence);
+      console.log(`Voice strictness set to ${Math.round(config.voiceConfidence * 100)}%.`);
+      ui({ t: "voiceConfidence", value: config.voiceConfidence });
+    }
+    const update = /^set autoUpdate (on|off)\s*$/m.exec(text);
+    if (update) {
+      config.autoUpdate = update[1] === "on";
+      saveSetting("autoUpdate", config.autoUpdate);
+      console.log(`Automatic update checks turned ${update[1]}.`);
+    }
   });
   process.stdin.on("end", shutdown);
 }
 
-function setVoiceConfidence(value) {
-  if (!(value >= 0 && value <= 1)) return;
-  config.voiceConfidence = Math.round(value * 100) / 100;
-  // Rewrite only this setting, keeping the rest of the file as the player wrote it.
+// Rewrites one setting in config.json, keeping the rest of the file as the player wrote it.
+function saveSetting(key, value) {
   const saved = JSON.parse(fs.readFileSync(CONFIG_PATH, "utf8"));
-  saved.voiceConfidence = config.voiceConfidence;
+  saved[key] = value;
   fs.writeFileSync(CONFIG_PATH, JSON.stringify(saved, null, 2) + "\n");
-  console.log(`Voice strictness set to ${Math.round(config.voiceConfidence * 100)}%.`);
-  ui({ t: "voiceConfidence", value: config.voiceConfidence });
 }

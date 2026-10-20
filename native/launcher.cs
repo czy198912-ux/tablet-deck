@@ -8,13 +8,21 @@
 // The server reports status as "@ui {json}" lines on stdout (see ui() in server.js); every
 // other line goes to the log. "quit" on its stdin stops it. Only the installed app uses
 // this window; running from source keeps the console.
+//
+// Updates: unless turned off, the window asks GitHub for the latest release when it starts
+// and once a day. A newer version shows a banner; "Update now" downloads the installer,
+// checks it against the release's SHA-256 file and runs it quietly. The installer asks this
+// window to quit (TabletDeck.Quit), installs, and starts Tablet Deck again.
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
+using System.Net;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Web.Script.Serialization;
@@ -34,6 +42,8 @@ static class Program
 
     // Sent to every window when Tablet Deck is opened a second time; the running copy shows itself.
     public static readonly int ShowWindowMessage = RegisterWindowMessage("TabletDeck.ShowWindow");
+    // Sent by the installer (installer/TabletDeck.iss) before it updates or removes the files.
+    public static readonly int QuitMessage = RegisterWindowMessage("TabletDeck.Quit");
 
     [STAThread]
     static void Main(string[] args)
@@ -47,6 +57,7 @@ static class Program
                 return;
             }
             SetProcessDPIAware();
+            ServicePointManager.SecurityProtocol |= (SecurityProtocolType)3072; // TLS 1.2, which GitHub requires
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new DeckWindow(args));
@@ -149,6 +160,27 @@ class DeckWindow : Form
     readonly List<string[]> voiceCommands = new List<string[]>(); // [phrase, button label]
     VoiceCommandsWindow commandsWindow;
 
+    // ---- updates ----
+    const string LatestReleaseApi = "https://api.github.com/repos/nodieCode/tablet-deck/releases/latest";
+    const string ReleasesPage = "https://github.com/nodieCode/tablet-deck/releases";
+    const string DownloadPrefix = "https://github.com/nodieCode/tablet-deck/releases/download/";
+    const string AppKey = @"Software\Tablet Deck";
+    // This window's version, e.g. "1.1.0" (AssemblyInformationalVersion, set by scripts/build.js).
+    static readonly string CurrentVersion = Application.ProductVersion;
+    readonly CheckBox autoUpdate = new CheckBox();
+    bool showingServerAutoUpdate;
+    bool checkedAtStart;
+    bool checking;
+    readonly System.Windows.Forms.Timer dailyCheck = new System.Windows.Forms.Timer();
+    readonly Panel banner = new Panel();
+    readonly Label bannerText = new Label();
+    readonly Button bannerWhatsNew = new Button();
+    readonly Button bannerUpdate = new Button();
+    readonly Button bannerLater = new Button();
+    string whatsNewUrl = "";
+    string updateVersion = "", updateSetupUrl = "", updateShaUrl = "", dismissedVersion = "";
+    Process installer;
+
     public DeckWindow(string[] args)
     {
         var passOn = new List<string>();
@@ -218,6 +250,18 @@ class DeckWindow : Form
         startWithWindows.CheckedChanged += delegate { SetRunAtStartup(startWithWindows.Checked); };
         Place(startWithWindows, 304, 274, 300, 22);
 
+        autoUpdate.Text = "Check for updates automatically";
+        autoUpdate.ForeColor = Ink;
+        autoUpdate.Checked = true;
+        autoUpdate.CheckedChanged += delegate
+        {
+            if (showingServerAutoUpdate) return;
+            SendToServer("set autoUpdate " + (autoUpdate.Checked ? "on" : "off"));
+            if (autoUpdate.Checked) CheckForUpdates(false);
+        };
+        Place(autoUpdate, 304, 298, 300, 22);
+        tips.SetToolTip(autoUpdate, "Looks for a new version on GitHub when Tablet Deck starts and once a day. Updates only install when you click Update now.");
+
         tablets.Text = "Tablets connected: 0";
         Place(tablets, 20, 296, 240, 20);
         keys.ForeColor = Dim;
@@ -276,6 +320,27 @@ class DeckWindow : Form
         Place(log, 20, 446, 720, 124);
         log.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
 
+        // Update banner, shown above the log when there's news; the log moves down for it.
+        banner.BackColor = Color.FromArgb(20, 58, 96);
+        banner.Visible = false;
+        banner.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+        bannerText.ForeColor = Ink;
+        bannerText.Font = new Font("Segoe UI", 9.75f, FontStyle.Bold);
+        bannerText.Bounds = new Rectangle(10, 0, 390, 36);
+        bannerText.TextAlign = ContentAlignment.MiddleLeft;
+        banner.Controls.Add(bannerText);
+        BannerButton(bannerWhatsNew, "What's new", 404, 96);
+        bannerWhatsNew.Click += delegate { if (whatsNewUrl != "") Process.Start(whatsNewUrl); };
+        BannerButton(bannerUpdate, "Update now", 506, 104);
+        bannerUpdate.Click += delegate { InstallUpdate(); };
+        BannerButton(bannerLater, "Later", 616, 96);
+        bannerLater.Click += delegate { dismissedVersion = updateVersion; HideBanner(); };
+        Place(banner, 20, 446, 720, 36);
+
+        dailyCheck.Interval = 24 * 60 * 60 * 1000;
+        dailyCheck.Tick += delegate { if (autoUpdate.Checked) CheckForUpdates(false); };
+        dailyCheck.Start();
+
         tray.Icon = Icon;
         tray.Text = "Tablet Deck";
         tray.Visible = true;
@@ -283,6 +348,7 @@ class DeckWindow : Form
         var menu = new ContextMenuStrip();
         menu.Items.Add("Show Tablet Deck", null, delegate { ShowFromTray(); });
         menu.Items.Add("Copy link", null, delegate { CopyLink(); });
+        menu.Items.Add("Check for updates now", null, delegate { CheckForUpdates(true); });
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Quit", null, delegate { Close(); });
         tray.ContextMenuStrip = menu;
@@ -296,6 +362,19 @@ class DeckWindow : Form
 
         CreateHandle(); // lets server output reach the window even while it starts hidden
         StartServer();
+        ShowWhatsNewAfterUpdate();
+    }
+
+    void BannerButton(Button b, string text, int x, int w)
+    {
+        b.Text = text;
+        b.FlatStyle = FlatStyle.Flat;
+        b.FlatAppearance.BorderColor = Accent;
+        b.BackColor = Panel;
+        b.ForeColor = Ink;
+        b.Cursor = Cursors.Hand;
+        b.Bounds = new Rectangle(x, 3, w, 30);
+        banner.Controls.Add(b);
     }
 
     void Place(Control c, int x, int y, int w, int h)
@@ -469,6 +548,11 @@ class DeckWindow : Form
                     : "Keys go to whatever window is in front.";
                 tray.Text = "Tablet Deck " + version + (dryRun ? " (test mode)" : "");
                 ShowStrictness(Num(ev, "voiceConfidence"));
+                showingServerAutoUpdate = true;
+                autoUpdate.Checked = Bool(ev, "autoUpdate");
+                showingServerAutoUpdate = false;
+                if (!checkedAtStart && autoUpdate.Checked) CheckForUpdates(false);
+                checkedAtStart = true;
                 break;
             case "voiceConfidence":
                 ShowStrictness(Num(ev, "value"));
@@ -607,6 +691,220 @@ class DeckWindow : Form
         log.ScrollToCaret();
     }
 
+    // ---------- updates ----------
+
+    // Shows the banner above the log. Buttons: "update" (What's new, Update now, Later),
+    // "news" (What's new, Close), "busy" (none) or "info" (Close).
+    void ShowBanner(string text, string buttons)
+    {
+        bannerText.Text = text;
+        bannerWhatsNew.Visible = buttons == "update" || buttons == "news";
+        bannerUpdate.Visible = buttons == "update";
+        bannerUpdate.Enabled = true;
+        bannerLater.Visible = buttons != "busy";
+        bannerLater.Text = buttons == "update" ? "Later" : "Close";
+        if (banner.Visible) return;
+        int shift = banner.Height + banner.Height / 4;
+        log.Top += shift;
+        log.Height -= shift;
+        banner.Visible = true;
+    }
+
+    void HideBanner()
+    {
+        if (!banner.Visible) return;
+        int shift = banner.Height + banner.Height / 4;
+        banner.Visible = false;
+        log.Top -= shift;
+        log.Height += shift;
+    }
+
+    static WebClient NewWebClient()
+    {
+        var web = new WebClient { Encoding = Encoding.UTF8 };
+        web.Headers[HttpRequestHeader.UserAgent] = "TabletDeck/" + CurrentVersion; // GitHub requires one
+        return web;
+    }
+
+    // "1.2.0" or "v1.2.0-beta" -> 1.2.0; null if it isn't a version.
+    static Version ParseVersion(string text)
+    {
+        string v = (text ?? "").Trim().TrimStart('v', 'V');
+        int cut = v.IndexOfAny(new[] { '-', '+', ' ' });
+        if (cut >= 0) v = v.Substring(0, cut);
+        Version result;
+        return Version.TryParse(v, out result) ? result : null;
+    }
+
+    // Asks GitHub for the latest release in the background. userAsked: report "up to date"
+    // and errors too, and show a version the player dismissed with Later.
+    void CheckForUpdates(bool userAsked)
+    {
+        if (checking || installer != null) return;
+        checking = true;
+        ThreadPool.QueueUserWorkItem(delegate
+        {
+            Dictionary<string, object> release = null;
+            string error = null;
+            try
+            {
+                using (var web = NewWebClient())
+                {
+                    web.Headers[HttpRequestHeader.Accept] = "application/vnd.github+json";
+                    release = new JavaScriptSerializer().DeserializeObject(web.DownloadString(LatestReleaseApi)) as Dictionary<string, object>;
+                }
+            }
+            catch (Exception ex) { error = ex.Message; }
+            OnUi(delegate { checking = false; OnLatestRelease(release, error, userAsked); });
+        });
+    }
+
+    void OnLatestRelease(Dictionary<string, object> release, string error, bool userAsked)
+    {
+        if (release == null)
+        {
+            if (userAsked) Notify("Couldn't check for updates", error ?? "GitHub didn't answer.");
+            return;
+        }
+        string latest = Str(release, "tag_name").TrimStart('v', 'V');
+        Version remote = ParseVersion(latest), local = ParseVersion(CurrentVersion);
+        if (remote == null || local == null || remote <= local)
+        {
+            if (userAsked) Notify("Tablet Deck is up to date", "You have version " + CurrentVersion + ", the latest.");
+            return;
+        }
+        // The installer and its checksum, attached to the release by .github/workflows/release.yml.
+        string setupName = "TabletDeck-Setup-" + latest + ".exe";
+        string setupUrl = "", shaUrl = "";
+        foreach (var a in List(release, "assets"))
+        {
+            var asset = a as Dictionary<string, object>;
+            if (asset == null) continue;
+            string url = Str(asset, "browser_download_url");
+            if (!url.StartsWith(DownloadPrefix, StringComparison.Ordinal)) continue;
+            if (Str(asset, "name") == setupName) setupUrl = url;
+            else if (Str(asset, "name") == setupName + ".sha256") shaUrl = url;
+        }
+        if (setupUrl == "" || shaUrl == "")
+        {
+            if (userAsked) Notify("Update not ready yet", "Version " + latest + " is out, but its installer isn't attached yet. Try again in a few minutes.");
+            return;
+        }
+        if (!userAsked && latest == dismissedVersion) return;
+        updateVersion = latest;
+        updateSetupUrl = setupUrl;
+        updateShaUrl = shaUrl;
+        whatsNewUrl = Str(release, "html_url") != "" ? Str(release, "html_url") : ReleasesPage;
+        ShowBanner("Tablet Deck " + latest + " is available (you have " + CurrentVersion + ").", "update");
+        if (!Visible) Notify("Tablet Deck " + latest + " is available", "Open Tablet Deck and click Update now.");
+    }
+
+    void Notify(string title, string text)
+    {
+        tray.ShowBalloonTip(5000, title, text, ToolTipIcon.Info);
+    }
+
+    // Downloads the installer for updateVersion, then VerifyAndInstall.
+    void InstallUpdate()
+    {
+        if (updateSetupUrl == "") return;
+        ShowBanner("Downloading Tablet Deck " + updateVersion + "...", "busy");
+        string dir = UpdateFolder;
+        string file = Path.Combine(dir, "TabletDeck-Setup-" + updateVersion + ".exe");
+        try { Directory.CreateDirectory(dir); }
+        catch (Exception ex) { UpdateFailed(ex.Message); return; }
+        var web = NewWebClient();
+        web.DownloadProgressChanged += (s, e) => bannerText.Text = "Downloading Tablet Deck " + updateVersion + "... " + e.ProgressPercentage + "%";
+        web.DownloadFileCompleted += (s, e) =>
+        {
+            web.Dispose();
+            if (e.Error != null) UpdateFailed("the download failed (" + e.Error.Message + ")");
+            else VerifyAndInstall(file);
+        };
+        web.DownloadFileAsync(new Uri(updateSetupUrl), file);
+    }
+
+    // Checks the download against the release's SHA-256 file, then runs the installer
+    // quietly. It asks this window to quit before it replaces the files, and starts
+    // Tablet Deck again afterwards. Until then the deck keeps working.
+    void VerifyAndInstall(string file)
+    {
+        bannerText.Text = "Checking the download...";
+        try
+        {
+            string expected;
+            using (var web = NewWebClient())
+                expected = web.DownloadString(updateShaUrl).Trim().Split(' ')[0].ToLowerInvariant();
+            string actual;
+            using (var sha = SHA256.Create())
+            using (var stream = File.OpenRead(file))
+                actual = BitConverter.ToString(sha.ComputeHash(stream)).Replace("-", "").ToLowerInvariant();
+            if (expected.Length != 64 || actual != expected)
+            {
+                File.Delete(file);
+                UpdateFailed("the download didn't match its checksum, so it wasn't installed");
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            UpdateFailed("couldn't check the download (" + ex.Message + ")");
+            return;
+        }
+        bannerText.Text = "Installing Tablet Deck " + updateVersion + ". Allow the Windows prompt to continue.";
+        try
+        {
+            installer = Process.Start(new ProcessStartInfo(file, "/SILENT /SUPPRESSMSGBOXES /NORESTART /RELAUNCH=1") { UseShellExecute = true });
+        }
+        catch (Win32Exception ex)
+        {
+            UpdateFailed(ex.NativeErrorCode == 1223 ? "the Windows permission prompt was cancelled" : ex.Message);
+            return;
+        }
+        // Normally the installer closes this window. If it ends first, the update didn't happen.
+        installer.EnableRaisingEvents = true;
+        installer.Exited += delegate
+        {
+            OnUi(delegate
+            {
+                int code = installer.ExitCode;
+                installer = null;
+                UpdateFailed(code == 0 ? "the installer finished without updating" : "the installer stopped (code " + code + "). Was the Windows prompt cancelled?");
+            });
+        };
+    }
+
+    void UpdateFailed(string why)
+    {
+        string text = "Update failed: " + why + (why.EndsWith("?") || why.EndsWith(".") ? "" : ".");
+        ShowBanner(text, "info");
+        AppendLog(text, Warn);
+    }
+
+    // Where Update now saves the installer; emptied when the window next starts.
+    static readonly string UpdateFolder = Path.Combine(Path.GetTempPath(), "TabletDeck-Update");
+
+    // After an update, offers the new version's notes once and removes the used installer.
+    void ShowWhatsNewAfterUpdate()
+    {
+        try { if (Directory.Exists(UpdateFolder)) Directory.Delete(UpdateFolder, true); }
+        catch (Exception) { }
+        try
+        {
+            using (var key = Registry.CurrentUser.CreateSubKey(AppKey))
+            {
+                string last = key.GetValue("LastVersion") as string;
+                if (last != null && last != CurrentVersion)
+                {
+                    whatsNewUrl = ReleasesPage + "/tag/v" + CurrentVersion;
+                    ShowBanner("Updated to Tablet Deck " + CurrentVersion + ".", "news");
+                }
+                key.SetValue("LastVersion", CurrentVersion);
+            }
+        }
+        catch (Exception) { }
+    }
+
     // ---------- buttons ----------
 
     void CopyLink()
@@ -689,6 +987,7 @@ class DeckWindow : Form
     protected override void WndProc(ref Message m)
     {
         if (m.Msg == Program.ShowWindowMessage) ShowFromTray();
+        else if (m.Msg == Program.QuitMessage) BeginInvoke(new MethodInvoker(Close));
         base.WndProc(ref m);
     }
 }

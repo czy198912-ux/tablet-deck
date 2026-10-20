@@ -80,10 +80,14 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; WorkingDir: "{app
 Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall delete rule name=""{#FirewallRule}"""; Flags: runhidden
 Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall add rule name=""{#FirewallRule}"" dir=in action=allow program=""{app}\{#ServerExe}"" enable=yes profile=private"; Flags: runhidden; StatusMsg: "Allowing Tablet Deck through Windows Firewall on private networks..."
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: postinstall nowait skipifsilent runasoriginaluser
+; An update started from the app's Update now button runs quietly with /RELAUNCH=1: start it again.
+Filename: "{app}\{#AppExe}"; Flags: nowait runasoriginaluser; Check: UpdatingFromApp
 
 [Registry]
 ; The window's "Start with Windows" checkbox writes this value; uninstalling removes it.
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; ValueName: "Tablet Deck"; Flags: uninsdeletevalue dontcreatekey
+; The window remembers the last version it ran here, to show "What's new" after an update.
+Root: HKCU; Subkey: "Software\Tablet Deck"; Flags: uninsdeletekey dontcreatekey
 
 [UninstallRun]
 Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall delete rule name=""{#FirewallRule}"""; Flags: runhidden; RunOnceId: "RemoveFirewallRule"
@@ -111,6 +115,38 @@ begin
         Result := Chr(Drive) + ':\' + Roots[I] + '\StarCitizen\LIVE';
         Exit;
       end;
+end;
+
+function RegisterWindowMessage(Name: String): Cardinal;
+  external 'RegisterWindowMessageW@user32.dll stdcall';
+
+// Asks a running Tablet Deck window to quit (it stops the server, which releases held
+// keys), and waits up to 10 s for it. See Program.QuitMessage in native/launcher.cs.
+procedure CloseRunningApp();
+var
+  I: Integer;
+begin
+  if not CheckForMutexes('Local\TabletDeck.Window') then Exit;
+  PostBroadcastMessage(RegisterWindowMessage('TabletDeck.Quit'), 0, 0);
+  for I := 1 to 100 do
+  begin
+    if not CheckForMutexes('Local\TabletDeck.Window') then Exit;
+    Sleep(100);
+  end;
+end;
+
+// True for a quiet update started from the app's Update now button (/RELAUNCH=1).
+function UpdatingFromApp(): Boolean;
+begin
+  Result := ExpandConstant('{param:relaunch|0}') = '1';
+end;
+
+// For an update from the app, close it before its files are replaced. A normal setup
+// leaves this to Windows' "close applications" step, which asks the player first.
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+begin
+  Result := '';
+  if UpdatingFromApp() then CloseRunningApp();
 end;
 
 function InitializeSetup(): Boolean;
@@ -163,9 +199,10 @@ var
   Code: Integer;
 begin
   // Close a running copy (the window, the server, and the key sender and voice listener
-  // it started) so its files can be removed.
+  // it started) so its files can be removed: politely first, then by force (1.0.0 had no window).
   if CurUninstallStep = usUninstall then
   begin
+    CloseRunningApp();
     Exec(ExpandConstant('{sys}\taskkill.exe'), '/f /t /im {#ServerExe} /im {#AppExe}', '', SW_HIDE, ewWaitUntilTerminated, Code);
     Sleep(500);
   end;

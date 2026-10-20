@@ -39,7 +39,7 @@ jobs:
 
       - run: npm ci
 
-      - name: Check the tag matches package.json
+      - name: Check the tag matches package.json and CHANGELOG.md
         if: startsWith(github.ref, 'refs/tags/')
         shell: pwsh
         run: |
@@ -47,6 +47,8 @@ jobs:
           if ("${{ github.ref_name }}" -ne "v$version") {
             throw "Tag ${{ github.ref_name }} doesn't match package.json version $version. Update package.json or the tag."
           }
+          node scripts/release-notes.js $version > $null
+          if ($LASTEXITCODE -ne 0) { throw "Add a '## $version' section to CHANGELOG.md." }
 
       - name: Install Inno Setup if missing
         shell: pwsh
@@ -108,8 +110,15 @@ jobs:
           $version = "${{ github.ref_name }}".TrimStart("v")
           $setup = "dist/TabletDeck-Setup-$version.exe"
           $hash = (Get-Content "$setup.sha256").Split(" ")[0]
+          $changes = (node scripts/release-notes.js $version) -join "`n"
           $notes = @"
-          Download **TabletDeck-Setup-$version.exe** below and run it. No Node.js needed.
+          ## What's new
+
+          $changes
+
+          ## Download
+
+          Download **TabletDeck-Setup-$version.exe** below and run it. No Node.js needed. If you already have Tablet Deck 1.2.0 or later, it offers the update itself.
 
           If Windows shows "Windows protected your PC" (unknown publisher), click **More info**, then **Run anyway**. See the README for details.
 

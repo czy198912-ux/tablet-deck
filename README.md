@@ -59,6 +59,16 @@ running in the tray (next to the clock); double-click the tray icon to bring it
 back, or right-click it to quit. **Closing** the window quits Tablet Deck. Tick
 **Start with Windows** to have it start in the tray when you log in.
 
+**Updates:** Tablet Deck checks GitHub for a new version when it starts and
+once a day. When there is one, the window shows **What's new** and **Update
+now**. Updating downloads the new installer, checks it against the release's
+checksum, and installs it after the usual Windows permission prompt. Tablet
+Deck then closes, releasing any held keys, and opens again, keeping your
+settings. Nothing installs until you click. Untick **Check for updates
+automatically** to stop the checks; **Check for updates now** in the tray menu
+still works. Versions before 1.2.0 can't update themselves, so download 1.2.0
+once by hand. [CHANGELOG.md](CHANGELOG.md) lists what changed in each version.
+
 If the tablet can't connect, check that Windows treats your network as
 **Private** (Settings → Network & Internet → your network). The firewall rule
 only covers private networks, so the deck isn't reachable on public Wi-Fi.
@@ -177,8 +187,9 @@ Node's
 feature. The window runs that server hidden with `--ui` and reads its status
 lines. `installer/TabletDeck.iss` is the Inno Setup script.
 
-To publish a release, set `version` in `package.json`, commit, then push a
-matching tag:
+To publish a release, set `version` in `package.json`, add a section for it at
+the top of `CHANGELOG.md` (it becomes the release notes, and the release stops
+without one), commit, then push a matching tag:
 
 ```
 git tag v1.0.0
@@ -369,6 +380,8 @@ the settings folder first, then among the built-in files.
   from 0 to 1 (default 0.6). Raise it if it triggers on the wrong things, lower
   it if it often says "Didn't catch that". The app window's Voice strictness
   slider changes it too.
+- `autoUpdate`: installed app only. Check GitHub for new versions when the app
+  starts and once a day (default `true`). The window's checkbox changes it.
 
 ## Safety
 
