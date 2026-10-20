@@ -109,8 +109,10 @@
       },
 
       // Hold-to-talk mic for voice commands; hidden when they're turned off on the PC.
+      // An optional "label" shows next to the mic.
       talk(e) {
-        const el = box(make("button", "hud-btn s-top js-talk", `<span class="hud-ico">${D.deckIcon("mic")}</span>`), e);
+        const el = box(make("button", "hud-btn s-top js-talk", `<span class="hud-ico">${D.deckIcon("mic")}</span>${e.label ? `<span class="hud-lbl"></span>` : ""}`), e);
+        if (e.label) text(el, ".hud-lbl", e.label);
         el.type = "button";
         el.setAttribute("aria-label", "Hold to talk");
         D.bindTalk(el);
