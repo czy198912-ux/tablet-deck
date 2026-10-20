@@ -5,7 +5,7 @@ section becomes the notes of its
 [GitHub release](https://github.com/nodieCode/tablet-deck/releases), so add one
 before tagging a release.
 
-## 1.3.0 (not released yet)
+## 1.3.0 (2026-10-20)
 
 - **Settings** button in the window: change the pairing code (or make a new
   random one), the port, the "only while Star Citizen is in front" check, how
