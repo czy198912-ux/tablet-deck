@@ -5,7 +5,7 @@ section becomes the notes of its
 [GitHub release](https://github.com/nodieCode/tablet-deck/releases), so add one
 before tagging a release.
 
-## 1.4.0 (not released yet)
+## 1.4.0 (2026-10-20)
 
 - **Push-to-talk from a PC key:** in **Settings**, pick any key or mouse button
   (Mouse 4/5 work well) to talk to Tablet Deck without touching the tablet.
