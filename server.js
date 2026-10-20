@@ -2,7 +2,8 @@
 // presses into keyboard scancodes on this PC. No dependencies beyond Node itself.
 //
 //   node server.js            normal mode
-//   node server.js --dry-run  log key events instead of sending them
+//   node server.js --dry-run  log key events instead of sending them, and stream them
+//                             to the sandbox page (public/showcase.html)
 "use strict";
 const http = require("http");
 const fs = require("fs");
@@ -172,23 +173,43 @@ function buildNative(name, what, refs = []) {
   return exe;
 }
 
-let sender = null;
-const focusWaiters = []; // pending "focus" queries, answered in order by the key sender
-function startSender() {
-  if (DRY_RUN) return;
-  sender = spawn(buildNative("keysender", "key sender"), [], { stdio: ["pipe", "pipe", "inherit"] });
+// Starts native/keysender.exe. `proc.focusWaiters` holds pending "focus" queries, answered in order.
+function spawnKeySender(onExit) {
+  const proc = spawn(buildNative("keysender", "key sender"), [], { stdio: ["pipe", "pipe", "inherit"] });
+  proc.focusWaiters = [];
   let pending = "";
-  sender.stdout.on("data", (d) => {
+  proc.stdout.on("data", (d) => {
     const lines = (pending + d.toString()).split(/\r?\n/);
     pending = lines.pop();
     for (const line of lines) {
       if (line.startsWith("err")) console.error("key sender:", line);
-      else if (line.startsWith("focus ")) focusWaiters.shift()?.(line === "focus 1");
+      else if (line.startsWith("focus ")) proc.focusWaiters.shift()?.(line === "focus 1");
     }
   });
-  sender.on("exit", (code) => {
+  proc.on("exit", (code) => {
+    for (const answer of proc.focusWaiters.splice(0)) answer(false);
+    onExit(code);
+  });
+  return proc;
+}
+
+// Resolves true if the game owns the window in front, asking the given key sender process.
+function askFocus(proc) {
+  return new Promise((resolve) => {
+    let done = false;
+    const answer = (focused) => { if (!done) { done = true; resolve(focused); } };
+    proc.focusWaiters.push(answer);
+    proc.stdin.write(`focus ${GAME_PROCESS}\n`);
+    // An unanswered query counts as not focused; its late reply still shifts it off the queue.
+    setTimeout(() => answer(false), 1000);
+  });
+}
+
+let sender = null;
+function startSender() {
+  if (DRY_RUN) { startFocusProbe(); return; }
+  sender = spawnKeySender((code) => {
     console.error(`Key sender exited (${code}); restarting.`);
-    for (const answer of focusWaiters.splice(0)) answer(false);
     sender = null;
     setTimeout(startSender, 500);
   });
@@ -197,14 +218,27 @@ function startSender() {
 // Resolves true when keys may be sent: the check is off, it's a dry run, or the game is in front.
 function gameFocused() {
   if (!config.onlyWhenGameFocused || !sender) return Promise.resolve(true);
-  return new Promise((resolve) => {
-    let done = false;
-    const answer = (focused) => { if (!done) { done = true; resolve(focused); } };
-    focusWaiters.push(answer);
-    sender.stdin.write(`focus ${GAME_PROCESS}\n`);
-    // An unanswered query counts as not focused; its late reply still shifts it off the queue.
-    setTimeout(() => answer(false), 1000);
-  });
+  return askFocus(sender);
+}
+
+// Dry runs press nothing, but a key sender that only ever gets "focus" queries lets the
+// sandbox log say whether the focus check would have skipped a press. It's kept apart
+// from `sender`, so sendKey can't reach it.
+let focusProbe = null;
+function startFocusProbe() {
+  if (!config.onlyWhenGameFocused) return;
+  try {
+    focusProbe = spawnKeySender((code) => { console.error(`Focus probe exited (${code}).`); focusProbe = null; });
+  } catch (err) {
+    console.error(`Focus probe unavailable: ${err.message}`);
+  }
+}
+
+// Dry run: true if the focus check would have skipped a press, null when that's unknown.
+async function wouldBlock() {
+  if (!config.onlyWhenGameFocused) return false;
+  if (!focusProbe) return null;
+  return !(await askFocus(focusProbe));
 }
 
 function sendKey(direction, [code, ext]) {
@@ -243,10 +277,35 @@ function skipped(btn, client) {
   client?.send({ t: "blocked", id: btn.id });
 }
 
+// ---------- sandbox event stream (dry run only) ----------
+
+// The showcase page (public/showcase.html) reads these as its live "keys sent" log.
+const eventStreams = new Set();
+function emit(event) {
+  if (!DRY_RUN) return;
+  const data = `data: ${JSON.stringify({ time: Date.now(), ...event })}\n\n`;
+  for (const res of eventStreams) res.write(data);
+}
+setInterval(() => { for (const res of eventStreams) res.write(": ping\n\n"); }, 20000).unref();
+
+// Logs a press with the focus verdict. Queued so a hold's "up" can't overtake its "down".
+let reports = Promise.resolve();
+function report(btn, kind, extra = {}) {
+  if (!DRY_RUN || !eventStreams.size) return;
+  const time = Date.now(); // when it happened, not when the focus probe answered
+  reports = reports.then(async () => {
+    // Releases always go through, so only presses get a focus verdict.
+    const blocked = kind === "up" ? false : await wouldBlock();
+    emit({ t: "press", time, id: btn.id, label: btn.label, keys: btn.keys, kind, blocked, ...extra });
+  });
+}
+
 // Presses a button's keys for `ms`, then releases them, unless the game isn't in front.
-async function tapButton(btn, client, ms = btn.ms || config.tapMs) {
+// `kind` (tap, timed, voice) only labels the press in the sandbox log.
+async function tapButton(btn, client, ms = btn.ms || config.tapMs, kind = btn.mode === "timed" ? "timed" : "tap") {
   if (!(await gameFocused())) { skipped(btn, client); return; }
   console.log(`${btn.label} (${btn.keys}) tap`);
+  report(btn, kind, { ms });
   await pressCombo(btn.scancodes);
   await sleep(ms);
   await releaseCombo(btn.scancodes);
@@ -325,13 +384,15 @@ async function onVoice(id, confidence, text) {
   const btn = id ? loadLayout().buttons.get(id) : null;
   if (!btn || confidence < config.voiceConfidence) {
     console.log(btn ? `Voice: "${text}" ignored (confidence ${confidence.toFixed(2)})` : "Voice: didn't catch that");
+    emit(btn ? { t: "voice", result: "ignored", text, label: btn.label, confidence } : { t: "voice", result: "unheard" });
     client?.send({ t: "unheard" });
     return;
   }
   console.log(`Voice: "${text}" -> ${btn.label} (confidence ${confidence.toFixed(2)})`);
+  emit({ t: "voice", result: "heard", text, label: btn.label, confidence });
   client?.send({ t: "heard", id: btn.id, label: btn.label, text });
   // Hold buttons (quantum engage, laser power) get a longer press, set per button.
-  await tapButton(btn, client, btn.voiceMs || btn.ms || config.tapMs);
+  await tapButton(btn, client, btn.voiceMs || btn.ms || config.tapMs, "voice");
 }
 
 // ---------- minimal WebSocket server (RFC 6455, text frames) ----------
@@ -388,6 +449,15 @@ const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".
 
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://x");
+  // Server-sent events for the showcase page's key log; dry runs only.
+  if (url.pathname === "/events" && DRY_RUN) {
+    if (url.searchParams.get("t") !== config.token) { res.writeHead(403); res.end("bad token"); return; }
+    res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-store", Connection: "keep-alive" });
+    res.write(`data: ${JSON.stringify({ t: "hello", time: Date.now(), focusCheck: config.onlyWhenGameFocused, focusProbe: Boolean(focusProbe), voice: Boolean(voice) })}\n\n`);
+    eventStreams.add(res);
+    req.on("close", () => eventStreams.delete(res));
+    return;
+  }
   if (url.pathname === "/layout.json") {
     if (url.searchParams.get("t") !== config.token) { res.writeHead(403); res.end("bad token"); return; }
     try {
@@ -419,7 +489,9 @@ server.on("upgrade", (req, socket) => {
   }
   wsAccept(req, socket);
   const who = socket.remoteAddress;
+  const device = url.searchParams.get("device") || "tablet";
   console.log(`Tablet connected: ${who}`);
+  emit({ t: "client", on: true, device });
   const client = { send: (obj) => { if (!socket.destroyed) wsSend(socket, JSON.stringify(obj)); } };
   client.send({ t: "hello", voice: Boolean(config.voice) });
 
@@ -439,6 +511,7 @@ server.on("upgrade", (req, socket) => {
     try { msg = JSON.parse(text); } catch { return; }
     if (msg.t === "hb") return;
     if (msg.t === "voice") {
+      emit({ t: "voice", result: msg.on ? "listen" : "stop", running: Boolean(voice) });
       if (!voice) {
         client.send({ t: "voice-off", reason: config.voice ? "Voice commands aren't running on the PC" : "Voice commands are turned off" });
       } else if (msg.on) {
@@ -462,12 +535,14 @@ server.on("upgrade", (req, socket) => {
       }
       if (held.get(btn.id) !== hold) return;
       console.log(`${btn.label} (${btn.keys}) down`);
+      report(btn, "down");
       await pressCombo(btn.scancodes);
     } else if (msg.t === "up" && held.has(btn.id)) {
       // Releases always go through, even after the game loses focus, so no key stays stuck.
       const { sc } = held.get(btn.id);
       held.delete(btn.id);
       console.log(`${btn.label} up`);
+      report(btn, "up");
       await releaseCombo(sc);
     } else if (msg.t === "tap") {
       await tapButton(btn, client);
@@ -477,6 +552,7 @@ server.on("upgrade", (req, socket) => {
     void releaseAll();
     if (voiceOwner === client) { voice?.stdin.write("stop\n"); voiceOwner = null; }
     console.log(`Tablet disconnected: ${who}`);
+    emit({ t: "client", on: false, device });
   });
 });
 

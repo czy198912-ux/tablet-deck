@@ -94,6 +94,12 @@
   const device = new URLSearchParams(location.search).get("device")
     || (Math.min(screen.width, screen.height) < 500 ? "phone" : "tablet");
   document.documentElement.dataset.device = device;
+  // ?safe=top,right,bottom,left (CSS px) stands in for the screen's safe-area insets. Pages
+  // in an iframe always see zero insets, so the showcase frame passes the phone's here.
+  const safe = (new URLSearchParams(location.search).get("safe") || "").split(",").map(Number);
+  if (safe.length === 4 && safe.every((n) => n >= 0)) {
+    ["top", "right", "bottom", "left"].forEach((side, i) => document.documentElement.style.setProperty(`--safe-${side}`, `${safe[i]}px`));
+  }
   let layout = null;
   let ws = null;
   let pageIndex = Number(store.get("page") || 0);

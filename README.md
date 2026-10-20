@@ -90,6 +90,33 @@ from `https` pages, so there the shortcut opens in a browser tab.
 `start.bat --dry-run` logs button presses without sending any keys, which is
 handy for trying the deck out. Dry runs skip the focus check.
 
+### Showcase / sandbox
+
+To show or test the deck without a phone, and without pressing keys in the
+game, run a dry-run copy on another port and open the showcase page on the PC:
+
+```
+node server.js --dry-run --port 8790
+```
+
+Then open `http://localhost:8790/showcase.html?t=<pairing code>`. It shows the
+deck inside an iPhone 15 Pro frame (852×393, landscape) or, with the toggle, an
+iPad frame (1024×768). Clicks work as taps. The phone frame passes the iPhone's
+safe-area insets (`&safe=0,59,21,59`) so the deck stays clear of the Dynamic
+Island and home indicator as on the real phone. Pages inside a frame always see
+zero insets otherwise.
+
+Next to the device, a live log shows each button's label, its keys, and how it
+was pressed (tap, long press, hold and release, or voice). It also shows voice
+results and whether the focus check would have blocked the press. The press
+still goes through, because it's a dry run. Mode switches and panel arrows
+appear as "screen only", since they send nothing to the PC. The log comes from
+`/events`, which only exists in `--dry-run` and needs the pairing code. Against
+a normal server the page warns that taps send real keys.
+
+In Claude Code, `.claude/launch.json` has this as the **deck-sandbox** config,
+so the built-in browser can start it with `preview_start`.
+
 ## Keybinds
 
 The deck uses Star Citizen 4.x default keys where they exist. Actions with no

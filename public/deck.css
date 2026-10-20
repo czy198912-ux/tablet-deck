@@ -7,7 +7,7 @@ body {
   color: var(--text);
   font: var(--label-weight) 16px/1.2 var(--font-body);
   display: flex; flex-direction: column;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  padding: var(--safe-top, env(safe-area-inset-top)) var(--safe-right, env(safe-area-inset-right)) var(--safe-bottom, env(safe-area-inset-bottom)) var(--safe-left, env(safe-area-inset-left));
   user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
   overscroll-behavior: none; touch-action: manipulation;
 }
@@ -125,7 +125,7 @@ body.offline main { opacity: .45; filter: saturate(.4); }
 
 /* ---------- toast ---------- */
 #toast {
-  position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 24px); z-index: 20;
+  position: fixed; left: 50%; bottom: calc(var(--safe-bottom, env(safe-area-inset-bottom)) + 24px); z-index: 20;
   transform: translate(-50%, 12px); opacity: 0; pointer-events: none;
   max-width: calc(100% - 32px); padding: 10px 18px; border-radius: min(var(--key-radius), 10px);
   background: color-mix(in srgb, var(--panel) 92%, transparent); color: var(--text);
