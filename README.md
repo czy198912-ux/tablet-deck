@@ -44,14 +44,20 @@ Wi-Fi or network. Nothing else: no Node.js, no account.
    the desktop, if you tick that), and lets it through Windows Firewall on
    private networks. Tick **Install the Star Citizen keybind profile** to copy
    the deck's keybinds into your game folder (see [Keybinds](#keybinds)).
-4. Open **Tablet Deck** from the Start menu. Its window prints an address and a
-   pairing code, for example `http://192.168.1.20:8765` and
-   `Pairing code: 1a2b3c4d`, plus a QR code. Scan the QR code with the tablet's
-   camera, or open the address on your tablet and enter the code. Use "Add to
-   Home Screen" for a full-screen app.
+4. Open **Tablet Deck** from the Start menu. Its window shows a QR code, an
+   address such as `http://192.168.1.20:8765` and a pairing code such as
+   `1a2b3c4d`. Scan the QR code with the tablet's camera, or open the address on
+   your tablet and enter the code. Use "Add to Home Screen" for a full-screen
+   app.
 5. Click into Star Citizen. Buttons only press keys while Star Citizen is the
    window in front; otherwise the tablet shows "Star Citizen not focused" and
    nothing is typed into the other window.
+
+The window also shows how many tablets are connected, whether voice commands
+are ready, and a log of button presses. **Minimize** it to keep Tablet Deck
+running in the tray (next to the clock); double-click the tray icon to bring it
+back, or right-click it to quit. **Closing** the window quits Tablet Deck. Tick
+**Start with Windows** to have it start in the tray when you log in.
 
 If the tablet can't connect, check that Windows treats your network as
 **Private** (Settings → Network & Internet → your network). The firewall rule
@@ -74,7 +80,7 @@ flowchart LR
     tablet["📱 Tablet or phone<br/>any browser"]
     mic["🎙️ PC microphone"]
     subgraph pc["Gaming PC"]
-        server["Tablet Deck server<br/>TabletDeck.exe or start.bat"]
+        server["Tablet Deck server<br/>Tablet Deck app or start.bat"]
         voice["Voice listener<br/>Windows speech recognition"]
         keys["Key sender"]
     end
@@ -117,12 +123,13 @@ on first run with the C# compiler that ships with Windows.
 4. Pair the tablet and click into Star Citizen as in steps 4 and 5 of
    [Download](#download).
 
-Running from source keeps `config.json` next to `server.js` instead of in
-`%APPDATA%`.
+Running from source shows everything in a console window instead of the app
+window, and keeps `config.json` next to `server.js` instead of in `%APPDATA%`.
 
 `start.bat --dry-run` logs button presses without sending any keys, which is
 handy for trying the deck out. Dry runs skip the focus check. `--port <n>`
-overrides the port in `config.json`. The installed app takes the same options:
+overrides the port in `config.json`. The installed app takes the same options
+and passes them on to its server:
 `"C:\Program Files\Tablet Deck\TabletDeck.exe" --dry-run`.
 
 ### Showcase / sandbox
@@ -162,10 +169,13 @@ npm run build
 This makes `dist/TabletDeck-Setup-<version>.exe` (the version comes from
 `package.json`). It needs [Inno Setup 6](https://jrsoftware.org/isinfo.php)
 and Node.js 20 or newer. `scripts/build.js` checks the keybind profile is up to
-date, compiles the key sender and voice listener, and packs `server.js`, `qr.js`,
-`public/`, `layouts/` and `keybinds/` into `TabletDeck.exe` with Node's
+date, compiles the app window (`native/launcher.cs`, which becomes
+`TabletDeck.exe`), the key sender and the voice listener, and packs `server.js`,
+`qr.js`, `public/`, `layouts/` and `keybinds/` into `TabletDeckServer.exe` with
+Node's
 [single executable application](https://nodejs.org/api/single-executable-applications.html)
-feature. `installer/TabletDeck.iss` is the Inno Setup script.
+feature. The window runs that server hidden with `--ui` and reads its status
+lines. `installer/TabletDeck.iss` is the Inno Setup script.
 
 To publish a release, set `version` in `package.json`, commit, then push a
 matching tag:

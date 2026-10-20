@@ -19,11 +19,14 @@ const qr = require("./qr");
 const sea = (() => { try { return require("node:sea"); } catch { return null; } })();
 const INSTALLED = Boolean(sea && sea.isSea());
 // Running from source, everything lives in the repo folder. The installed app keeps
-// public/, layouts/ and keybinds/ inside TabletDeck.exe, the native helpers next to it in
-// Program Files (read-only), and config.json plus the player's own files in %APPDATA%.
+// public/, layouts/ and keybinds/ inside TabletDeckServer.exe, the native helpers next to
+// it in Program Files (read-only), and config.json plus the player's own files in %APPDATA%.
 const APP_DIR = INSTALLED ? path.dirname(process.execPath) : __dirname;
 const DATA_DIR = INSTALLED ? path.join(process.env.APPDATA || os.homedir(), "TabletDeck") : __dirname;
 const DRY_RUN = process.argv.includes("--dry-run");
+// --ui: run under the app window (native/launcher.cs), which shows the console output as
+// its log and reads "@ui {json}" status lines. It sends "quit" on stdin to stop the server.
+const UI = process.argv.includes("--ui");
 // --port <n> overrides config.json, e.g. to run a dry-run copy next to the real one.
 const portArg = process.argv.indexOf("--port");
 const PORT_OVERRIDE = portArg > -1 ? Number(process.argv[portArg + 1]) : null;
@@ -33,8 +36,14 @@ const CONFIG_PATH = path.join(DATA_DIR, "config.json");
 // ends. Like start.bat's "pause", keep it open after a fatal error so it can be read.
 function fatal(message) {
   console.error(message);
+  ui({ t: "fatal", text: message });
   if (INSTALLED && process.stdin.isTTY) spawnSync("cmd.exe", ["/c", "pause"], { stdio: "inherit" });
   process.exit(1);
+}
+
+// A status line for the app window; nothing without --ui.
+function ui(event) {
+  if (UI) console.log(`@ui ${JSON.stringify(event)}`);
 }
 if (INSTALLED) {
   process.title = "Tablet Deck";
@@ -393,10 +402,11 @@ function voiceCommands(buttons) {
 let voice = null;      // the voice listener, once its grammar is loaded
 let voiceOwner = null; // the tablet holding the talk button; it gets the results
 function startVoice() {
-  if (!config.voice) return;
+  if (!config.voice) { ui({ t: "voice", state: "off" }); return; }
   let exe;
   try { exe = buildNative("voice", "voice commands", ["System.Speech.dll"]); } catch (err) {
     console.error(`Voice commands unavailable: ${err.message}.`);
+    ui({ t: "voice", state: "error", text: err.message });
     return;
   }
   const commands = voiceCommands(loadLayout().buttons);
@@ -409,8 +419,10 @@ function startVoice() {
       if (line.startsWith("ready")) {
         voice = proc;
         console.log(`Voice commands ready (${commands.size} phrases, ${line.slice(6)}). Hold the mic button on the tablet and speak.`);
+        ui({ t: "voice", state: "ready", phrases: commands.size, language: line.slice(6) });
       } else if (line.startsWith("err")) {
         console.error(`Voice commands unavailable: ${line.slice(4)}. See "Voice commands" at https://github.com/nodieCode/tablet-deck#voice-commands`);
+        ui({ t: "voice", state: "error", text: line.slice(4) });
       } else if (line.startsWith("heard ")) {
         const [, id, confidence, ...words] = line.split(" ");
         void onVoice(id, Number(confidence), words.join(" "));
@@ -423,6 +435,7 @@ function startVoice() {
     const wasReady = voice === proc;
     if (wasReady) voice = null;
     console.error(`Voice listener exited (${code})${wasReady ? "; restarting" : ""}.`);
+    ui({ t: "voice", state: wasReady ? "starting" : "error", text: `voice listener exited (${code})` });
     if (wasReady) setTimeout(startVoice, 2000);
   });
   for (const [phrase, id] of commands) proc.stdin.write(`phrase ${id} ${phrase}\n`);
@@ -527,6 +540,7 @@ const server = http.createServer((req, res) => {
   res.end(body);
 });
 
+let connectedTablets = 0;
 server.on("upgrade", (req, socket) => {
   const url = new URL(req.url, "http://x");
   if (url.pathname !== "/ws" || url.searchParams.get("t") !== config.token) {
@@ -541,6 +555,7 @@ server.on("upgrade", (req, socket) => {
   const device = url.searchParams.get("device") || "tablet";
   console.log(`Tablet connected: ${who}`);
   emit({ t: "client", on: true, device });
+  ui({ t: "clients", count: ++connectedTablets });
   const client = { send: (obj) => { if (!socket.destroyed) wsSend(socket, JSON.stringify(obj)); } };
   client.send({ t: "hello", voice: Boolean(config.voice) });
 
@@ -602,6 +617,7 @@ server.on("upgrade", (req, socket) => {
     if (voiceOwner === client) { voice?.stdin.write("stop\n"); voiceOwner = null; }
     console.log(`Tablet disconnected: ${who}`);
     emit({ t: "client", on: false, device });
+    ui({ t: "clients", count: --connectedTablets });
   });
 });
 
@@ -610,16 +626,31 @@ server.on("upgrade", (req, socket) => {
 try { loadLayout(); loadLayout("phone"); } catch (err) { fatal(`Layout error: ${err.message}`); }
 startSender();
 startVoice();
+server.on("error", (err) => {
+  if (err.code !== "EADDRINUSE") throw err;
+  fatal(`Port ${config.port} is already in use. Is Tablet Deck already running? Otherwise change "port" in ${CONFIG_PATH}.`);
+});
 server.listen(config.port, "0.0.0.0", () => {
   const ips = Object.values(os.networkInterfaces()).flat()
     .filter((i) => i && i.family === "IPv4" && !i.internal && !i.address.startsWith("169.254"))
     .map((i) => i.address);
+  // Home networks are usually 192.168.x.x or 10.x.x.x; VPN and virtual adapters come later.
+  const lan = ips.find((ip) => ip.startsWith("192.168.")) || ips.find((ip) => ip.startsWith("10.")) || ips[0];
   console.log(`\nTablet Deck${VERSION ? ` ${VERSION}` : ""} running${DRY_RUN ? " (DRY RUN: no keys are sent)" : ""}.`);
+  if (UI) {
+    // The window shows the address, code and QR code itself; rows of "1" (dark) and "0".
+    const link = lan ? `http://${lan}:${config.port}/?t=${config.token}` : null;
+    ui({
+      t: "ready", version: VERSION, port: config.port, token: config.token, link, settings: CONFIG_PATH,
+      others: ips.filter((ip) => ip !== lan).map((ip) => `http://${ip}:${config.port}`),
+      qr: link ? qr.matrix(link).map((row) => row.map((dark) => (dark ? "1" : "0")).join("")) : [],
+      dryRun: DRY_RUN, focusCheck: Boolean(config.onlyWhenGameFocused),
+    });
+    return;
+  }
   if (INSTALLED) console.log(`Settings: ${CONFIG_PATH}`);
   console.log("Open this on your tablet (same Wi-Fi/network):");
   for (const ip of ips) console.log(`   http://${ip}:${config.port}/?t=${config.token}`);
-  // Home networks are usually 192.168.x.x or 10.x.x.x; VPN and virtual adapters come later.
-  const lan = ips.find((ip) => ip.startsWith("192.168.")) || ips.find((ip) => ip.startsWith("10.")) || ips[0];
   if (lan) {
     console.log(`\nOr scan this with the tablet's camera (${lan}):\n`);
     console.log(qr.toTerminal(`http://${lan}:${config.port}/?t=${config.token}`, { color: process.stdout.isTTY }));
@@ -640,3 +671,10 @@ process.on("SIGTERM", shutdown);
 // Closing the console window (SIGHUP) or Ctrl+Break also releases held keys first.
 process.on("SIGHUP", shutdown);
 process.on("SIGBREAK", shutdown);
+// The app window asks the server to stop with "quit"; if the window itself goes away,
+// stdin closes, which stops the server the same way.
+if (UI) {
+  process.stdin.setEncoding("utf8");
+  process.stdin.on("data", (text) => { if (/^quit\s*$/m.test(text)) shutdown(); });
+  process.stdin.on("end", shutdown);
+}

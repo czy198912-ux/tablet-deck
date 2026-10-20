@@ -5,11 +5,13 @@
 //   npm run build
 //
 // 1. Checks keybinds/TabletDeck-StarCitizen.xml is up to date with the layouts.
-// 2. Compiles native/keysender.cs and native/voice.cs, with version info.
-// 3. Packs server.js, qr.js, public/, layouts/ and keybinds/ into TabletDeck.exe, a Node
-//    single executable application made from the node.exe running this script.
-// 4. Signs the three .exe files, if signing is set up (see SIGN_CMD below).
-// 5. Runs Inno Setup on installer/TabletDeck.iss, which signs the installer too.
+// 2. Makes the app icon from public/icon-512.png.
+// 3. Compiles the app window (native/launcher.cs -> TabletDeck.exe), the key sender and the
+//    voice listener, with version info.
+// 4. Packs server.js, qr.js, public/, layouts/ and keybinds/ into TabletDeckServer.exe, a
+//    Node single executable application made from the node.exe running this script.
+// 5. Signs the .exe files, if signing is set up (see SIGN_CMD below).
+// 6. Runs Inno Setup on installer/TabletDeck.iss, which signs the installer too.
 //
 // Needs Windows, the C# compiler that ships with the .NET Framework, and Inno Setup 6
 // (ISCC.exe on PATH or in its usual folders, or set ISCC to its path).
@@ -63,70 +65,8 @@ fs.mkdirSync(DIST, { recursive: true });
 step("Checking the keybind profile");
 run(process.execPath, [path.join(ROOT, "tools", "make-profile.js"), "--check"]);
 
-step("Compiling the key sender and voice listener");
-const fw = path.join(process.env.WINDIR || "C:\\Windows", "Microsoft.NET", "Framework64", "v4.0.30319");
-// Same compiler and flags server.js uses from source, plus a version resource, which
-// makes the files easier for antivirus software and players to identify.
-function compileNative(name, title, refs = []) {
-  const info = path.join(BUILD, `${name}-version.cs`);
-  fs.writeFileSync(info, [
-    "using System.Reflection;",
-    `[assembly: AssemblyTitle("${title}")]`,
-    `[assembly: AssemblyDescription("${title}")]`,
-    '[assembly: AssemblyProduct("Tablet Deck")]',
-    '[assembly: AssemblyCompany("nodieCode")]',
-    `[assembly: AssemblyCopyright("${COPYRIGHT}")]`,
-    `[assembly: AssemblyVersion("${FILE_VERSION}")]`,
-    `[assembly: AssemblyFileVersion("${FILE_VERSION}")]`,
-    `[assembly: AssemblyInformationalVersion("${VERSION}")]`,
-    "",
-  ].join("\n"));
-  const out = path.join(APP, "native", `${name}.exe`);
-  run(path.join(fw, "csc.exe"), ["/nologo", "/optimize", "/target:exe", "/platform:x64", `/lib:${path.join(fw, "WPF")}`,
-    ...refs.map((r) => `/r:${r}`), `/out:${out}`, path.join(ROOT, "native", `${name}.cs`), info]);
-  return out;
-}
-const natives = [
-  compileNative("keysender", "Tablet Deck key sender"),
-  compileNative("voice", "Tablet Deck voice commands", ["System.Speech.dll"]),
-];
-
-step("Packing TabletDeck.exe");
-// A single executable runs one script and can only require Node's built-in modules, so
-// qr.js is inlined where server.js requires it.
-const qrRequire = 'const qr = require("./qr");';
-const server = fs.readFileSync(path.join(ROOT, "server.js"), "utf8");
-if (!server.includes(qrRequire)) throw new Error(`server.js no longer contains ${qrRequire}; update scripts/build.js.`);
-const qrSource = fs.readFileSync(path.join(ROOT, "qr.js"), "utf8");
-const bundle = server.replace(qrRequire, () =>
-  `const qr = (() => { const module = { exports: {} };\n${qrSource}\nreturn module.exports; })();`);
-fs.writeFileSync(path.join(BUILD, "bundle.js"), bundle);
-
-// Files server.js reads with readBundled(), under their repo paths.
-const assets = ["package.json", ...filesUnder("public"), ...filesUnder("layouts"), ...filesUnder("keybinds")];
-const blob = path.join(BUILD, "sea.blob");
-fs.writeFileSync(path.join(BUILD, "sea-config.json"), JSON.stringify({
-  main: path.join(BUILD, "bundle.js"),
-  output: blob,
-  disableExperimentalSEAWarning: true,
-  assets: Object.fromEntries(assets.map((a) => [a, path.join(ROOT, a)])),
-}, null, 2));
-run(process.execPath, ["--experimental-sea-config", path.join(BUILD, "sea-config.json")]);
-console.log(`${assets.length} bundled files`);
-
-const exe = path.join(APP, "TabletDeck.exe");
-fs.copyFileSync(process.execPath, exe);
-
-// node.exe's signature stops matching once the app is added, so remove it first.
-const kits = path.join(process.env["ProgramFiles(x86)"] || "C:\\Program Files (x86)", "Windows Kits", "10", "bin");
-const signtool = firstExisting([
-  process.env.SIGNTOOL,
-  ...(fs.existsSync(kits) ? fs.readdirSync(kits).filter((d) => /^10\./.test(d)).sort().reverse().map((d) => path.join(kits, d, "x64", "signtool.exe")) : []),
-]);
-if (signtool) run(signtool, ["remove", "/s", exe]);
-else console.log("signtool not found (Windows SDK); TabletDeck.exe keeps node.exe's old signature.");
-
-// Icon: the deck's 512 px icon scaled to the sizes Windows uses, stored as PNGs in an .ico.
+step("Making the icon");
+// The deck's 512 px icon scaled to the sizes Windows uses, stored as PNGs in an .ico.
 const sizes = [256, 48, 32, 16];
 execFileSync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", `
   Add-Type -AssemblyName System.Drawing
@@ -157,24 +97,88 @@ sizes.forEach((s, i) => {
 const ico = path.join(BUILD, "icon.ico");
 fs.writeFileSync(ico, Buffer.concat([icoHeader, ...pngs]));
 
+step("Compiling the app window, key sender and voice listener");
+const fw = path.join(process.env.WINDIR || "C:\\Windows", "Microsoft.NET", "Framework64", "v4.0.30319");
+// The compiler and flags server.js uses from source, plus a version resource, which makes
+// the files easier for antivirus software and players to identify.
+function compileCs(name, out, title, { target = "exe", refs = [], icon = null } = {}) {
+  const info = path.join(BUILD, `${name}-version.cs`);
+  fs.writeFileSync(info, [
+    "using System.Reflection;",
+    `[assembly: AssemblyTitle("${title}")]`,
+    `[assembly: AssemblyDescription("${title}")]`,
+    '[assembly: AssemblyProduct("Tablet Deck")]',
+    '[assembly: AssemblyCompany("nodieCode")]',
+    `[assembly: AssemblyCopyright("${COPYRIGHT}")]`,
+    `[assembly: AssemblyVersion("${FILE_VERSION}")]`,
+    `[assembly: AssemblyFileVersion("${FILE_VERSION}")]`,
+    `[assembly: AssemblyInformationalVersion("${VERSION}")]`,
+    "",
+  ].join("\n"));
+  run(path.join(fw, "csc.exe"), ["/nologo", "/optimize", `/target:${target}`, "/platform:x64", `/lib:${path.join(fw, "WPF")}`,
+    ...refs.map((r) => `/r:${r}`), ...(icon ? [`/win32icon:${icon}`] : []), `/out:${out}`, path.join(ROOT, "native", `${name}.cs`), info]);
+  return out;
+}
+const window = compileCs("launcher", path.join(APP, "TabletDeck.exe"), "Tablet Deck",
+  { target: "winexe", refs: ["System.Windows.Forms.dll", "System.Drawing.dll", "System.Web.Extensions.dll"], icon: ico });
+const natives = [
+  compileCs("keysender", path.join(APP, "native", "keysender.exe"), "Tablet Deck key sender"),
+  compileCs("voice", path.join(APP, "native", "voice.exe"), "Tablet Deck voice commands", { refs: ["System.Speech.dll"] }),
+];
+
+step("Packing TabletDeckServer.exe");
+// A single executable runs one script and can only require Node's built-in modules, so
+// qr.js is inlined where server.js requires it.
+const qrRequire = 'const qr = require("./qr");';
+const server = fs.readFileSync(path.join(ROOT, "server.js"), "utf8");
+if (!server.includes(qrRequire)) throw new Error(`server.js no longer contains ${qrRequire}; update scripts/build.js.`);
+const qrSource = fs.readFileSync(path.join(ROOT, "qr.js"), "utf8");
+const bundle = server.replace(qrRequire, () =>
+  `const qr = (() => { const module = { exports: {} };\n${qrSource}\nreturn module.exports; })();`);
+fs.writeFileSync(path.join(BUILD, "bundle.js"), bundle);
+
+// Files server.js reads with readBundled(), under their repo paths.
+const assets = ["package.json", ...filesUnder("public"), ...filesUnder("layouts"), ...filesUnder("keybinds")];
+const blob = path.join(BUILD, "sea.blob");
+fs.writeFileSync(path.join(BUILD, "sea-config.json"), JSON.stringify({
+  main: path.join(BUILD, "bundle.js"),
+  output: blob,
+  disableExperimentalSEAWarning: true,
+  assets: Object.fromEntries(assets.map((a) => [a, path.join(ROOT, a)])),
+}, null, 2));
+run(process.execPath, ["--experimental-sea-config", path.join(BUILD, "sea-config.json")]);
+console.log(`${assets.length} bundled files`);
+
+const exe = path.join(APP, "TabletDeckServer.exe");
+fs.copyFileSync(process.execPath, exe);
+
+// node.exe's signature stops matching once the app is added, so remove it first.
+const kits = path.join(process.env["ProgramFiles(x86)"] || "C:\\Program Files (x86)", "Windows Kits", "10", "bin");
+const signtool = firstExisting([
+  process.env.SIGNTOOL,
+  ...(fs.existsSync(kits) ? fs.readdirSync(kits).filter((d) => /^10\./.test(d)).sort().reverse().map((d) => path.join(kits, d, "x64", "signtool.exe")) : []),
+]);
+if (signtool) run(signtool, ["remove", "/s", exe]);
+else console.log("signtool not found (Windows SDK); TabletDeckServer.exe keeps node.exe's old signature.");
+
 // Icon and version info before the app goes in; rcedit rewrites the resources.
 run(path.join(ROOT, "node_modules", "rcedit", "bin", "rcedit-x64.exe"), [exe,
   "--set-icon", ico,
   "--set-file-version", FILE_VERSION,
   "--set-product-version", VERSION,
-  "--set-version-string", "FileDescription", "Tablet Deck",
+  "--set-version-string", "FileDescription", "Tablet Deck server",
   "--set-version-string", "ProductName", "Tablet Deck",
   "--set-version-string", "CompanyName", "nodieCode",
   "--set-version-string", "LegalCopyright", COPYRIGHT,
-  "--set-version-string", "OriginalFilename", "TabletDeck.exe",
-  "--set-version-string", "InternalName", "TabletDeck",
+  "--set-version-string", "OriginalFilename", "TabletDeckServer.exe",
+  "--set-version-string", "InternalName", "TabletDeckServer",
 ]);
 
 (async () => {
   await inject(exe, "NODE_SEA_BLOB", fs.readFileSync(blob), { sentinelFuse: "NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2" });
 
   step(SIGN_CMD ? "Signing" : "Signing skipped (SIGN_CMD not set)");
-  for (const file of [exe, ...natives]) sign(file);
+  for (const file of [window, exe, ...natives]) sign(file);
 
   step("Building the installer");
   const iscc = firstExisting([

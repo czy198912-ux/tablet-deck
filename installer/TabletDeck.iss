@@ -6,7 +6,9 @@
 #endif
 
 #define AppName "Tablet Deck"
+; The app window (native/launcher.cs), and the server it runs hidden (server.js).
 #define AppExe "TabletDeck.exe"
+#define ServerExe "TabletDeckServer.exe"
 #define RepoUrl "https://github.com/nodieCode/tablet-deck"
 #define FirewallRule "Tablet Deck"
 
@@ -61,6 +63,7 @@ Name: "scprofile"; Description: "Install the Star Citizen keybind profile (Table
 
 [Files]
 Source: "{#BuildDir}\app\{#AppExe}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#BuildDir}\app\{#ServerExe}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#BuildDir}\app\native\*.exe"; DestDir: "{app}\native"; Flags: ignoreversion
 Source: "keybinds\TabletDeck-StarCitizen.xml"; DestDir: "{app}\keybinds"; Flags: ignoreversion
 Source: "LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"; Flags: ignoreversion
@@ -72,11 +75,15 @@ Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"; WorkingDir: "{ap
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; WorkingDir: "{app}"; Tasks: desktopicon
 
 [Run]
-; Let tablets reach the app on private (home) networks only, so Windows doesn't ask.
-; Deleting first keeps reinstalls from adding a second rule.
+; Let tablets reach the server on private (home) networks only, so Windows doesn't ask.
+; Deleting first keeps reinstalls and upgrades from adding a second rule.
 Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall delete rule name=""{#FirewallRule}"""; Flags: runhidden
-Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall add rule name=""{#FirewallRule}"" dir=in action=allow program=""{app}\{#AppExe}"" enable=yes profile=private"; Flags: runhidden; StatusMsg: "Allowing Tablet Deck through Windows Firewall on private networks..."
+Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall add rule name=""{#FirewallRule}"" dir=in action=allow program=""{app}\{#ServerExe}"" enable=yes profile=private"; Flags: runhidden; StatusMsg: "Allowing Tablet Deck through Windows Firewall on private networks..."
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: postinstall nowait skipifsilent runasoriginaluser
+
+[Registry]
+; The window's "Start with Windows" checkbox writes this value; uninstalling removes it.
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; ValueName: "Tablet Deck"; Flags: uninsdeletevalue dontcreatekey
 
 [UninstallRun]
 Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall delete rule name=""{#FirewallRule}"""; Flags: runhidden; RunOnceId: "RemoveFirewallRule"
@@ -155,11 +162,11 @@ var
   Settings: String;
   Code: Integer;
 begin
-  // Close a running copy (and the key sender and voice listener it started) so its
-  // files can be removed.
+  // Close a running copy (the window, the server, and the key sender and voice listener
+  // it started) so its files can be removed.
   if CurUninstallStep = usUninstall then
   begin
-    Exec(ExpandConstant('{sys}\taskkill.exe'), '/f /t /im {#AppExe}', '', SW_HIDE, ewWaitUntilTerminated, Code);
+    Exec(ExpandConstant('{sys}\taskkill.exe'), '/f /t /im {#ServerExe} /im {#AppExe}', '', SW_HIDE, ewWaitUntilTerminated, Code);
     Sleep(500);
   end;
   // Settings stay unless the player says otherwise; silent uninstalls always keep them.
