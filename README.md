@@ -269,6 +269,13 @@ Hold the mic button at the top of the deck, say a command, and let go. The PC
 listens through your default microphone and presses that button's keys. The
 tablet shows what it heard, or "Didn't catch that".
 
+**Push-to-talk on the PC:** in **Settings**, pick a key or mouse button (a mouse
+side button works well) and hold it to talk instead, or press once to start and
+again to stop. A soft sound plays when it starts and stops listening, and the
+tablet's mic lights up. Pick a key Star Citizen doesn't use, since the key still
+reaches the game. Tablet Deck only checks that one key; it doesn't record what
+you type.
+
 - Every button answers to its name ("landing gear", "fire laser", "max
   shields"; `+` and `−` are said as "up" and "down", so "shields up").
 - Common commands have extra phrases: "engines on", "gear up", "flight ready",

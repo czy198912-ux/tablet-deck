@@ -612,7 +612,8 @@ class DeckWindow : Form
                 string s = Str(ev, "state");
                 if (s == "ready")
                 {
-                    voice.Text = "Voice commands: ready (" + Str(ev, "phrases") + " phrases, " + Str(ev, "language") + ")";
+                    voice.Text = "Voice commands: ready (" + Str(ev, "phrases") + " phrases, " + Str(ev, "language") + ")"
+                        + (Str(ev, "ptt") != "" ? ", push-to-talk: " + Str(ev, "ptt") : "");
                     voice.ForeColor = Good;
                 }
                 else if (s == "off")
@@ -965,7 +966,8 @@ class DeckWindow : Form
                 return;
             }
             var pairs = new List<string>();
-            foreach (var change in dialog.Changes) pairs.Add(change.Key + "=" + change.Value);
+            // Quoted, since some values have spaces (e.g. "pttKeyName=Numpad 5"); none have quotes.
+            foreach (var change in dialog.Changes) pairs.Add("\"" + change.Key + "=" + change.Value + "\"");
             try
             {
                 var psi = new ProcessStartInfo(Path.Combine(appDir, "TabletDeckServer.exe"), "--set " + string.Join(" ", pairs.ToArray()))
@@ -1384,6 +1386,55 @@ class SettingsWindow : Form
     readonly NumericUpDown tap = new NumericUpDown();
     readonly CheckBox voiceOn = new CheckBox();
     readonly ComboBox language = new ComboBox();
+    readonly ComboBox pttMode = new ComboBox();
+    readonly CheckBox pttSound = new CheckBox();
+    Button pttButton;
+    int pttKey;          // Windows virtual-key code, 0 = none
+    string pttName = "";
+    bool capturing;      // waiting for the player to press the push-to-talk key
+
+    // ---------- push-to-talk key ----------
+
+    void StartCapture()
+    {
+        if (capturing) { capturing = false; ShowPttKey(); return; } // a second click cancels
+        capturing = true;
+        pttButton.Text = "Press a key or mouse button...";
+    }
+
+    // While capturing, every key (Tab, Enter and Alt included) is the push-to-talk key; Esc cancels.
+    protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+    {
+        if (!capturing) return base.ProcessCmdKey(ref msg, keyData);
+        var key = keyData & Keys.KeyCode;
+        if (key == Keys.Escape) { capturing = false; ShowPttKey(); }
+        else SetPttKey((int)key);
+        return true;
+    }
+
+    void SetPttKey(int vk)
+    {
+        capturing = false;
+        pttKey = vk;
+        pttName = vk == 0 ? "" : KeyName(vk);
+        ShowPttKey();
+    }
+
+    void ShowPttKey()
+    {
+        pttButton.Text = pttKey == 0 ? "None: click to set" : pttName;
+    }
+
+    static string KeyName(int vk)
+    {
+        if (vk == 4) return "Middle mouse";
+        if (vk == 5) return "Mouse 4";
+        if (vk == 6) return "Mouse 5";
+        string name = ((Keys)vk).ToString();
+        if (name.StartsWith("NumPad")) return "Numpad " + name.Substring(6);
+        if (name.StartsWith("D") && name.Length == 2 && char.IsDigit(name[1])) return name.Substring(1);
+        return System.Text.RegularExpressions.Regex.Replace(name, "[^A-Za-z0-9 +-]", "");
+    }
 
     public SettingsWindow(Dictionary<string, object> current, bool portFromCommandLine, Icon icon, string keybindProfile)
     {
@@ -1399,7 +1450,7 @@ class SettingsWindow : Form
         BackColor = DeckWindow.Back;
         ForeColor = DeckWindow.Ink;
         Font = new Font("Segoe UI", 9.75f);
-        ClientSize = new Size(480, 446);
+        ClientSize = new Size(480, 546);
 
         Caption("Pairing code", 14);
         Field(code, 12, 36, 200);
@@ -1444,12 +1495,36 @@ class SettingsWindow : Form
         language.Enabled = voiceOn.Checked;
         Hint("Needs that English speech recognizer installed in Windows (Settings > Time & Language > Speech).", 130, 326, 338);
 
-        AddButton("Install keybind profile...", 12, 400, 190, delegate
+        // Push-to-talk from a key or mouse button on the PC (see native/voice.cs).
+        Caption("Push-to-talk key on the PC", 368);
+        pttKey = GetNumber("pttKey", 0);
+        pttName = Get("pttKeyName", "");
+        pttButton = AddButton("", 12, 390, 190, delegate { StartCapture(); });
+        pttButton.MouseDown += (s, e) =>
+        {
+            if (!capturing) return;
+            int vk = e.Button == MouseButtons.Middle ? 4 : e.Button == MouseButtons.XButton1 ? 5 : e.Button == MouseButtons.XButton2 ? 6 : 0;
+            if (vk != 0) SetPttKey(vk);
+        };
+        AddButton("None", 208, 390, 64, delegate { SetPttKey(0); });
+        Field(pttMode, 280, 392, 188);
+        pttMode.DropDownStyle = ComboBoxStyle.DropDownList;
+        pttMode.FlatStyle = FlatStyle.Flat;
+        pttMode.Items.AddRange(new object[] { "Hold to talk", "Press to start, again to stop" });
+        pttMode.SelectedIndex = Get("pttMode", "hold") == "toggle" ? 1 : 0;
+        pttSound.Text = "Play a sound when it starts and stops listening";
+        pttSound.Checked = GetBool("pttSound", true);
+        pttSound.Bounds = new Rectangle(12, 428, 456, 24);
+        Controls.Add(pttSound);
+        Hint("Pick a key Star Citizen doesn't use, like a mouse side button, a numpad key or F13-F24: the key still reaches the game.", 12, 454, 456);
+        ShowPttKey();
+
+        AddButton("Install keybind profile...", 12, 500, 190, delegate
         {
             using (var dialog = new KeybindProfileWindow(keybindProfile, Icon)) dialog.ShowDialog(this);
         });
-        var save = AddButton("Save", 280, 400, 90, delegate { Save(); });
-        var cancel = AddButton("Cancel", 378, 400, 90, delegate { DialogResult = DialogResult.Cancel; });
+        var save = AddButton("Save", 280, 500, 90, delegate { Save(); });
+        var cancel = AddButton("Cancel", 378, 500, 90, delegate { DialogResult = DialogResult.Cancel; });
         AcceptButton = save;
         CancelButton = cancel;
 
@@ -1533,6 +1608,13 @@ class SettingsWindow : Form
         Change("tapMs", GetNumber("tapMs", 60).ToString(), ((int)tap.Value).ToString(), false);
         Change("voice", OnOff(GetBool("voice", true)), OnOff(voiceOn.Checked), true);
         Change("voiceLanguage", Get("voiceLanguage", "en-US"), newLanguage, true);
+        if (GetNumber("pttKey", 0) != pttKey)
+        {
+            Change("pttKey", GetNumber("pttKey", 0).ToString(), pttKey.ToString(), false);
+            if (pttKey != 0) Change("pttKeyName", "", pttName == "" ? "Key" : pttName, false);
+        }
+        Change("pttMode", Get("pttMode", "hold"), pttMode.SelectedIndex == 1 ? "toggle" : "hold", false);
+        Change("pttSound", OnOff(GetBool("pttSound", true)), OnOff(pttSound.Checked), false);
         DialogResult = DialogResult.OK;
     }
 

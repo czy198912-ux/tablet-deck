@@ -5,6 +5,14 @@ section becomes the notes of its
 [GitHub release](https://github.com/nodieCode/tablet-deck/releases), so add one
 before tagging a release.
 
+## 1.4.0 (not released yet)
+
+- **Push-to-talk from a PC key:** in **Settings**, pick any key or mouse button
+  (Mouse 4/5 work well) to talk to Tablet Deck without touching the tablet.
+  Hold it to talk, or press once to start and again to stop. A soft sound plays
+  when it starts and stops listening, and the tablet's mic button lights up.
+  It only watches that one key; it doesn't record anything you type.
+
 ## 1.3.0 (2026-10-20)
 
 - **Settings** button in the window: change the pairing code (or make a new

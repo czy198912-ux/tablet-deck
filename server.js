@@ -134,6 +134,11 @@ const SETTINGS = {
   port: wholeNumber(1024, 65535),
   tapMs: wholeNumber(20, 1000),
   voiceLanguage: (v) => (/^[a-z]{2}(-[A-Za-z]{2,4})?$/.test(v) ? v : undefined),
+  // Push-to-talk from a PC key: its Windows virtual-key code (0 = none) and a name to show.
+  pttKey: wholeNumber(0, 255),
+  pttKeyName: (v) => (/^[\w +-]{1,30}$/.test(v) ? v : undefined),
+  pttMode: (v) => (v === "hold" || v === "toggle" ? v : undefined),
+  pttSound: onOff,
 };
 
 // --set name=value ...: save settings to config.json and exit without starting. The app
@@ -442,6 +447,8 @@ function voiceCommands(buttons) {
 
 let voice = null;      // the voice listener, once its grammar is loaded
 let voiceList = [];    // what can be said: [phrase, button label] pairs
+let voiceFromKey = false; // the last listening came from the PC's push-to-talk key
+let voiceStatus = null;   // the window's "voice ready" status, re-sent when push-to-talk changes
 let voiceOwner = null; // the tablet holding the talk button; it gets the results
 function startVoice() {
   if (!config.voice) { ui({ t: "voice", state: "off" }); return; }
@@ -453,7 +460,6 @@ function startVoice() {
   }
   const { buttons } = loadLayout();
   const commands = voiceCommands(buttons);
-  // The app window's voice commands list: [phrase, button label] pairs, by label.
   // [phrase, button label] pairs by label, for the window's list and the tablet's (/voice.json).
   voiceList = [...commands].map(([phrase, id]) => [phrase, buttons.get(id).label])
     .sort((a, b) => a[1].localeCompare(b[1]) || a[0].localeCompare(b[0]));
@@ -466,8 +472,17 @@ function startVoice() {
     for (const line of lines) {
       if (line.startsWith("ready")) {
         voice = proc;
-        console.log(`Voice commands ready (${commands.size} phrases, ${line.slice(6)}). Hold the mic button on the tablet and speak.`);
-        ui({ t: "voice", state: "ready", phrases: commands.size, language: line.slice(6) });
+        sendPushToTalk();
+        const key = config.pttKey ? ` or hold ${config.pttKeyName || "the push-to-talk key"} on the PC` : "";
+        console.log(`Voice commands ready (${commands.size} phrases, ${line.slice(6)}). Hold the mic button on the tablet${key} and speak.`);
+        voiceStatus = { t: "voice", state: "ready", phrases: commands.size, language: line.slice(6) };
+        ui({ ...voiceStatus, ptt: config.pttKey ? config.pttKeyName || "on" : "" });
+      } else if (line === "ptt 1" || line === "ptt 0") {
+        // Push-to-talk from a PC key: results go to every tablet, and their mic buttons light up.
+        voiceFromKey = true;
+        voiceOwner = null;
+        for (const c of tablets) c.send({ t: "listening", on: line === "ptt 1" });
+        emit({ t: "voice", result: line === "ptt 1" ? "listen" : "stop", running: true });
       } else if (line.startsWith("err")) {
         console.error(`Voice commands unavailable: ${line.slice(4)}. See "Voice commands" at https://github.com/nodieCode/tablet-deck#voice-commands`);
         ui({ t: "voice", state: "error", text: line.slice(4) });
@@ -491,8 +506,16 @@ function startVoice() {
 }
 
 // Presses the button for a recognised phrase. The layout is re-read so in-game rebinds count.
+// Tells the voice listener the push-to-talk key (Windows virtual-key code, 0 = none).
+function sendPushToTalk() {
+  if (!voice) return;
+  voice.stdin.write(`ptt ${config.pttKey || 0} ${config.pttMode === "toggle" ? "toggle" : "hold"}\n`);
+  voice.stdin.write(`chime ${config.pttSound === false ? "off" : "on"}\n`);
+}
+
 async function onVoice(id, confidence, text) {
-  const client = voiceOwner;
+  // After push-to-talk on the PC there's no tablet holding the mic, so all of them hear back.
+  const client = voiceFromKey ? { send: (obj) => { for (const c of tablets) c.send(obj); } } : voiceOwner;
   const btn = id ? loadLayout().buttons.get(id) : null;
   if (!btn || confidence < config.voiceConfidence) {
     console.log(btn ? `Voice: "${text}" ignored (confidence ${confidence.toFixed(2)})` : "Voice: didn't catch that");
@@ -755,6 +778,7 @@ server.on("upgrade", (req, socket) => {
         client.send({ t: "voice-off", reason: config.voice ? "Voice commands aren't running on the PC" : "Voice commands are turned off" });
       } else if (msg.on) {
         voiceOwner = client;
+        voiceFromKey = false;
         voice.stdin.write("listen\n");
       } else if (voiceOwner === client) {
         voice.stdin.write("stop\n");
@@ -877,6 +901,10 @@ function applySetting(name, text) {
     return;
   }
   console.log(`Saved ${name}: ${value === true ? "on" : value === false ? "off" : value}.`);
+  if (name.startsWith("ptt")) {
+    sendPushToTalk();
+    if (voiceStatus) ui({ ...voiceStatus, ptt: config.pttKey ? config.pttKeyName || "on" : "" });
+  }
   sendReady();
 }
 

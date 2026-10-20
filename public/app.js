@@ -233,6 +233,8 @@
       else if (msg.t === "heard") toast(`Heard: ${msg.text || msg.label}`);
       else if (msg.t === "unheard") toast("Didn't catch that");
       else if (msg.t === "voice-off") toast(msg.reason);
+      // Push-to-talk held on the PC: the mic buttons light up as if held here.
+      else if (msg.t === "listening") for (const el of document.querySelectorAll(".js-talk")) el.classList.toggle("listening", msg.on);
       else if (msg.t === "reload") location.reload(); // the layout was changed in the editor
     };
     ws.onclose = () => { setOnline(false, "Reconnecting…"); setTimeout(connect, 1000); };
