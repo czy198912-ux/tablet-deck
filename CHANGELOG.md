@@ -17,7 +17,8 @@ before tagging a release.
   happens in place, without replaying the intro or leaving full screen. Turn
   swiping off with **2-finger swipe** in the sliders sheet.
 - **Open on PC:** buttons in the sliders sheet open websites in the PC's
-  browser: UEX (trading), Erkul (loadouts) and SPViewer to start with. Change
+  browser: UEX (trading), Erkul (loadouts), SPViewer and SCMDB (missions,
+  crafting and mining) to start with. Change
   the list in **Settings → Links**. The tablet only gets the names, so it can't
   open anything else.
 

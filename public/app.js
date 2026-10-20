@@ -153,7 +153,7 @@
   // "Open on PC": websites set up on the PC (Settings → Links), opened in its browser. The
   // tablet only gets their names and asks by position, so it can't open anything else.
   function fillLinks() {
-    const names = DEMO ? Promise.resolve(["UEX", "Erkul", "SPViewer"])
+    const names = DEMO ? Promise.resolve(["UEX", "Erkul", "SPViewer", "SCMDB"])
       : fetch(`/links.json?t=${encodeURIComponent(token)}`).then((r) => (r.ok ? r.json() : Promise.reject())).then((d) => d.links);
     names.then((list) => {
       const box = $("pcLinkBtns");

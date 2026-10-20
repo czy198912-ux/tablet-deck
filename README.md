@@ -249,7 +249,8 @@ presses.
 ### Open websites on the PC
 
 The sliders sheet on the tablet has an **Open on PC** row: tap **UEX**
-(trading), **Erkul** (loadouts) or **SPViewer** to open it in the PC's browser.
+(trading), **Erkul** (loadouts), **SPViewer** or **SCMDB** (missions, crafting
+and mining) to open it in the PC's browser.
 Change the list in **Settings → Links**, one per line as `Name | https://address`.
 The tablet only gets the names and can't make the PC open anything else. The
 browser comes to the front, so this suits a second monitor best.
@@ -334,7 +335,7 @@ Uninstalling keeps them unless you choose to delete them.
 | `voiceConfidence` | how sure the recognizer must be, from 0 to 1 (the Voice strictness slider) | `0.6` |
 | `autoUpdate` | check GitHub for new versions | `true` |
 | `pttKey`, `pttKeyName`, `pttMode`, `pttSound` | push-to-talk key on the PC (Windows key code, `0` = none), its name, `hold` or `toggle`, and the sound | none, `hold`, `true` |
-| `links` | websites the tablet can open on the PC: `[{ "name": "UEX", "url": "https://..." }]`, https only, up to 12 | UEX, Erkul, SPViewer |
+| `links` | websites the tablet can open on the PC: `[{ "name": "UEX", "url": "https://..." }]`, https only, up to 12 | UEX, Erkul, SPViewer, SCMDB |
 
 File paths can be absolute, or relative: `layouts/my.json` is looked up in the
 settings folder first, then among the built-in files.

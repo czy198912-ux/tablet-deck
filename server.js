@@ -116,6 +116,7 @@ function loadConfig() {
       { name: "UEX", url: "https://uexcorp.space/" },
       { name: "Erkul", url: "https://www.erkul.games/" },
       { name: "SPViewer", url: "https://www.spviewer.eu/" },
+      { name: "SCMDB", url: "https://scmdb.net/" },
     ];
     changed = true;
   }
