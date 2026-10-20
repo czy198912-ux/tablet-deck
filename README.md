@@ -226,7 +226,10 @@ and so on) get keys from the **Tablet Deck Keyboard** profile in
    `StarCitizen\LIVE\user\client\0\Controls\Mappings` (create the `Mappings`
    folder if it doesn't exist). The installer does this for you if you tick
    **Install the Star Citizen keybind profile** and it finds your game folder.
-   Otherwise the file is also in `C:\Program Files\Tablet Deck\keybinds`.
+   Later, use **Settings → Install keybind profile...** in the app window: it
+   finds your LIVE, PTU and other copies of the game (or lets you pick the
+   folder), shows which have the current profile, and installs it. The file is
+   also in `C:\Program Files\Tablet Deck\keybinds`.
 2. In-game, open **Options → Keybindings → Control Profiles** and load
    **Tablet Deck Keyboard**. This replaces your current custom binds, so note
    any you want to keep and set them again afterwards.

@@ -244,7 +244,7 @@ class DeckWindow : Form
         settingsButton.Click += delegate { OpenSettingsFolder(); };
         StyleButton(optionsButton, "Settings", 558, 236, 90);
         optionsButton.Click += delegate { OpenSettings(); };
-        tips.SetToolTip(optionsButton, "Pairing code, port, focus check, tap length and voice language");
+        tips.SetToolTip(optionsButton, "Pairing code, port, focus check, tap length, voice language and the Star Citizen keybind profile");
         StyleButton(restartButton, "Restart", 656, 236, 84);
         restartButton.Visible = false;
         restartButton.Click += delegate { StartServer(); };
@@ -928,7 +928,8 @@ class DeckWindow : Form
         Dictionary<string, object> current = null;
         try { current = new JavaScriptSerializer().DeserializeObject(File.ReadAllText(ConfigFile())) as Dictionary<string, object>; }
         catch (Exception) { }
-        using (var dialog = new SettingsWindow(current ?? new Dictionary<string, object>(), serverArgs.Contains("--port"), Icon))
+        using (var dialog = new SettingsWindow(current ?? new Dictionary<string, object>(), serverArgs.Contains("--port"), Icon,
+            Path.Combine(appDir, "keybinds", "TabletDeck-StarCitizen.xml")))
         {
             if (dialog.ShowDialog(this) != DialogResult.OK || dialog.Changes.Count == 0) return;
             if (serverReady && server != null && !server.HasExited)
@@ -1144,6 +1145,210 @@ class VoiceCommandsWindow : Form
     }
 }
 
+// Copies the Tablet Deck Keyboard profile (keybinds\TabletDeck-StarCitizen.xml in the
+// install folder) into Star Citizen's Controls\Mappings folder, for each copy of the game
+// (LIVE, PTU and so on) the player ticks. Found by searching the drives, or picked by hand.
+class KeybindProfileWindow : Form
+{
+    static readonly string[] Channels = { "LIVE", "PTU", "EPTU", "HOTFIX", "TECH-PREVIEW" };
+    const string ProfileName = "TabletDeck-StarCitizen.xml";
+
+    readonly string profile;
+    readonly List<string> games = new List<string>(); // ...\StarCitizen\<channel>, same order as list
+    readonly CheckedListBox list = new CheckedListBox();
+    readonly Label status = new Label();
+
+    public KeybindProfileWindow(string profile, Icon icon)
+    {
+        this.profile = profile;
+        SuspendLayout();
+        Text = "Install keybind profile";
+        Icon = icon;
+        ShowInTaskbar = false;
+        FormBorderStyle = FormBorderStyle.FixedDialog;
+        MaximizeBox = false;
+        MinimizeBox = false;
+        StartPosition = FormStartPosition.CenterParent;
+        BackColor = DeckWindow.Back;
+        ForeColor = DeckWindow.Ink;
+        Font = new Font("Segoe UI", 9.75f);
+        ClientSize = new Size(560, 420);
+
+        Controls.Add(new Label
+        {
+            Text = "Copies the Tablet Deck Keyboard profile into Star Citizen, so buttons for actions with no default key work. Tick the copies of the game to install it into.",
+            ForeColor = DeckWindow.Ink, Bounds = new Rectangle(12, 12, 536, 40),
+        });
+        list.Bounds = new Rectangle(12, 58, 536, 130);
+        list.CheckOnClick = true;
+        list.BackColor = DeckWindow.Panel;
+        list.ForeColor = DeckWindow.Ink;
+        list.BorderStyle = BorderStyle.None;
+        list.HorizontalScrollbar = true;
+        Controls.Add(list);
+        MakeButton("Choose game folder...", 12, 196, 170, delegate { ChooseFolder(); });
+
+        status.Bounds = new Rectangle(12, 236, 536, 140);
+        status.ForeColor = DeckWindow.Dim;
+        status.UseMnemonic = false;
+        Controls.Add(status);
+
+        var install = MakeButton("Install", 358, 382, 90, delegate { Install(); });
+        var close = MakeButton("Close", 458, 382, 90, delegate { Close(); });
+        AcceptButton = install;
+        CancelButton = close;
+
+        AutoScaleDimensions = new SizeF(96f, 96f);
+        AutoScaleMode = AutoScaleMode.Dpi;
+        ResumeLayout(false);
+
+        if (!File.Exists(profile))
+        {
+            status.Text = "The profile file is missing (" + profile + "). Reinstall Tablet Deck.";
+            status.ForeColor = DeckWindow.Bad;
+            install.Enabled = false;
+            return;
+        }
+        foreach (var game in FindGames()) AddGame(game);
+        status.Text = games.Count == 0
+            ? "Star Citizen wasn't found in the usual places. Click \"Choose game folder...\" and pick the StarCitizen folder (the one with LIVE in it)."
+            : "Found " + games.Count + (games.Count == 1 ? " copy" : " copies") + " of the game. Missing one? Click \"Choose game folder...\".";
+    }
+
+    Button MakeButton(string text, int x, int y, int w, EventHandler click)
+    {
+        var b = new Button { Text = text, FlatStyle = FlatStyle.Flat, BackColor = DeckWindow.Panel, ForeColor = DeckWindow.Ink, Cursor = Cursors.Hand, Bounds = new Rectangle(x, y, w, 30) };
+        b.FlatAppearance.BorderColor = DeckWindow.Accent;
+        b.Click += click;
+        Controls.Add(b);
+        return b;
+    }
+
+    // ...\StarCitizen\<channel> folders in the usual install places, and one or two folder
+    // levels down on each fixed drive (e.g. D:\Games\RSI\StarCitizen).
+    static List<string> FindGames()
+    {
+        var found = new List<string>();
+        foreach (var drive in DriveInfo.GetDrives())
+        {
+            if (drive.DriveType != DriveType.Fixed || !drive.IsReady) continue;
+            var places = new List<string> { drive.RootDirectory.FullName };
+            foreach (var top in SubFolders(drive.RootDirectory.FullName))
+            {
+                if (Path.GetFileName(top).Equals("Windows", StringComparison.OrdinalIgnoreCase)) continue;
+                places.Add(top);
+                places.AddRange(SubFolders(top));
+            }
+            foreach (var place in places)
+                foreach (var channel in Channels)
+                {
+                    string dir = Path.Combine(place, "StarCitizen", channel);
+                    if (Directory.Exists(dir) && !found.Contains(dir)) found.Add(dir);
+                }
+        }
+        return found;
+    }
+
+    static string[] SubFolders(string dir)
+    {
+        try { return Directory.GetDirectories(dir); }
+        catch (Exception) { return new string[0]; } // no access, e.g. system folders
+    }
+
+    static string Target(string game)
+    {
+        return Path.Combine(game, "user", "client", "0", "Controls", "Mappings", ProfileName);
+    }
+
+    // Adds a game copy to the list, ticked unless it already has this exact profile.
+    void AddGame(string game)
+    {
+        foreach (var g in games) if (string.Equals(g, game, StringComparison.OrdinalIgnoreCase)) return;
+        string state;
+        bool tick;
+        string target = Target(game);
+        if (!File.Exists(target)) { state = "not installed"; tick = true; }
+        else if (SameFile(target, profile)) { state = "already up to date"; tick = false; }
+        else { state = "older copy, will be replaced"; tick = true; }
+        games.Add(game);
+        list.Items.Add(Path.GetFileName(game) + "  -  " + game + "  (" + state + ")", tick);
+    }
+
+    static bool SameFile(string a, string b)
+    {
+        try { return File.ReadAllText(a).Replace("\r\n", "\n") == File.ReadAllText(b).Replace("\r\n", "\n"); }
+        catch (Exception) { return false; }
+    }
+
+    // Accepts the StarCitizen folder, a channel folder inside it, or the folder above it.
+    void ChooseFolder()
+    {
+        using (var dialog = new FolderBrowserDialog { Description = "Pick the StarCitizen folder (the one with LIVE in it).", ShowNewFolderButton = false })
+        {
+            if (dialog.ShowDialog(this) != DialogResult.OK) return;
+            string picked = dialog.SelectedPath;
+            var candidates = new List<string>();
+            if (Array.IndexOf(Channels, Path.GetFileName(picked).ToUpperInvariant()) >= 0) candidates.Add(picked);
+            foreach (var root in new[] { picked, Path.Combine(picked, "StarCitizen") })
+                foreach (var channel in Channels)
+                    if (Directory.Exists(Path.Combine(root, channel))) candidates.Add(Path.Combine(root, channel));
+            if (candidates.Count == 0)
+            {
+                status.Text = "That folder doesn't look like Star Citizen. Pick the StarCitizen folder, the one with LIVE in it.";
+                status.ForeColor = DeckWindow.Warn;
+                return;
+            }
+            foreach (var game in candidates) AddGame(game);
+            status.Text = "Added. Tick the copies of the game to install the profile into, then click Install.";
+            status.ForeColor = DeckWindow.Dim;
+        }
+    }
+
+    void Install()
+    {
+        var done = new List<string>();
+        var failed = new List<string>();
+        for (int i = 0; i < games.Count; i++)
+        {
+            if (!list.GetItemChecked(i)) continue;
+            try
+            {
+                string target = Target(games[i]);
+                Directory.CreateDirectory(Path.GetDirectoryName(target));
+                File.Copy(profile, target, true);
+                done.Add(Path.GetFileName(games[i]));
+            }
+            catch (Exception ex)
+            {
+                failed.Add(Path.GetFileName(games[i]) + ": " + ex.Message);
+            }
+        }
+        if (done.Count == 0 && failed.Count == 0)
+        {
+            status.Text = "Nothing ticked. Tick the copies of the game to install the profile into.";
+            status.ForeColor = DeckWindow.Warn;
+            return;
+        }
+        var text = new StringBuilder();
+        if (done.Count > 0)
+        {
+            text.Append("Installed into " + string.Join(", ", done.ToArray()) + ". ");
+            text.Append("Now, in Star Citizen: Options > Keybindings > Control Profiles, load \"Tablet Deck Keyboard\". ");
+            text.Append("This replaces your current custom binds, so note any you want to keep and set them again afterwards.");
+        }
+        if (failed.Count > 0)
+            text.Append((done.Count > 0 ? "\n\n" : "") + "Couldn't copy into " + string.Join("; ", failed.ToArray()) +
+                ". Try running Tablet Deck as administrator, or copy " + profile + " by hand.");
+        status.Text = text.ToString();
+        status.ForeColor = failed.Count > 0 ? DeckWindow.Warn : DeckWindow.Good;
+        // Refresh the states shown in the list.
+        var again = new List<string>(games);
+        games.Clear();
+        list.Items.Clear();
+        foreach (var game in again) AddGame(game);
+    }
+}
+
 // Settings that would otherwise mean editing config.json. Only what changed ends up in
 // Changes, as setting name -> text value (see SETTINGS in server.js).
 class SettingsWindow : Form
@@ -1159,7 +1364,7 @@ class SettingsWindow : Form
     readonly CheckBox voiceOn = new CheckBox();
     readonly ComboBox language = new ComboBox();
 
-    public SettingsWindow(Dictionary<string, object> current, bool portFromCommandLine, Icon icon)
+    public SettingsWindow(Dictionary<string, object> current, bool portFromCommandLine, Icon icon, string keybindProfile)
     {
         this.current = current;
         SuspendLayout();
@@ -1218,6 +1423,10 @@ class SettingsWindow : Form
         language.Enabled = voiceOn.Checked;
         Hint("Needs that English speech recognizer installed in Windows (Settings > Time & Language > Speech).", 130, 326, 338);
 
+        AddButton("Install keybind profile...", 12, 400, 190, delegate
+        {
+            using (var dialog = new KeybindProfileWindow(keybindProfile, Icon)) dialog.ShowDialog(this);
+        });
         var save = AddButton("Save", 280, 400, 90, delegate { Save(); });
         var cancel = AddButton("Cancel", 378, 400, 90, delegate { DialogResult = DialogResult.Cancel; });
         AcceptButton = save;

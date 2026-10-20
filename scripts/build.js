@@ -133,6 +133,10 @@ async function buildApp() {
     compileCs("voice", path.join(APP, "native", "voice.exe"), "Tablet Deck voice commands", { refs: ["System.Speech.dll"] }),
   ];
 
+  // The keybind profile, for the window's "Install keybind profile" and the installer's option.
+  fs.mkdirSync(path.join(APP, "keybinds"), { recursive: true });
+  fs.copyFileSync(path.join(ROOT, "keybinds", "TabletDeck-StarCitizen.xml"), path.join(APP, "keybinds", "TabletDeck-StarCitizen.xml"));
+
   step("Packing TabletDeckServer.exe");
   // A single executable runs one script and can only require Node's built-in modules, so
   // qr.js is inlined where server.js requires it.

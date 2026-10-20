@@ -12,6 +12,10 @@ before tagging a release.
   long a tap holds the key, and voice commands and their language, without
   editing `config.json`. Settings also work when Tablet Deck couldn't start,
   for example to pick another port when yours is taken.
+- **Install keybind profile...** (in Settings): finds your Star Citizen copies
+  (LIVE, PTU and so on), shows which already have the current Tablet Deck
+  Keyboard profile, and installs it into the ones you tick. You can also pick
+  the game folder yourself.
 
 ## 1.2.1 (2026-10-20)
 

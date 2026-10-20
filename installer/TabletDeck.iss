@@ -65,10 +65,10 @@ Name: "scprofile"; Description: "Install the Star Citizen keybind profile (Table
 Source: "{#BuildDir}\app\{#AppExe}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#BuildDir}\app\{#ServerExe}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#BuildDir}\app\native\*.exe"; DestDir: "{app}\native"; Flags: ignoreversion
-Source: "keybinds\TabletDeck-StarCitizen.xml"; DestDir: "{app}\keybinds"; Flags: ignoreversion
+Source: "{#BuildDir}\app\keybinds\TabletDeck-StarCitizen.xml"; DestDir: "{app}\keybinds"; Flags: ignoreversion
 Source: "LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"; Flags: ignoreversion
 ; The copy in the game folder stays on uninstall: the player may have it loaded in-game.
-Source: "keybinds\TabletDeck-StarCitizen.xml"; DestDir: "{code:MappingsDir}"; Tasks: scprofile; Check: HasStarCitizen; Flags: ignoreversion uninsneveruninstall
+Source: "{#BuildDir}\app\keybinds\TabletDeck-StarCitizen.xml"; DestDir: "{code:MappingsDir}"; Tasks: scprofile; Check: HasStarCitizen; Flags: ignoreversion uninsneveruninstall
 
 [Icons]
 Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"; WorkingDir: "{app}"
