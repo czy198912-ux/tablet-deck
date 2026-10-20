@@ -192,6 +192,7 @@
       else if (msg.t === "heard") toast(`Heard: ${msg.text || msg.label}`);
       else if (msg.t === "unheard") toast("Didn't catch that");
       else if (msg.t === "voice-off") toast(msg.reason);
+      else if (msg.t === "reload") location.reload(); // the layout was changed in the editor
     };
     ws.onclose = () => { setOnline(false, "Reconnecting…"); setTimeout(connect, 1000); };
     ws.onerror = () => ws.close();

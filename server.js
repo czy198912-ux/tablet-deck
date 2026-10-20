@@ -219,6 +219,13 @@ function loadLayout(device) {
   const text = (device === "phone" && config.phoneLayout && readConfigFile(config.phoneLayout)) || readConfigFile(config.layout);
   if (!text) throw new Error(`Layout file not found: ${config.layout}`);
   const layout = JSON.parse(text.toString("utf8"));
+  return { layout, buttons: prepareLayout(layout) };
+}
+
+// Gives every button its keys (from the keybind files when it has an scAction) and
+// scancodes, and returns them by id. Throws on an unknown key or a duplicate id, so the
+// layout editor's saves get the same checks as loading.
+function prepareLayout(layout) {
   const overrides = readActionmapOverrides(config.actionmaps);
   const buttons = new Map();
   (function collect(node) {
@@ -232,7 +239,7 @@ function loadLayout(device) {
     }
     for (const v of Object.values(node)) if (v && typeof v === "object") collect(v);
   })(layout);
-  return { layout, buttons };
+  return buttons;
 }
 
 // ---------- key sender ----------
@@ -551,6 +558,104 @@ function wsReader(socket, onText, onClose) {
 
 const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".webmanifest": "application/manifest+json" };
 
+// ---------- layout editor (public/editor.html) ----------
+
+const fromThisPC = (req) => ["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(req.socket.remoteAddress);
+function sendJson(res, status, obj) {
+  res.writeHead(status, { "Content-Type": MIME[".json"], "Cache-Control": "no-store" });
+  res.end(JSON.stringify(obj));
+}
+
+// Every layout file: the bundled ones plus the player's own in the settings folder.
+function layoutFiles() {
+  let bundled;
+  if (INSTALLED) {
+    try { bundled = JSON.parse(readBundled("bundled-files.json")); } catch { bundled = []; }
+  } else {
+    bundled = fs.readdirSync(path.join(__dirname, "layouts")).map((f) => `layouts/${f}`);
+  }
+  const files = new Set(bundled.filter((f) => /^layouts\/[^/]+\.json$/.test(f)));
+  const own = path.join(DATA_DIR, "layouts");
+  if (fs.existsSync(own)) for (const f of fs.readdirSync(own)) if (f.endsWith(".json")) files.add(`layouts/${f}`);
+  return [...files].sort();
+}
+
+// Tablets that are connected, so a saved layout can make them reload.
+const tablets = new Set();
+const reloadTablets = () => { for (const client of tablets) client.send({ t: "reload" }); };
+
+// The editor reads layouts and saves the player's own; it only answers this PC, so a
+// device on the network can't change files even with the pairing code.
+function handleEditor(req, res, url) {
+  if (url.searchParams.get("t") !== config.token) return sendJson(res, 403, { error: "Wrong pairing code." });
+  if (!fromThisPC(req)) return sendJson(res, 403, { error: "The layout editor only works on the PC running Tablet Deck (open it at http://localhost)." });
+
+  if (url.pathname === "/editor/layouts") {
+    const layouts = [];
+    for (const file of layoutFiles()) {
+      try {
+        const l = JSON.parse(readConfigFile(file));
+        layouts.push({ file, name: l.name || file, canvas: l.canvas || null, custom: l.custom === true,
+          active: file === config.layout ? "tablet" : file === config.phoneLayout ? "phone" : null });
+      } catch { /* not a layout */ }
+    }
+    return sendJson(res, 200, {
+      layouts,
+      keys: Object.keys(SCANCODES).filter((k) => !/^num\d$/.test(k)),
+      // scAction -> keys from the player's Star Citizen keybinds, for "Follow game keybind".
+      overrides: readActionmapOverrides(config.actionmaps),
+    });
+  }
+
+  if (url.pathname === "/editor/layout") {
+    const file = url.searchParams.get("file") || "";
+    if (!layoutFiles().includes(file)) return sendJson(res, 404, { error: "No such layout." });
+    return sendJson(res, 200, JSON.parse(readConfigFile(file)));
+  }
+
+  if (url.pathname === "/editor/save" && req.method === "POST") {
+    let body = "";
+    req.setEncoding("utf8");
+    req.on("data", (chunk) => { body += chunk; if (body.length > 4e6) req.destroy(); });
+    req.on("end", () => {
+      let data;
+      try { data = JSON.parse(body); } catch { return sendJson(res, 400, { error: "The editor sent something unreadable." }); }
+      const name = String(data.name || "").trim().toLowerCase();
+      if (!/^[a-z0-9][a-z0-9-]{0,39}$/.test(name)) return sendJson(res, 400, { error: "Use letters, numbers and dashes for the name." });
+      const file = `layouts/${name}.json`;
+      // Only the player's own layouts (marked "custom") may be overwritten.
+      const existing = readConfigFile(file);
+      if (existing) {
+        let custom = false;
+        try { custom = JSON.parse(existing).custom === true; } catch { /* unreadable: treat as not ours */ }
+        if (!custom) return sendJson(res, 400, { error: `"${name}" is a built-in layout. Pick another name.` });
+      }
+      const layout = data.layout;
+      if (!layout || typeof layout !== "object" || !Array.isArray(layout.canvas)) return sendJson(res, 400, { error: "That isn't a layout." });
+      layout.custom = true;
+      try { prepareLayout(JSON.parse(JSON.stringify(layout))); } catch (err) { return sendJson(res, 400, { error: err.message }); }
+      const target = path.join(DATA_DIR, file);
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      fs.writeFileSync(target, JSON.stringify(layout, null, 2) + "\n");
+      console.log(`Saved layout ${file}.`);
+      const kind = layout.canvas[1] < 500 ? "phoneLayout" : "layout";
+      if (data.use && config[kind] !== file) {
+        config[kind] = file;
+        saveSetting(kind, file);
+        console.log(`${kind === "layout" ? "Tablets" : "Phones"} now use ${file}.`);
+      }
+      if (config.layout === file || config.phoneLayout === file) {
+        reloadTablets();
+        // Voice commands come from the tablet layout; restart the listener so they match.
+        if (kind === "layout" && voice) voice.kill();
+      }
+      sendJson(res, 200, { ok: true, file, active: config[kind] === file });
+    });
+    return;
+  }
+  sendJson(res, 404, { error: "Not found." });
+}
+
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://x");
   // Server-sent events for the showcase page's key log; dry runs only.
@@ -580,6 +685,7 @@ const server = http.createServer((req, res) => {
     }
     return;
   }
+  if (url.pathname.startsWith("/editor/")) { handleEditor(req, res, url); return; }
   const rel = path.posix.normalize(`public/${url.pathname === "/" ? "index.html" : url.pathname.slice(1)}`);
   const body = rel.startsWith("public/") ? readBundled(rel) : null;
   if (!body) { res.writeHead(404); res.end("not found"); return; }
@@ -604,6 +710,7 @@ server.on("upgrade", (req, socket) => {
   emit({ t: "client", on: true, device });
   ui({ t: "clients", count: ++connectedTablets });
   const client = { send: (obj) => { if (!socket.destroyed) wsSend(socket, JSON.stringify(obj)); } };
+  tablets.add(client);
   client.send({ t: "hello", voice: Boolean(config.voice) });
 
   const held = new Map(); // button id -> { sc } currently pressed by this tablet
@@ -660,6 +767,7 @@ server.on("upgrade", (req, socket) => {
     }
   }, () => {
     clearInterval(watchdog);
+    tablets.delete(client);
     void releaseAll();
     if (voiceOwner === client) { voice?.stdin.write("stop\n"); voiceOwner = null; }
     console.log(`Tablet disconnected: ${who}`);
@@ -716,6 +824,7 @@ server.listen(config.port, "0.0.0.0", () => {
   }
   console.log(`\nPairing code: ${config.token}`);
   console.log(`(You can also open http://${ips[0] || "<this PC's IP>"}:${config.port} and type the code.)`);
+  console.log(`\nLayout editor (on this PC): http://localhost:${config.port}/editor.html?t=${config.token}`);
   console.log(config.onlyWhenGameFocused
     ? "\nKeys are only sent while Star Citizen is the window in front.\n"
     : "\nKeep the game window focused; keys go to whatever window is in front.\n");

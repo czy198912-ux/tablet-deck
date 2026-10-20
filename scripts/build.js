@@ -150,12 +150,14 @@ async function buildApp() {
 
   // Files server.js reads with readBundled(), under their repo paths.
   const assets = ["package.json", ...filesUnder("public"), ...filesUnder("layouts"), ...filesUnder("keybinds")];
+  // A packed app can't list its files, so the list goes in too (for the layout editor).
+  fs.writeFileSync(path.join(BUILD, "bundled-files.json"), JSON.stringify(assets));
   const blob = path.join(BUILD, "sea.blob");
   fs.writeFileSync(path.join(BUILD, "sea-config.json"), JSON.stringify({
     main: path.join(BUILD, "bundle.js"),
     output: blob,
     disableExperimentalSEAWarning: true,
-    assets: Object.fromEntries(assets.map((a) => [a, path.join(ROOT, a)])),
+    assets: { ...Object.fromEntries(assets.map((a) => [a, path.join(ROOT, a)])), "bundled-files.json": path.join(BUILD, "bundled-files.json") },
   }, null, 2));
   run(process.execPath, ["--experimental-sea-config", path.join(BUILD, "sea-config.json")]);
   console.log(`${assets.length} bundled files`);

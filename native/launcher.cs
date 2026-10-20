@@ -141,6 +141,8 @@ class DeckWindow : Form
     readonly Button settingsButton = new Button();
     readonly Button restartButton = new Button();
     readonly Button optionsButton = new Button();
+    readonly Button editButton = new Button();
+    string editorUrl = ""; // the layout editor on this PC, set when the server is ready
     bool serverReady; // the server has said "ready" and takes settings on stdin
     readonly CheckBox startWithWindows = new CheckBox();
     readonly Label tablets = new Label();
@@ -245,6 +247,11 @@ class DeckWindow : Form
         StyleButton(optionsButton, "Settings", 558, 236, 90);
         optionsButton.Click += delegate { OpenSettings(); };
         tips.SetToolTip(optionsButton, "Pairing code, port, focus check, tap length, voice language and the Star Citizen keybind profile");
+        // Edit layout and Restart share a place: one shows while running, the other when stopped.
+        StyleButton(editButton, "Edit layout", 656, 236, 84);
+        editButton.Visible = false;
+        editButton.Click += delegate { OpenEditor(); };
+        tips.SetToolTip(editButton, "Opens the layout editor in your browser: move buttons, change their keys, labels and icons");
         StyleButton(restartButton, "Restart", 656, 236, 84);
         restartButton.Visible = false;
         restartButton.Click += delegate { StartServer(); };
@@ -353,6 +360,7 @@ class DeckWindow : Form
         var menu = new ContextMenuStrip();
         menu.Items.Add("Show Tablet Deck", null, delegate { ShowFromTray(); });
         menu.Items.Add("Copy link", null, delegate { CopyLink(); });
+        menu.Items.Add("Edit layout", null, delegate { OpenEditor(); });
         menu.Items.Add("Check for updates now", null, delegate { CheckForUpdates(true); });
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Quit", null, delegate { Close(); });
@@ -511,6 +519,7 @@ class DeckWindow : Form
         state.Height = codeCaption.Top - state.Top;
         SetState("Stopped: " + why, Bad);
         restartButton.Visible = true;
+        editButton.Visible = false;
         tablets.Text = "Tablets connected: 0";
         voice.Text = "Voice commands: off";
         voice.ForeColor = Dim;
@@ -538,6 +547,8 @@ class DeckWindow : Form
             case "ready":
                 serverReady = true;
                 link = Str(ev, "link");
+                editorUrl = "http://localhost:" + Str(ev, "port") + "/editor.html?t=" + Uri.EscapeDataString(Str(ev, "token"));
+                editButton.Visible = true;
                 settingsPath = Str(ev, "settings");
                 linkLabel.Text = link != "" ? link : "No network found. Connect this PC to Wi-Fi or a network.";
                 code.Text = Str(ev, "token");
@@ -911,6 +922,16 @@ class DeckWindow : Form
             }
         }
         catch (Exception) { }
+    }
+
+    void OpenEditor()
+    {
+        if (editorUrl == "" || !serverReady)
+        {
+            Notify("Tablet Deck isn't running", "Start it first; the layout editor is part of the server.");
+            return;
+        }
+        Process.Start(editorUrl);
     }
 
     // ---------- settings ----------

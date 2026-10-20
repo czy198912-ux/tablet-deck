@@ -286,8 +286,11 @@
       renderElements(canvas, layout.chrome || []);
       for (const region of layout.regions) canvas.appendChild(renderRegion(region));
       D.refreshStatus();
+      if (D.afterRender) D.afterRender();
     }
 
     render();
+    // The layout editor redraws after changing the layout, and asks which panels are showing.
+    return { render, panelShown: (regionId) => state.panels[regionId] || 0, scale: scaleNow };
   };
 })();

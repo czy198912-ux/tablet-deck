@@ -298,6 +298,32 @@ elements are relative to their half). Element types include `button`, `header`,
 `switch` (with `when` to show elements per mode), `menu`, `slider`, `grid` and
 decorations.
 
+## Layout editor
+
+Click **Edit layout** in the app window (or open the "Layout editor" link the
+console prints when running from source). It opens in your PC's browser and
+shows the deck as the tablet does, but clicking a button selects it instead of
+pressing keys:
+
+- Drag a button to move it, drag its yellow corner to resize it, or nudge it
+  with the arrow keys (Shift for bigger steps).
+- On the right, change its label, keys (picked from a list, so they're always
+  valid), how it presses, colour, icon, press animation and voice phrases. It
+  warns when another button uses the same keys or phrases.
+- Buttons tied to a Star Citizen keybind have **Follow game keybind** on: their
+  key comes from your in-game binds. Untick it to set your own key.
+- **Add button**, **Duplicate**, **Delete**, **Undo** and **Redo** are in the
+  toolbar (Ctrl+Z, Ctrl+Y, Ctrl+D, Delete and Ctrl+S work too).
+- The panel arrows and mode switches work, so you can reach every panel.
+
+**Save** checks the layout and stores it as your own copy (e.g.
+`my-hud.json`) in the settings folder; the built-in layouts never change. With
+**Use on tablets** (or phones) ticked, it becomes the active layout and
+connected tablets reload by themselves. The editor only works on the PC running
+Tablet Deck, not from other devices on the network. It edits the canvas layouts
+(`hud.json`, `hud-phone.json` and copies of them); adding new panels, and the
+older tabbed `star-citizen.json` layout, still mean editing the file.
+
 ## Changing buttons
 
 Edit a layout file, then reload the page on the tablet. With the installed
