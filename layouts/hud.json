@@ -5,7 +5,8 @@
   "chrome": [
     { "type": "action", "action": "menu", "icon": "emblem", "x": 14, "y": 14, "w": 58, "h": 52 },
     { "type": "status", "x": 84, "y": 30 },
-    { "type": "talk", "label": "Hold to talk", "x": 371, "y": 14, "w": 254, "h": 52 },
+    { "type": "talk", "label": "Hold to talk", "x": 371, "y": 14, "w": 196, "h": 52 },
+    { "type": "voicehelp", "x": 573, "y": 14, "w": 52, "h": 52 },
     { "type": "button", "style": "top", "id": "top-atc", "label": "ATC", "voice": ["request landing", "call atc", "air traffic control"], "keys": "lalt+n", "mode": "tap", "x": 631, "y": 14, "w": 58, "h": 52 },
     { "type": "button", "style": "top", "id": "top-chat", "icon": "chat", "label": "Chat", "keys": "f12", "verify": true, "mode": "tap", "x": 695, "y": 14, "w": 58, "h": 52 },
     { "type": "button", "style": "top", "id": "top-contacts", "icon": "party", "label": "Contacts", "keys": "f11", "mode": "tap", "x": 759, "y": 14, "w": 58, "h": 52 },

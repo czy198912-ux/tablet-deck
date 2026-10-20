@@ -431,6 +431,7 @@ function voiceCommands(buttons) {
 }
 
 let voice = null;      // the voice listener, once its grammar is loaded
+let voiceList = [];    // what can be said: [phrase, button label] pairs
 let voiceOwner = null; // the tablet holding the talk button; it gets the results
 function startVoice() {
   if (!config.voice) { ui({ t: "voice", state: "off" }); return; }
@@ -443,11 +444,10 @@ function startVoice() {
   const { buttons } = loadLayout();
   const commands = voiceCommands(buttons);
   // The app window's voice commands list: [phrase, button label] pairs, by label.
-  ui({
-    t: "voice-commands",
-    commands: [...commands].map(([phrase, id]) => [phrase, buttons.get(id).label])
-      .sort((a, b) => a[1].localeCompare(b[1]) || a[0].localeCompare(b[0])),
-  });
+  // [phrase, button label] pairs by label, for the window's list and the tablet's (/voice.json).
+  voiceList = [...commands].map(([phrase, id]) => [phrase, buttons.get(id).label])
+    .sort((a, b) => a[1].localeCompare(b[1]) || a[0].localeCompare(b[0]));
+  ui({ t: "voice-commands", commands: voiceList });
   const proc = spawn(exe, [config.voiceLanguage], { stdio: ["pipe", "pipe", "inherit"] });
   let pending = "";
   proc.stdout.on("data", (d) => {
@@ -560,6 +560,13 @@ const server = http.createServer((req, res) => {
     res.write(`data: ${JSON.stringify({ t: "hello", time: Date.now(), focusCheck: config.onlyWhenGameFocused, focusProbe: Boolean(focusProbe), voice: Boolean(voice) })}\n\n`);
     eventStreams.add(res);
     req.on("close", () => eventStreams.delete(res));
+    return;
+  }
+  // The voice commands list, for the tablet's "?" next to the mic button.
+  if (url.pathname === "/voice.json") {
+    if (url.searchParams.get("t") !== config.token) { res.writeHead(403); res.end("bad token"); return; }
+    res.writeHead(200, { "Content-Type": MIME[".json"], "Cache-Control": "no-store" });
+    res.end(JSON.stringify({ on: Boolean(config.voice), ready: Boolean(voice), commands: voiceList }));
     return;
   }
   if (url.pathname === "/layout.json") {

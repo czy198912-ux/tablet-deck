@@ -135,6 +135,9 @@ window.DECK_ICONS = {
 
   swap: `<path d="M8 16h28m-6-6 6 6-6 6M40 32H12m6-6-6 6 6 6"/>`,
 
+  help: `<circle cx="24" cy="24" r="17"/><path d="M18.5 19a5.5 5.5 0 1 1 8 4.9c-1.8.9-2.5 2-2.5 3.6V29"/>
+    <circle cx="24" cy="35" r="1.8" fill="currentColor" stroke="none"/>`,
+
   default: `<path d="M24 5 40 14v20L24 43 8 34V14Z"/><circle cx="24" cy="24" r="5" fill="currentColor" stroke="none" opacity=".6"/>`,
 };
 

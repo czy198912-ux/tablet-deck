@@ -282,6 +282,58 @@
   }
   bindTalk($("talk"));
 
+  // ---------- voice commands list ----------
+
+  // What can be said and which button it presses, from the PC (the same list the PC listens for).
+  let voiceData = null;
+  function openVoiceHelp() {
+    $("voiceHelp").classList.add("open");
+    $("voiceSearch").value = "";
+    voiceNote("Loading…");
+    fetch(`/voice.json?t=${encodeURIComponent(token)}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data) => { voiceData = data; renderVoiceList(); })
+      .catch(() => voiceNote("Couldn't load the list from the PC."));
+  }
+  const closeVoiceHelp = () => $("voiceHelp").classList.remove("open");
+
+  function voiceNote(text) {
+    const list = $("voiceList");
+    list.innerHTML = `<p class="vh-note"></p>`;
+    list.querySelector("p").textContent = text;
+  }
+
+  // One card per button, with its phrases; the search matches phrases and button names.
+  function renderVoiceList() {
+    if (!voiceData) return;
+    if (!voiceData.on) { voiceNote("Voice commands are turned off on the PC."); return; }
+    const q = $("voiceSearch").value.trim().toLowerCase();
+    const byLabel = new Map();
+    for (const [phrase, label] of voiceData.commands) {
+      if (q && !phrase.includes(q) && !label.toLowerCase().includes(q)) continue;
+      if (!byLabel.has(label)) byLabel.set(label, []);
+      byLabel.get(label).push(phrase);
+    }
+    if (!byLabel.size) { voiceNote(q ? "Nothing matches that." : "No voice commands yet. The PC may still be starting them."); return; }
+    const list = $("voiceList");
+    list.innerHTML = "";
+    for (const [label, phrases] of byLabel) {
+      const card = document.createElement("div");
+      card.className = "vh-card";
+      card.innerHTML = `<div class="vh-label"></div><div class="vh-phrases"></div>`;
+      card.querySelector(".vh-label").textContent = label;
+      for (const phrase of phrases) {
+        const chip = document.createElement("span");
+        chip.textContent = phrase;
+        card.querySelector(".vh-phrases").appendChild(chip);
+      }
+      list.appendChild(card);
+    }
+  }
+  $("voiceSearch").oninput = renderVoiceList;
+  $("voiceHelpBtn").onclick = openVoiceHelp;
+  $("closeVoiceHelp").onclick = closeVoiceHelp;
+
   // ---------- pairing + load ----------
 
   function showPairing(wrong) {
@@ -320,7 +372,7 @@
         if (layout.canvas) {
           document.body.classList.add("canvas-mode");
           window.renderCanvas(layout, {
-            send, bindButton, bindTalk, buzz, store, refreshStatus, openPicker, toggleFullscreen,
+            send, bindButton, bindTalk, buzz, store, refreshStatus, openPicker, openVoiceHelp, toggleFullscreen,
             deckIcon: window.deckIcon,
             emblemHtml: () => emblemSvg((themeById[document.documentElement.dataset.theme] || THEMES[0]).emblem),
           });

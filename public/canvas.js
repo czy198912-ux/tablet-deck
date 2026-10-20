@@ -119,6 +119,15 @@
         return el;
       },
 
+      // Opens the list of voice commands; hidden with the mic when voice is off on the PC.
+      voicehelp(e) {
+        const el = box(make("button", "hud-btn s-top js-voice", `<span class="hud-ico">${D.deckIcon("help")}</span>`), e);
+        el.type = "button";
+        el.setAttribute("aria-label", "Voice commands list");
+        el.onclick = D.openVoiceHelp;
+        return el;
+      },
+
       status: (e) => box(make("div", "hud-status", `<span class="js-dot dot"></span><span class="js-status">Connecting…</span>`), e),
 
       rule: (e) => box(make("div", "hud-rule", "<i></i><i></i>"), e),

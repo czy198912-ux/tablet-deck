@@ -339,7 +339,8 @@ it heard, or "Didn't catch that".
 - Eject, self-destruct and look behind don't respond to voice.
 - The focus check applies: nothing is pressed unless Star Citizen is in front.
 
-In the installed app, **Voice commands...** in the window lists every phrase
+On the tablet, the **?** next to **Hold to talk** lists every phrase and the
+button it presses, with a search box. In the installed app, **Voice commands...** in the window lists every phrase
 and the button it presses, with a search box. The **Voice strictness** slider
 sets how sure the recognizer must be before a command counts (the
 `voiceConfidence` setting), and takes effect straight away. Under it, the window

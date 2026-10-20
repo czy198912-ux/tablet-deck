@@ -16,6 +16,8 @@ before tagging a release.
   (LIVE, PTU and so on), shows which already have the current Tablet Deck
   Keyboard profile, and installs it into the ones you tick. You can also pick
   the game folder yourself.
+- Voice commands list on the tablet: the new **?** next to **Hold to talk**
+  shows everything you can say and the button it presses, with a search box.
 
 ## 1.2.1 (2026-10-20)
 

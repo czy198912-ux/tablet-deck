@@ -29,6 +29,7 @@
   <div class="brand"><span id="brandMark"></span><h1 id="title">Tablet Deck</h1></div>
   <div id="status"><span id="dot"></span><span id="statusText">Connecting…</span></div>
   <button id="talk" class="hbtn js-talk" type="button">Hold to talk</button>
+  <button id="voiceHelpBtn" class="hbtn js-voice" type="button" aria-label="Voice commands list">?</button>
   <button id="themeBtn" class="hbtn" type="button"><span class="sw"></span><span id="themeName">Theme</span></button>
   <button id="fs" class="hbtn" type="button">Fullscreen</button>
 </header>
@@ -62,6 +63,14 @@
   <div class="bar"><span>Choose manufacturer</span>
     <div class="bar-btns"><button id="nightBtn" type="button" aria-pressed="false">Night mode</button><button id="closePicker" type="button">Close</button></div></div>
   <div id="cards" class="cards"></div>
+</div>
+
+<div id="voiceHelp" role="dialog" aria-label="Voice commands">
+  <div class="bar"><span>Voice commands</span>
+    <div class="bar-btns"><button id="closeVoiceHelp" type="button">Close</button></div></div>
+  <p class="vh-intro">Hold the mic button and say one of these. Most Star Citizen controls are toggles, so "engines on" and "engines off" press the same key.</p>
+  <input id="voiceSearch" type="search" placeholder="Search, e.g. shields" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <div id="voiceList"></div>
 </div>
 
 <script src="icons.js"></script>
