@@ -191,6 +191,16 @@ body.offline main { opacity: .45; filter: saturate(.4); }
 .vh-label { margin-bottom: 7px; color: var(--accent); font: 400 15px/1.1 var(--font-display); letter-spacing: .06em; text-transform: uppercase; }
 .vh-phrases { display: flex; flex-wrap: wrap; gap: 6px; }
 .vh-phrases span { padding: 4px 9px; border: 1px solid var(--line); border-radius: 999px; font: 13px/1.2 var(--font-body); }
+#picker .pc-links {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 0 20px 16px;
+  color: #e8eef5; font: 600 12px "Segoe UI", system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase;
+}
+#picker .pc-links[hidden] { display: none; }
+#pcLinkBtns { display: flex; flex-wrap: wrap; gap: 10px; }
+#pcLinkBtns button {
+  background: rgba(79,179,255,.1); border: 1px solid rgba(79,179,255,.55); color: #e8eef5;
+  border-radius: 8px; padding: 9px 16px; font: 600 13px "Segoe UI", system-ui, sans-serif; letter-spacing: .06em;
+}
 #picker .cards {
   flex: 1; overflow-y: auto; padding: 4px 20px 24px;
   display: grid; gap: 16px; align-content: start;

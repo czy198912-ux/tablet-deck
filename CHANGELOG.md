@@ -12,6 +12,14 @@ before tagging a release.
   Hold it to talk, or press once to start and again to stop. A soft sound plays
   when it starts and stops listening, and the tablet's mic button lights up.
   It only watches that one key; it doesn't record anything you type.
+- **Swipe between layouts:** swipe sideways with two fingers to switch to the
+  next or previous layout. Switching (by swipe or in the Layout list) now
+  happens in place, without replaying the intro or leaving full screen. Turn
+  swiping off with **2-finger swipe** in the sliders sheet.
+- **Open on PC:** buttons in the sliders sheet open websites in the PC's
+  browser: UEX (trading), Erkul (loadouts) and SPViewer to start with. Change
+  the list in **Settings → Links**. The tablet only gets the names, so it can't
+  open anything else.
 
 ## 1.3.0 (2026-10-20)
 

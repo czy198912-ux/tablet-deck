@@ -241,6 +241,19 @@ Phones get versions sized for an iPhone 15 Pro in landscape that scale to fit
 other phones. Hold the phone sideways. Layouts you make in the editor show up in
 the list too.
 
+**Swipe sideways with two fingers** to flip to the next or previous layout. So a
+swipe never presses anything, a press waits a moment (60 ms) in case a second
+finger follows; turn **2-finger swipe** off in the sliders sheet for instant
+presses.
+
+### Open websites on the PC
+
+The sliders sheet on the tablet has an **Open on PC** row: tap **UEX**
+(trading), **Erkul** (loadouts) or **SPViewer** to open it in the PC's browser.
+Change the list in **Settings → Links**, one per line as `Name | https://address`.
+The tablet only gets the names and can't make the PC open anything else. The
+browser comes to the front, so this suits a second monitor best.
+
 ### Layout editor
 
 <p align="center">
@@ -320,6 +333,8 @@ Uninstalling keeps them unless you choose to delete them.
 | `voiceLanguage` | the Windows speech recognizer to use | `en-US` |
 | `voiceConfidence` | how sure the recognizer must be, from 0 to 1 (the Voice strictness slider) | `0.6` |
 | `autoUpdate` | check GitHub for new versions | `true` |
+| `pttKey`, `pttKeyName`, `pttMode`, `pttSound` | push-to-talk key on the PC (Windows key code, `0` = none), its name, `hold` or `toggle`, and the sound | none, `hold`, `true` |
+| `links` | websites the tablet can open on the PC: `[{ "name": "UEX", "url": "https://..." }]`, https only, up to 12 | UEX, Erkul, SPViewer |
 
 File paths can be absolute, or relative: `layouts/my.json` is looked up in the
 settings folder first, then among the built-in files.

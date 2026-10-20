@@ -148,7 +148,30 @@
       cards.appendChild(card);
     }
   }
-  const openPicker = () => { $("picker").classList.add("open"); applyTheme(document.documentElement.dataset.theme); fillLayoutPick(); };
+  const openPicker = () => { $("picker").classList.add("open"); applyTheme(document.documentElement.dataset.theme); fillLayoutPick(); fillLinks(); };
+
+  // "Open on PC": websites set up on the PC (Settings → Links), opened in its browser. The
+  // tablet only gets their names and asks by position, so it can't open anything else.
+  function fillLinks() {
+    const names = DEMO ? Promise.resolve(["UEX", "Erkul", "SPViewer"])
+      : fetch(`/links.json?t=${encodeURIComponent(token)}`).then((r) => (r.ok ? r.json() : Promise.reject())).then((d) => d.links);
+    names.then((list) => {
+      const box = $("pcLinkBtns");
+      box.innerHTML = "";
+      list.forEach((name, index) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.textContent = name;
+        b.onclick = () => {
+          if (DEMO) { toast(`With the app, this opens ${name} on your PC`, 2600); return; }
+          buzz();
+          send({ t: "open", index });
+        };
+        box.appendChild(b);
+      });
+      $("pcLinks").hidden = !list.length;
+    }).catch(() => { $("pcLinks").hidden = true; });
+  }
   const closePicker = () => $("picker").classList.remove("open");
   $("themeBtn").onclick = openPicker;
   $("closePicker").onclick = closePicker;
@@ -181,9 +204,75 @@
       .catch(() => {});
   }
   $("layoutPick").onchange = (e) => {
-    store.set(layoutKey, e.target.value);
-    location.reload();
+    closePicker();
+    useLayout(e.target.value);
   };
+
+  // ---------- two-finger swipe between layouts ----------
+
+  // Swiping sideways with two fingers switches to the next or previous layout in the
+  // Layout list. The first finger usually lands on a button, so while swiping is on, a
+  // press waits SWIPE_WAIT_MS; if a second finger lands meanwhile, it's a swipe and
+  // nothing is pressed. Each device can turn it off in the sliders sheet.
+  const SWIPE_WAIT_MS = 60;
+  const swipeKey = `swipe-${device}`;
+  const swipeOn = () => store.get(swipeKey) !== "off";
+  const pendingPresses = new Set(); // cancel functions of presses still waiting
+  const fingers = new Map();        // pointerId -> { x, y } where it went down
+  let swipe = null;                 // { startX, startY, x, y } while two fingers are down
+
+  function centre() {
+    let x = 0, y = 0;
+    for (const f of fingers.values()) { x += f.x; y += f.y; }
+    return { x: x / fingers.size, y: y / fingers.size };
+  }
+  document.addEventListener("pointerdown", (e) => {
+    if (!swipeOn() || e.pointerType === "mouse") return;
+    fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (fingers.size === 2) {
+      for (const cancel of [...pendingPresses]) cancel();
+      pendingPresses.clear();
+      const c = centre();
+      swipe = { startX: c.x, startY: c.y, x: c.x, y: c.y };
+    }
+  }, true);
+  document.addEventListener("pointermove", (e) => {
+    if (!fingers.has(e.pointerId)) return;
+    fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (swipe && fingers.size >= 2) Object.assign(swipe, centre());
+  }, true);
+  const lift = (e) => {
+    if (!fingers.delete(e.pointerId) || !swipe || fingers.size > 0) return;
+    const dx = swipe.x - swipe.startX, dy = swipe.y - swipe.startY;
+    swipe = null;
+    if (Math.abs(dx) > 90 && Math.abs(dy) < Math.abs(dx) * 0.6) switchLayout(dx < 0 ? 1 : -1);
+  };
+  document.addEventListener("pointerup", lift, true);
+  document.addEventListener("pointercancel", lift, true);
+
+  // The layouts this device can show, as in the Layout picker: [{ file, name }].
+  function layoutChoices() {
+    if (DEMO) return Promise.resolve({ list: DEMO_LAYOUTS.map(([file, name]) => ({ file, name })), current: chosenLayout || DEMO_LAYOUTS[0][0] });
+    return fetch(`/layouts.json?t=${encodeURIComponent(token)}&device=${device}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data) => ({ list: data.layouts, current: data.layouts.some((l) => l.file === chosenLayout) ? chosenLayout : data.pcChoice }));
+  }
+
+  function switchLayout(step) {
+    layoutChoices().then(({ list, current }) => {
+      if (list.length < 2) return;
+      const i = Math.max(0, list.findIndex((l) => l.file === current));
+      const next = list[(i + step + list.length) % list.length];
+      useLayout(next.file, next.name);
+    }).catch(() => {});
+  }
+
+  function applySwipe(on) {
+    store.set(swipeKey, on ? "on" : "off");
+    $("swipeBtn").setAttribute("aria-pressed", String(on));
+  }
+  $("swipeBtn").onclick = () => applySwipe(!swipeOn());
+  $("swipeBtn").setAttribute("aria-pressed", String(swipeOn()));
 
   // Night mode dims the whole deck for playing in a dark room; each device remembers it.
   function applyNight(on) {
@@ -235,7 +324,8 @@
       else if (msg.t === "voice-off") toast(msg.reason);
       // Push-to-talk held on the PC: the mic buttons light up as if held here.
       else if (msg.t === "listening") for (const el of document.querySelectorAll(".js-talk")) el.classList.toggle("listening", msg.on);
-      else if (msg.t === "reload") location.reload(); // the layout was changed in the editor
+      else if (msg.t === "reload") load().then(reconnect); // the layout was changed in the editor
+      else if (msg.t === "opened") toast(msg.dryRun ? `${msg.name}: test mode, not opened` : `Opened ${msg.name} on the PC`);
     };
     ws.onclose = () => { setOnline(false, "Reconnecting…"); setTimeout(connect, 1000); };
     ws.onerror = () => ws.close();
@@ -282,17 +372,27 @@
   function bindButton(el, btn) {
     const fx = window.DeckFX.attach(el, btn);
     let pointer = null;
-    el.addEventListener("pointerdown", (e) => {
-      if (pointer !== null) return;
-      pointer = e.pointerId;
-      el.setPointerCapture(e.pointerId);
+    let waiting = null; // a press held back in case a second finger starts a swipe
+    const press = (e) => {
+      waiting = null;
       el.classList.add("pressed");
       buzz();
       send({ t: btn.mode === "hold" ? "down" : "tap", id: btn.id });
       fx.down(e);
+    };
+    el.addEventListener("pointerdown", (e) => {
+      if (pointer !== null || swipe) return; // fingers that are part of a swipe press nothing
+      pointer = e.pointerId;
+      el.setPointerCapture(e.pointerId);
+      if (!swipeOn()) { press(e); return; }
+      const cancel = () => { clearTimeout(waiting.timer); waiting = null; pointer = null; };
+      waiting = { cancel, timer: setTimeout(() => { pendingPresses.delete(cancel); press(e); }, SWIPE_WAIT_MS) };
+      pendingPresses.add(cancel);
     });
     const end = (e) => {
       if (e.pointerId !== pointer) return;
+      // Lifted before the wait was over: still a press, just a quick one.
+      if (waiting) { clearTimeout(waiting.timer); pendingPresses.delete(waiting.cancel); press(e); }
       pointer = null;
       el.classList.remove("pressed");
       if (btn.mode === "hold") send({ t: "up", id: btn.id });
@@ -423,33 +523,47 @@
     };
   }
 
+  // Draws a layout: canvas layouts on the stage, tabbed grid layouts in the page. Also used
+  // to switch layouts in place, without reloading (which would replay the intro and leave
+  // full screen).
+  let deckCanvas = null;
+  function showLayout(l) {
+    layout = l;
+    $("title").textContent = layout.name;
+    document.title = layout.name;
+    if (layout.canvas) {
+      document.body.classList.add("canvas-mode");
+      deckCanvas = window.renderCanvas(layout, {
+        send, bindButton, bindTalk, buzz, store, refreshStatus, openPicker, openVoiceHelp, toggleFullscreen,
+        deckIcon: window.deckIcon,
+        emblemHtml: () => emblemSvg((themeById[document.documentElement.dataset.theme] || THEMES[0]).emblem),
+      });
+    } else {
+      if (deckCanvas) { deckCanvas.dispose(); deckCanvas = null; }
+      document.body.classList.remove("canvas-mode");
+      $("stage").hidden = true;
+      $("canvas").innerHTML = "";
+      if (pageIndex >= layout.pages.length) pageIndex = 0;
+      renderTabs();
+      renderPage();
+    }
+  }
+
+  // Fetches the chosen layout (from the PC, or the layouts/ folder in demo mode) and shows it.
   function load() {
     const demoFile = (DEMO_LAYOUTS.find(([f]) => f === chosenLayout) || DEMO_LAYOUTS[0])[0];
-    fetch(DEMO ? demoFile : `/layout.json?t=${encodeURIComponent(token)}&device=${device}&layout=${encodeURIComponent(chosenLayout)}`)
+    return fetch(DEMO ? demoFile : `/layout.json?t=${encodeURIComponent(token)}&device=${device}&layout=${encodeURIComponent(chosenLayout)}`)
       .then((r) => {
         if (r.status === 403) return Promise.reject("pair");
         return r.ok ? r.json() : Promise.reject(`Layout error (${r.status})`);
       })
       .then((l) => {
-        layout = l;
+        const first = !layout;
         if (!DEMO) store.set("token", token);
-        $("title").textContent = layout.name;
-        document.title = layout.name;
-        if (layout.canvas) {
-          document.body.classList.add("canvas-mode");
-          window.renderCanvas(layout, {
-            send, bindButton, bindTalk, buzz, store, refreshStatus, openPicker, openVoiceHelp, toggleFullscreen,
-            deckIcon: window.deckIcon,
-            emblemHtml: () => emblemSvg((themeById[document.documentElement.dataset.theme] || THEMES[0]).emblem),
-          });
-        } else {
-          if (pageIndex >= layout.pages.length) pageIndex = 0;
-          renderTabs();
-          renderPage();
-        }
+        showLayout(l);
         if (DEMO) {
           setOnline(true, "Demo");
-          setTimeout(() => toast("Demo: taps play their animations; with the app, they press keys in Star Citizen", 4500), 400);
+          if (first) setTimeout(() => toast("Demo: taps play their animations; with the app, they press keys in Star Citizen", 4500), 400);
         } else if (!ws) connect();
       })
       .catch((err) => {
@@ -458,6 +572,22 @@
         $("msg").textContent = String(err);
         setOnline(false, "Error");
       });
+  }
+
+  // A new layout means new buttons on the PC's side too, so connect again with it.
+  function reconnect() {
+    if (DEMO || !ws) return;
+    ws.onclose = null;
+    ws.close();
+    ws = null;
+    connect();
+  }
+
+  // Shows another layout (by file), remembered for this device.
+  function useLayout(file, name) {
+    chosenLayout = file;
+    store.set(layoutKey, file);
+    return load().then(() => { reconnect(); if (name) toast(name, 1600); });
   }
 
   function toggleFullscreen() {

@@ -4,7 +4,10 @@
 (() => {
   const NS = "deck-canvas";
 
+  let current = null; // the deck drawn last; a new one replaces it (switching layouts)
+
   window.renderCanvas = function renderCanvas(layout, D) {
+    if (current) current.dispose();
     const [W, H] = layout.canvas;
     const stage = document.getElementById("stage");
     const canvas = document.getElementById("canvas");
@@ -40,8 +43,9 @@
       return changed;
     }
     const fit = () => { if (measure()) render(); };
+    const turned = () => setTimeout(fit, 250);
     window.addEventListener("resize", fit);
-    window.addEventListener("orientationchange", () => setTimeout(fit, 250));
+    window.addEventListener("orientationchange", turned);
     measure();
 
     // Layout coordinates are in design pixels; place them on the stretched canvas.
@@ -291,6 +295,17 @@
 
     render();
     // The layout editor redraws after changing the layout, and asks which panels are showing.
-    return { render, panelShown: (regionId) => state.panels[regionId] || 0, scale: scaleNow };
+    current = {
+      render,
+      panelShown: (regionId) => state.panels[regionId] || 0,
+      scale: scaleNow,
+      // Stops this deck redrawing itself, before another layout is drawn or a grid layout shown.
+      dispose() {
+        window.removeEventListener("resize", fit);
+        window.removeEventListener("orientationchange", turned);
+        if (current === this) current = null;
+      },
+    };
+    return current;
   };
 })();

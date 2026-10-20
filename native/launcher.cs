@@ -967,7 +967,7 @@ class DeckWindow : Form
             }
             var pairs = new List<string>();
             // Quoted, since some values have spaces (e.g. "pttKeyName=Numpad 5"); none have quotes.
-            foreach (var change in dialog.Changes) pairs.Add("\"" + change.Key + "=" + change.Value + "\"");
+            foreach (var change in dialog.Changes) pairs.Add("\"" + change.Key + "=" + change.Value.Replace("\"", "\\\"") + "\"");
             try
             {
                 var psi = new ProcessStartInfo(Path.Combine(appDir, "TabletDeckServer.exe"), "--set " + string.Join(" ", pairs.ToArray()))
@@ -1387,6 +1387,45 @@ class SettingsWindow : Form
     readonly CheckBox voiceOn = new CheckBox();
     readonly ComboBox language = new ComboBox();
     readonly ComboBox pttMode = new ComboBox();
+    readonly TextBox links = new TextBox();
+
+    // config.json's links as editable lines.
+    string LinksText()
+    {
+        object v;
+        var lines = new List<string>();
+        if (current.TryGetValue("links", out v) && v is object[])
+            foreach (var item in (object[])v)
+            {
+                var l = item as Dictionary<string, object>;
+                if (l == null) continue;
+                lines.Add(Convert.ToString(l["name"], CultureInfo.InvariantCulture) + " | " + Convert.ToString(l["url"], CultureInfo.InvariantCulture));
+            }
+        return string.Join("\r\n", lines.ToArray());
+    }
+
+    // The lines as the JSON the server takes, or null (with a message) if one isn't valid.
+    string LinksJson()
+    {
+        var list = new List<Dictionary<string, string>>();
+        foreach (var raw in links.Lines)
+        {
+            string line = raw.Trim();
+            if (line == "") continue;
+            int bar = line.IndexOf('|');
+            string name = bar > 0 ? line.Substring(0, bar).Trim() : "";
+            string url = bar > 0 ? line.Substring(bar + 1).Trim() : "";
+            if (name == "" || name.Length > 24 || name.IndexOfAny(new[] { '<', '>', '"' }) >= 0
+                || !System.Text.RegularExpressions.Regex.IsMatch(url, "^https://[^\\s\"<>]{3,300}$"))
+            {
+                MessageBox.Show(this, "This link isn't right:\n\n" + line + "\n\nWrite each one as: Name | https://address (names up to 24 characters).", "Tablet Deck", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return null;
+            }
+            list.Add(new Dictionary<string, string> { { "name", name }, { "url", url } });
+        }
+        if (list.Count > 12) { MessageBox.Show(this, "Up to 12 links, please.", "Tablet Deck", MessageBoxButtons.OK, MessageBoxIcon.Warning); return null; }
+        return new JavaScriptSerializer().Serialize(list);
+    }
     readonly CheckBox pttSound = new CheckBox();
     Button pttButton;
     int pttKey;          // Windows virtual-key code, 0 = none
@@ -1450,7 +1489,7 @@ class SettingsWindow : Form
         BackColor = DeckWindow.Back;
         ForeColor = DeckWindow.Ink;
         Font = new Font("Segoe UI", 9.75f);
-        ClientSize = new Size(480, 546);
+        ClientSize = new Size(480, 690);
 
         Caption("Pairing code", 14);
         Field(code, 12, 36, 200);
@@ -1519,12 +1558,22 @@ class SettingsWindow : Form
         Hint("Pick a key Star Citizen doesn't use, like a mouse side button, a numpad key or F13-F24: the key still reaches the game.", 12, 454, 456);
         ShowPttKey();
 
-        AddButton("Install keybind profile...", 12, 500, 190, delegate
+        // Websites the tablet's "Open on PC" buttons open here, one per line: "Name | https://...".
+        Caption("Links the tablet can open on this PC", 498);
+        Field(links, 12, 520, 456);
+        links.Multiline = true;
+        links.ScrollBars = ScrollBars.Vertical;
+        links.Height = 76;
+        links.Font = new Font("Consolas", 9.5f);
+        links.Text = LinksText();
+        Hint("One per line: Name | https://address. The tablet only sees the names, so it can't open anything else.", 12, 600, 456);
+
+        AddButton("Install keybind profile...", 12, 644, 190, delegate
         {
             using (var dialog = new KeybindProfileWindow(keybindProfile, Icon)) dialog.ShowDialog(this);
         });
-        var save = AddButton("Save", 280, 500, 90, delegate { Save(); });
-        var cancel = AddButton("Cancel", 378, 500, 90, delegate { DialogResult = DialogResult.Cancel; });
+        var save = AddButton("Save", 280, 644, 90, delegate { Save(); });
+        var cancel = AddButton("Cancel", 378, 644, 90, delegate { DialogResult = DialogResult.Cancel; });
         AcceptButton = save;
         CancelButton = cancel;
 
@@ -1615,6 +1664,12 @@ class SettingsWindow : Form
         }
         Change("pttMode", Get("pttMode", "hold"), pttMode.SelectedIndex == 1 ? "toggle" : "hold", false);
         Change("pttSound", OnOff(GetBool("pttSound", true)), OnOff(pttSound.Checked), false);
+        if (links.Text.Trim() != LinksText().Trim())
+        {
+            string json = LinksJson();
+            if (json == null) { Changes.Clear(); NeedsRestart = false; links.Focus(); return; }
+            Change("links", "", json, false);
+        }
         DialogResult = DialogResult.OK;
     }
 

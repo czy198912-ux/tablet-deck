@@ -110,6 +110,15 @@ function loadConfig() {
   if (!config.voiceConfidence) { config.voiceConfidence = 0.6; changed = true; }
   // The installed app window checks GitHub for new versions unless this is false.
   if (INSTALLED && config.autoUpdate === undefined) { config.autoUpdate = true; changed = true; }
+  // Websites a tablet may open on this PC ("Open on PC" in its sliders sheet).
+  if (config.links === undefined) {
+    config.links = [
+      { name: "UEX", url: "https://uexcorp.space/" },
+      { name: "Erkul", url: "https://www.erkul.games/" },
+      { name: "SPViewer", url: "https://www.spviewer.eu/" },
+    ];
+    changed = true;
+  }
   if (changed) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
     fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2) + "\n");
@@ -139,6 +148,15 @@ const SETTINGS = {
   pttKeyName: (v) => (/^[\w +-]{1,30}$/.test(v) ? v : undefined),
   pttMode: (v) => (v === "hold" || v === "toggle" ? v : undefined),
   pttSound: onOff,
+  // JSON list of { name, url }: at most 12, https only.
+  links: (v) => {
+    let list;
+    try { list = JSON.parse(v); } catch { return undefined; }
+    if (!Array.isArray(list) || list.length > 12) return undefined;
+    const ok = list.every((l) => l && typeof l.name === "string" && /^[^<>"]{1,24}$/.test(l.name.trim())
+      && typeof l.url === "string" && /^https:\/\/[^\s"<>]{3,300}$/.test(l.url));
+    return ok ? list.map((l) => ({ name: l.name.trim(), url: l.url })) : undefined;
+  },
 };
 
 // --set name=value ...: save settings to config.json and exit without starting. The app
@@ -532,6 +550,27 @@ async function onVoice(id, confidence, text) {
   await tapButton(btn, client, btn.voiceMs || btn.ms || config.tapMs, "voice");
 }
 
+// ---------- open a website on the PC ----------
+
+// A tablet asks by position in config.links, so it can only open the addresses set up on
+// this PC, never one of its own. Opens in the default browser; dry runs only log it.
+let lastOpen = 0;
+function openLink(index, client) {
+  const link = (config.links || [])[index];
+  if (!link || !/^https:\/\/[^\s"<>]{3,300}$/.test(link.url)) return;
+  if (Date.now() - lastOpen < 1500) return; // one at a time, even on a double tap
+  lastOpen = Date.now();
+  if (DRY_RUN) {
+    console.log(`Open on PC: ${link.name} (${link.url}) - dry run, not opened`);
+    client.send({ t: "opened", name: link.name, dryRun: true });
+    return;
+  }
+  console.log(`Opening ${link.name} (${link.url}) on this PC.`);
+  // rundll32 hands the address to the default browser without a command shell in between.
+  spawn("rundll32.exe", ["url.dll,FileProtocolHandler", link.url], { detached: true, stdio: "ignore" }).unref();
+  client.send({ t: "opened", name: link.name });
+}
+
 // ---------- minimal WebSocket server (RFC 6455, text frames) ----------
 
 function wsAccept(req, socket) {
@@ -694,6 +733,11 @@ const server = http.createServer((req, res) => {
     return;
   }
   // The voice commands list, for the tablet's "?" next to the mic button.
+  // The names of the websites a tablet may open on this PC; the addresses stay here.
+  if (url.pathname === "/links.json") {
+    if (url.searchParams.get("t") !== config.token) { res.writeHead(403); res.end("bad token"); return; }
+    return sendJson(res, 200, { links: (config.links || []).map((l) => l.name) });
+  }
   if (url.pathname === "/voice.json") {
     if (url.searchParams.get("t") !== config.token) { res.writeHead(403); res.end("bad token"); return; }
     res.writeHead(200, { "Content-Type": MIME[".json"], "Cache-Control": "no-store" });
@@ -785,6 +829,7 @@ server.on("upgrade", (req, socket) => {
       }
       return;
     }
+    if (msg.t === "open") { openLink(msg.index, client); return; }
     const btn = buttons.get(msg.id);
     if (!btn) return;
     if (msg.t === "down" && !held.has(btn.id)) {
@@ -900,7 +945,7 @@ function applySetting(name, text) {
     ui({ t: "voiceConfidence", value });
     return;
   }
-  console.log(`Saved ${name}: ${value === true ? "on" : value === false ? "off" : value}.`);
+  console.log(`Saved ${name}: ${value === true ? "on" : value === false ? "off" : Array.isArray(value) ? value.map((l) => l.name).join(", ") || "none" : value}.`);
   if (name.startsWith("ptt")) {
     sendPushToTalk();
     if (voiceStatus) ui({ ...voiceStatus, ptt: config.pttKey ? config.pttKeyName || "on" : "" });
