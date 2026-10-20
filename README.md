@@ -2,90 +2,321 @@
   <img src="docs/banner.jpg" alt="Tablet Deck: turn any tablet or phone into a touch control panel for Star Citizen" width="100%">
 </p>
 
-Turn any tablet into a touch control panel for Star Citizen. A small server on
-your gaming PC serves a HUD-style button deck to the tablet over your home
-network, and each button sends real keyboard scancodes that Star Citizen reads.
+<p align="center">
+  <a href="https://github.com/nodieCode/tablet-deck/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/nodieCode/tablet-deck?style=for-the-badge&label=download&color=4fb3ff&labelColor=0b1726"></a>
+  <img alt="Windows 10 and 11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-4fb3ff?style=for-the-badge&labelColor=0b1726">
+  <a href="https://github.com/nodieCode/tablet-deck/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/nodieCode/tablet-deck/total?style=for-the-badge&color=4fb3ff&labelColor=0b1726"></a>
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/github/license/nodieCode/tablet-deck?style=for-the-badge&color=4fb3ff&labelColor=0b1726"></a>
+</p>
+
+<h3 align="center">Turn any tablet or phone into a touch control panel for Star Citizen.</h3>
+
+<p align="center">
+  A HUD-style button deck in your tablet's browser, where every button presses real keys on your gaming PC.<br>
+  Free and open source. No app on the tablet, no account.
+</p>
+
+<p align="center">
+  <a href="https://github.com/nodieCode/tablet-deck/releases/latest"><b>⬇&nbsp;Download for Windows</b></a>
+  &nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="https://nodiecode.github.io/tablet-deck/try/"><b>▶&nbsp;Try it in your browser</b></a>
+  &nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="https://nodiecode.github.io/tablet-deck/"><b>Website</b></a>
+</p>
 
 <p align="center">
   <img src="docs/demo.png" alt="The deck in action: landing gear, shields, flight ready and a quantum charge, then switching to the Drake theme" width="100%">
 </p>
 
-<p align="center">
-  <img src="docs/hero.jpg" alt="The deck on an iPad and an iPhone: landing, power management, ship systems and quantum controls" width="100%">
-</p>
-
-- 1024×768 two-panel HUD with landing, power management, quantum, operator
-  modes, shields, targeting, salvage, mining, doors, emotes and more
-- 12 ship-manufacturer themes (RSI, Drake, Aegis, Anvil, Origin, MISC, Crusader,
-  Banu, Aopoa, Argo, Consolidated Outland, Esperia)
-- Press animations: landing-gear struts, quantum charge ring, decoy sparks,
-  lock-on brackets, sliding doors, slide-to-eject and more
-- Works in any tablet browser (iPad or Android), no app or account needed
-- Phone layout sized for the iPhone 15 Pro in landscape; every layout stretches
-  to fill the whole screen
-- Hold-to-talk voice commands ("engines on", "landing gear", "engage quantum")
-- Animated intro screen: the manufacturer emblem draws itself, then tap to
-  quantum-jump into the deck
-
+> [!NOTE]
 > Fan project. Not affiliated with or endorsed by Cloud Imperium Games. Star
 > Citizen and the manufacturer names belong to their owners; the emblems here
 > are original designs, not the companies' logos.
 
-## Download
+**Contents:** [Features](#features) · [Get started](#get-started) ·
+[Troubleshooting](#troubleshooting) · [Using Tablet Deck](#using-tablet-deck) ·
+[Settings](#settings) · [How it works](#how-it-works) ·
+[Safety and privacy](#safety-and-privacy) · [Developers](#developers)
 
-You need Windows 10 or 11 on the gaming PC and a tablet or phone on the same
-Wi-Fi or network. Nothing else: no Node.js, no account.
+## Features
 
-1. Download **TabletDeck-Setup-&lt;version&gt;.exe** from the
+<table>
+<tr>
+<td width="50%" valign="top">
+
+### 🛸 A HUD for your tablet
+Landing, power management, quantum, operator modes, shields, targeting,
+salvage, mining, doors, emotes and more, on a two-half HUD that pages through
+panels. Phones get their own layout.
+
+</td>
+<td width="50%" valign="top">
+
+### 🎨 12 manufacturer themes
+RSI, Drake, Aegis, Anvil, Origin, MISC, Crusader, Banu, Aopoa, Argo,
+Consolidated Outland and Esperia, plus night mode. Press animations for
+landing-gear struts, the quantum charge ring, decoy sparks, sliding doors and
+more.
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+### 🎙️ Hold-to-talk voice commands
+"Landing gear", "engage quantum", "shields up": hold the mic button and speak.
+Windows' built-in speech recognition, offline. The **?** next to the mic lists
+everything you can say.
+
+</td>
+<td valign="top">
+
+### ⌨️ Follows your keybinds
+Reads your Star Citizen keybinds, so if you rebind something in-game, the
+button follows. An optional keybind profile covers actions that have no default
+key.
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+### ✏️ Layout editor and starter layouts
+Drag buttons around and change their keys, labels, icons and animations. Or
+pick a starter layout for **Combat**, **Mining & Salvage** or **Hauling &
+Exploration**, separately on each tablet.
+
+</td>
+<td valign="top">
+
+### 🖥️ A proper Windows app
+One installer. A window with the QR code and pairing code, a tray icon, settings,
+start with Windows, and updates with one click.
+
+</td>
+</tr>
+</table>
+
+<p align="center">
+  <img src="docs/hero.jpg" alt="The deck on an iPad and an iPhone: landing, power management, ship systems and quantum controls" width="100%">
+</p>
+
+## Get started
+
+You need **Windows 10 or 11** on the gaming PC and a **tablet or phone on the
+same Wi-Fi**. Nothing else.
+
+1. **Download** `TabletDeck-Setup-<version>.exe` from the
    [latest release](https://github.com/nodieCode/tablet-deck/releases/latest)
-   and run it.
-2. The installer isn't code-signed yet, so Windows may show **"Windows
-   protected your PC"** with an unknown publisher. Click **More info**, then
-   **Run anyway**. Your browser may also warn that the file isn't commonly
-   downloaded; choose **Keep**. Each release lists the file's SHA-256 checksum
-   if you want to check your download.
-3. Setup installs Tablet Deck to Program Files, adds it to the Start menu (and
-   the desktop, if you tick that), and lets it through Windows Firewall on
-   private networks. Tick **Install the Star Citizen keybind profile** to copy
-   the deck's keybinds into your game folder (see [Keybinds](#keybinds)).
-4. Open **Tablet Deck** from the Start menu. Its window shows a QR code, an
-   address such as `http://192.168.1.20:8765` and a pairing code such as
-   `1a2b3c4d`. Scan the QR code with the tablet's camera, or open the address on
-   your tablet and enter the code. Use "Add to Home Screen" for a full-screen
-   app.
-5. Click into Star Citizen. Buttons only press keys while Star Citizen is the
-   window in front; otherwise the tablet shows "Star Citizen not focused" and
-   nothing is typed into the other window.
+   and run it. (Windows may warn about an unknown publisher; see
+   [Troubleshooting](#troubleshooting).)
+2. **Install.** Setup adds Tablet Deck to the Start menu and lets it through
+   Windows Firewall on private networks. Tick **Install the Star Citizen keybind
+   profile** if Setup finds your game.
+3. **Open Tablet Deck** from the Start menu. Its window shows a QR code, an
+   address like `http://192.168.1.20:8765` and a pairing code.
+4. **Pair your tablet:** scan the QR code with its camera, or open the address
+   and type the code. Use "Add to Home Screen" for a full-screen app.
+5. **Fly.** Click into Star Citizen. Buttons only press keys while the game is
+   the window in front; otherwise the tablet shows "Star Citizen not focused".
 
-The window also shows how many tablets are connected, whether voice commands
-are ready, and a log of button presses. **Minimize** it to keep Tablet Deck
-running in the tray (next to the clock); double-click the tray icon to bring it
-back, or right-click it to quit. **Closing** the window quits Tablet Deck. Tick
-**Start with Windows** to have it start in the tray when you log in.
+In Star Citizen, load the **Tablet Deck Keyboard** profile once (see
+[Keybinds](#keybinds)) so the buttons for actions without a default key work.
 
-**Updates:** Tablet Deck checks GitHub for a new version when it starts and
-once a day. When there is one, the window shows **What's new** and **Update
-now**. Updating downloads the new installer, checks it against the release's
-checksum, and installs it after the usual Windows permission prompt. Tablet
-Deck then closes, releasing any held keys, and opens again, keeping your
-settings. Nothing installs until you click. Untick **Check for updates
-automatically** to stop the checks; **Check for updates now** in the tray menu
-still works. Versions before 1.2.0 can't update themselves, so download 1.2.0
-once by hand. [CHANGELOG.md](CHANGELOG.md) lists what changed in each version.
+## Troubleshooting
 
-If the tablet can't connect, check that Windows treats your network as
-**Private** (Settings → Network & Internet → your network). The firewall rule
-only covers private networks, so the deck isn't reachable on public Wi-Fi.
+<details>
+<summary><b>Windows says "Windows protected your PC" or "unknown publisher"</b></summary>
 
-The tablet's screen stays on while the deck is open, so it doesn't dim or lock
-mid-flight. "Add to Home Screen" gives the deck its own icon and, on iPad and
-iPhone, opens it full screen. On Android, Chrome only makes full-screen apps
-from `https` pages, so there the shortcut opens in a browser tab.
+The installer isn't code-signed yet. Click **More info**, then **Run anyway**.
+Your browser may also say the file isn't commonly downloaded; choose **Keep**.
+Each release lists the installer's SHA-256 checksum if you want to check your
+download, and all the source code is here.
+</details>
 
-Your settings are in `%APPDATA%\TabletDeck\config.json` (see
-[Settings](#settings-configjson-created-on-first-run)). To uninstall, use
-**Settings → Apps**. It removes the firewall rule and asks whether to delete
-your settings too.
+<details>
+<summary><b>The tablet can't connect</b></summary>
+
+- Make sure the tablet is on the same Wi-Fi or network as the PC.
+- Check that Windows treats your network as **Private** (Settings → Network &
+  Internet → your network). The firewall rule only covers private networks.
+- Type the address exactly as the Tablet Deck window shows it, including the
+  port (`:8765`).
+</details>
+
+<details>
+<summary><b>Buttons don't do anything in the game</b></summary>
+
+- Click into Star Citizen first: keys are only sent while it's the window in
+  front.
+- If Star Citizen runs as administrator, run Tablet Deck as administrator too.
+  Windows blocks keypresses from a normal program into an elevated one.
+- For actions with no default key, load the **Tablet Deck Keyboard** profile in
+  the game (see [Keybinds](#keybinds)).
+</details>
+
+<details>
+<summary><b>Voice commands don't work</b></summary>
+
+Commands are in English and need the English speech recognizer in Windows. If
+the window says "no en-US speech recognizer installed", add it under
+**Settings → Time & Language → Speech**, then restart Tablet Deck. If commands
+are often missed or misheard, try a headset mic, or move the **Voice
+strictness** slider in the window.
+</details>
+
+<details>
+<summary><b>"Port 8765 is already in use"</b></summary>
+
+Another program (or another copy of Tablet Deck) uses that port. Open
+**Settings** in the Tablet Deck window and pick another port.
+</details>
+
+## Using Tablet Deck
+
+### The app window
+
+<img src="docs/app-window.png" alt="The Tablet Deck window: QR code, address, pairing code, connected tablets, voice status and a log of presses" width="420" align="right">
+
+The window shows the QR code, address and pairing code, how many tablets are
+connected, whether voice commands are ready, and a log of button presses.
+
+- **Minimize** it to keep Tablet Deck running in the tray; double-click the tray
+  icon to bring it back. **Closing** the window quits.
+- **Settings:** pairing code, port, the "only while Star Citizen is in front"
+  check, tap length, voice on/off and language, and **Install keybind profile**.
+- **Edit layout** opens the [layout editor](#layout-editor).
+- **Start with Windows** starts it in the tray when you log in.
+- **Updates:** Tablet Deck checks for a new version when it starts and once a
+  day, and shows **What's new** and **Update now**. Nothing installs until you
+  click; your settings are kept. [CHANGELOG.md](CHANGELOG.md) lists every
+  version's changes.
+
+<br clear="right">
+
+### Keybinds
+
+The deck uses Star Citizen's default keys where they exist. Actions with no
+default keyboard key (operator modes, shield facings, doors, emotes, targeting
+and so on) get keys from the **Tablet Deck Keyboard** profile. To install it:
+
+1. Tick it in Setup, or use **Settings → Install keybind profile...** in the
+   window. It finds your LIVE, PTU and other copies of the game, or lets you
+   pick the folder.
+2. In-game, open **Options → Keybindings → Control Profiles** and load
+   **Tablet Deck Keyboard**. This replaces your current custom binds, so note
+   any you want to keep and set them again afterwards.
+
+Tablet Deck also reads your own `actionmaps.xml`, and your binds win: rebind an
+action in-game and its button follows.
+
+<details>
+<summary>Buttons to double-check</summary>
+
+A few buttons use defaults the profile doesn't set: power management, system
+power toggles, SCM/NAV, eject, chat and the docking camera. Check those on your
+keybinding screen.
+
+The mining buttons' action names couldn't be confirmed against the game's
+files. After loading the profile, check that **Options → Keybindings → Vehicles
+→ Mining** shows Fire Laser on RCtrl+F, Fracture/Extract on RCtrl+T, laser power
+on RCtrl+W / RCtrl+S and the modules on LAlt+1-3. If one is missing, rebind it
+there to the same key.
+</details>
+
+### Layouts
+
+Tap the sliders button (top right) on the tablet and choose under **Layout**.
+Each tablet and phone remembers its own choice:
+
+| Layout | What's on it |
+|---|---|
+| **Tablet Deck HUD** (default) | Everything: Power/Landing, Flight Assist, Shields, Targeting, Salvage and Mining on the left; QT/Systems, Operator Modes, Combat, Crew/Doors, On Foot and Emotes on the right |
+| **Combat** | Power, shields, targeting and flight assist; combat, quantum, operator modes and crew |
+| **Mining & Salvage** | Mining and salvage first, with landing and flight assist; operator modes, quantum, crew and on foot |
+| **Hauling & Exploration** | Landing, flight assist and targeting; quantum, crew, on foot and emotes |
+| **Star Citizen** | A simpler tabbed grid of buttons |
+
+Phones get versions sized for an iPhone 15 Pro in landscape that scale to fit
+other phones. Hold the phone sideways. Layouts you make in the editor show up in
+the list too.
+
+### Layout editor
+
+<p align="center">
+  <img src="docs/editor.jpg" alt="The layout editor: the deck on the left with Engage Quantum selected, its keys, mode, colour, icon, animation and voice phrases on the right" width="100%">
+</p>
+
+Click **Edit layout** in the window. It opens in your PC's browser and shows the
+deck exactly as the tablet does, but clicking a button selects it:
+
+- **Drag** a button to move it, drag its yellow corner to resize it, or nudge it
+  with the arrow keys.
+- On the right, change its **label, keys, how it presses, colour, icon, press
+  animation and voice phrases**. Keys are picked from a list, so they're always
+  valid, and it warns when another button uses the same keys or phrases.
+- Buttons tied to a Star Citizen keybind follow your in-game binds; untick
+  **Follow game keybind** to set your own key.
+- **Add**, **Duplicate**, **Delete**, **Undo** and **Redo** are in the toolbar.
+
+**Save** stores your own copy (e.g. `my-hud`); the built-in layouts never
+change. With **Use on tablets** ticked, connected tablets switch to it and
+reload by themselves. The editor only works on the PC running Tablet Deck.
+
+### Voice commands
+
+Hold the mic button at the top of the deck, say a command, and let go. The PC
+listens through your default microphone and presses that button's keys. The
+tablet shows what it heard, or "Didn't catch that".
+
+- Every button answers to its name ("landing gear", "fire laser", "max
+  shields"; `+` and `−` are said as "up" and "down", so "shields up").
+- Common commands have extra phrases: "engines on", "gear up", "flight ready",
+  "engage quantum", "lights on", "flares" and more.
+- Most Star Citizen controls are toggles, so "engines on" and "engines off"
+  press the same key.
+- Eject, self-destruct and look behind don't respond to voice.
+
+The **?** next to the mic on the tablet, and **Voice commands...** in the
+window, list every phrase with a search box. The window's **Voice strictness**
+slider sets how sure the recognizer must be, and shows the last thing it heard
+and how sure it was, so you can tune it.
+
+### Themes
+
+Tap the sliders button (top right) to pick a manufacturer theme. Each tablet
+remembers its own. **Night mode** dims the whole deck for a dark room.
+
+<p align="center">
+  <img src="docs/themes.jpg" alt="The deck in all 12 manufacturer themes" width="100%">
+</p>
+
+## Settings
+
+Most settings are in the window's **Settings** dialog. They're stored in
+`%APPDATA%\TabletDeck\config.json` (the **Settings folder** button opens it).
+Uninstalling keeps them unless you choose to delete them.
+
+<details>
+<summary>All settings in <code>config.json</code></summary>
+
+| setting | what it does | default |
+|---|---|---|
+| `port` | the server's port | `8765` |
+| `token` | the pairing code; delete it to get a new random one | random |
+| `layout` | the layout tablets show unless they pick their own | `layouts/hud.json` |
+| `phoneLayout` | the same for phones | `layouts/hud-phone.json` |
+| `actionmaps` | keybind files to read, in order (later files win) | the Tablet Deck profile, then your `actionmaps.xml` |
+| `tapMs` | how long a tap holds the key, in milliseconds | `60` |
+| `onlyWhenGameFocused` | only press keys while Star Citizen is in front; `false` sends them to whatever window is in front | `true` |
+| `voice` | voice commands on or off | `true` |
+| `voiceLanguage` | the Windows speech recognizer to use | `en-US` |
+| `voiceConfidence` | how sure the recognizer must be, from 0 to 1 (the Voice strictness slider) | `0.6` |
+| `autoUpdate` | check GitHub for new versions | `true` |
+
+File paths can be absolute, or relative: `layouts/my.json` is looked up in the
+settings folder first, then among the built-in files.
+</details>
 
 ## How it works
 
@@ -94,7 +325,7 @@ flowchart LR
     tablet["📱 Tablet or phone<br/>any browser"]
     mic["🎙️ PC microphone"]
     subgraph pc["Gaming PC"]
-        server["Tablet Deck server<br/>Tablet Deck app or start.bat"]
+        server["Tablet Deck"]
         voice["Voice listener<br/>Windows speech recognition"]
         keys["Key sender"]
     end
@@ -115,354 +346,29 @@ flowchart LR
 ```
 
 The tablet only shows the buttons; everything else happens on the PC. A press
-travels over your home network to the server, which checks that Star Citizen
-is the window in front and has the key sender type the button's keys. Voice
-commands take the same path once the PC has recognised the phrase.
+travels over your home network to Tablet Deck, which checks that Star Citizen is
+the window in front and has the key sender type the button's keys, like a
+second keyboard. One press per tap: no macros or automation, and nothing touches
+the game's files or memory.
 
-## Run from source (developers)
+## Safety and privacy
 
-To change the deck or run it without the installer:
-
-- Windows 10 or 11 on the gaming PC
-- [Node.js](https://nodejs.org) 18 or newer
-- A tablet on the same Wi-Fi or network as the PC
-
-Nothing else to install. The key sender (`native/keysender.cs`) compiles itself
-on first run with the C# compiler that ships with Windows.
-
-1. Download this repository (**Code → Download ZIP**, then extract it) or clone it.
-2. Double-click `start.bat` (or run `node server.js`).
-3. When Windows Firewall asks whether Node.js may use the network, allow
-   **Private networks**.
-4. Pair the tablet and click into Star Citizen as in steps 4 and 5 of
-   [Download](#download).
-
-Running from source shows everything in a console window instead of the app
-window, and keeps `config.json` next to `server.js` instead of in `%APPDATA%`.
-
-`start.bat --dry-run` logs button presses without sending any keys, which is
-handy for trying the deck out. Dry runs skip the focus check. `--port <n>`
-overrides the port in `config.json`. The installed app takes the same options
-and passes them on to its server:
-`"C:\Program Files\Tablet Deck\TabletDeck.exe" --dry-run`.
-
-### Showcase / sandbox
-
-To show or test the deck without a phone, and without pressing keys in the
-game, run a dry-run copy on another port and open the showcase page on the PC:
-
-```
-node server.js --dry-run --port 8790
-```
-
-Then open `http://localhost:8790/showcase.html?t=<pairing code>`. It shows the
-deck inside an iPhone 15 Pro frame (852×393, landscape) or, with the toggle, an
-iPad frame (1024×768). Clicks work as taps. The phone frame passes the iPhone's
-safe-area insets (`&safe=0,59,21,59`) so the deck stays clear of the Dynamic
-Island and home indicator as on the real phone. Pages inside a frame always see
-zero insets otherwise.
-
-Next to the device, a live log shows each button's label, its keys, and how it
-was pressed (tap, long press, hold and release, or voice). It also shows voice
-results and whether the focus check would have blocked the press. The press
-still goes through, because it's a dry run. Mode switches and panel arrows
-appear as "screen only", since they send nothing to the PC. The log comes from
-`/events`, which only exists in `--dry-run` and needs the pairing code. Against
-a normal server the page warns that taps send real keys.
-
-In Claude Code, `.claude/launch.json` has this as the **deck-sandbox** config,
-so the built-in browser can start it with `preview_start`.
-
-### Recording the demo
-
-`docs/demo.png` (the animation at the top) is recorded by
-`tools/record-demo.js`: it opens the deck in Microsoft Edge or Google Chrome
-without a window, taps through a short script and saves the result as an
-animated PNG. Run a dry-run server first so no keys are pressed:
-
-```
-node server.js --dry-run --port 8790
-node tools/record-demo.js "http://localhost:8790/?t=<pairing code>"
-```
-
-### Building the installer
-
-```
-npm install
-npm run build
-```
-
-This makes `dist/TabletDeck-Setup-<version>.exe` (the version comes from
-`package.json`). It needs [Inno Setup 6](https://jrsoftware.org/isinfo.php)
-and Node.js 20 or newer. `scripts/build.js` checks the keybind profile is up to
-date, compiles the app window (`native/launcher.cs`, which becomes
-`TabletDeck.exe`), the key sender and the voice listener, and packs `server.js`,
-`qr.js`, `public/`, `layouts/` and `keybinds/` into `TabletDeckServer.exe` with
-Node's
-[single executable application](https://nodejs.org/api/single-executable-applications.html)
-feature. The window runs that server hidden with `--ui` and reads its status
-lines. `installer/TabletDeck.iss` is the Inno Setup script.
-
-To publish a release, set `version` in `package.json`, add a section for it at
-the top of `CHANGELOG.md` (it becomes the release notes, and the release stops
-without one), commit, then push a matching tag:
-
-```
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-The **Release** workflow (`.github/workflows/release.yml`) builds the installer
-on GitHub and attaches it to a new release. You can also run it by hand from the
-Actions tab to build without publishing.
-
-Builds are unsigned until code signing is set up. Signing the app, its helpers
-and the installer stops the "unknown publisher" warning and makes antivirus
-false alarms less likely. The key sender types keys into other programs, which
-some antivirus tools treat as suspicious. The workflow supports two ways:
-
-- **SignPath Foundation** (free for open source, applied for): set the
-  `SIGNPATH_API_TOKEN` secret and the `SIGNPATH_ORGANIZATION_ID` variable. The
-  build then runs in two stages (`npm run build -- --app`, then
-  `-- --installer`) so SignPath signs the app files before they go into the
-  installer, and then the installer. The artifact configurations to paste into
-  SignPath are in `.signpath/artifact-configurations/`. See
-  [CODE_SIGNING.md](CODE_SIGNING.md) for the signing policy.
-- **Your own certificate:** a `.pfx` in the `SIGNING_CERT_PFX_BASE64` and
-  `SIGNING_CERT_PASSWORD` secrets.
-
-## Keybinds
-
-The deck uses Star Citizen 4.x default keys where they exist. Actions with no
-default keyboard key (operator modes, shield facings, doors, emotes, targeting
-and so on) get keys from the **Tablet Deck Keyboard** profile in
-`keybinds/TabletDeck-StarCitizen.xml`. Load it in Star Citizen once:
-
-1. Copy `keybinds/TabletDeck-StarCitizen.xml` into
-   `StarCitizen\LIVE\user\client\0\Controls\Mappings` (create the `Mappings`
-   folder if it doesn't exist). The installer does this for you if you tick
-   **Install the Star Citizen keybind profile** and it finds your game folder.
-   Later, use **Settings → Install keybind profile...** in the app window: it
-   finds your LIVE, PTU and other copies of the game (or lets you pick the
-   folder), shows which have the current profile, and installs it. The file is
-   also in `C:\Program Files\Tablet Deck\keybinds`.
-2. In-game, open **Options → Keybindings → Control Profiles** and load
-   **Tablet Deck Keyboard**. This replaces your current custom binds, so note
-   any you want to keep and set them again afterwards.
-
-The server reads the profile and your own `actionmaps.xml`, and your file wins.
-If you rebind an action in-game, its button follows. The server looks for
-`actionmaps.xml` in the usual install folders; if yours is elsewhere, set the
-path in `config.json` (see Settings).
-
-Buttons marked `"verify": true` in the layout use Star Citizen defaults that the
-profile doesn't set (power management, system power toggles, SCM/NAV, eject,
-chat, docking camera). Check those against your keybinding screen.
-
-The mining buttons are marked too: the profile binds them to keys, but their
-Star Citizen action names couldn't be confirmed against the game's files. After
-loading the profile, check that **Options → Keybindings → Vehicles → Mining**
-shows Fire Laser on RCtrl+F, Fracture/Extract on RCtrl+T, laser power on
-RCtrl+W / RCtrl+S and the modules on LAlt+1-3. If one is missing, the game
-didn't recognise that action; rebind it there to the same key.
-
-### Rebuilding the profile
-
-The profile is generated from the layouts. After you add or change a button
-that has an `scAction`, rebuild the profile, then copy it and load it in-game
-again:
-
-```
-node tools/make-profile.js
-```
-
-Every `scAction` must be listed with its Star Citizen actionmap in `ACTIONMAPS`
-at the top of `tools/make-profile.js`. The script stops if an action is missing
-there, if two buttons give the same action different keys, or if two actions
-that are active at the same time share a key.
-`node tools/make-profile.js --check` only reports whether the committed file is
-up to date.
-
-## Layouts
-
-`config.json` → `layout` picks what tablets show by default:
-
-- `layouts/hud.json` (default): the 1024×768 two-half HUD. Each half
-  pages through panels with the arrows at the bottom: POWER/LANDING, Flight
-  Assist, Shields, Targeting, Salvage and Mining on the left; QT/SYSTEMS, Operator
-  Modes, Combat, Crew/Doors, On Foot and Emotes on the right.
-- Starter layouts with the HUD's panels picked and ordered for one kind of
-  flying: `layouts/combat.json` (power, shields, targeting, combat, operator
-  modes), `layouts/mining-salvage.json` (mining and salvage first) and
-  `layouts/hauling-exploration.json` (landing, flight assist, quantum, crew, on
-  foot). Each has a `-phone` version.
-- `layouts/star-citizen.json`: a simpler tabbed grid of buttons.
-
-Each tablet or phone can also pick its own: tap the sliders button (top right)
-and choose under **Layout**, e.g. Combat on one tablet and Mining & Salvage on
-another. "PC's choice" follows `config.json`. Layouts you saved in the layout
-editor are listed too. Voice commands always follow the PC's tablet layout.
-
-The starter layouts are generated from the HUD layouts. After changing
-`layouts/hud.json` or the phone layout, run `node tools/make-starter-layouts.js`.
-
-### Phones
-
-Phones get their own layout automatically (`config.json` → `phoneLayout`,
-default `layouts/hud-phone.json`). It is sized for an iPhone 15 Pro in
-landscape: a 734×372 canvas, which is the 852×393 screen minus the Dynamic
-Island and home indicator, so it shows at full size when opened from the home
-screen. Other phones scale it to fit. The same panels are there, re-flowed for
-the shorter screen (Landing and Power on the left; QT/Systems, Emergency and the
-rest on the right). Hold the phone sideways; in portrait it asks you to turn it.
-
-The page counts any screen whose short side is under 500 points as a phone. Add
-`&device=tablet` or `&device=phone` to the address to override that.
-
-The phone layout is generated from the tablet one, so keys and animations match.
-After editing `layouts/hud.json`, run `node tools/make-phone-layout.js`, then
-`node tools/make-starter-layouts.js`.
-
-Canvas layouts place each element at `x`, `y`, `w`, `h` in canvas pixels (panel
-elements are relative to their half). Element types include `button`, `header`,
-`switch` (with `when` to show elements per mode), `menu`, `slider`, `grid` and
-decorations.
-
-## Layout editor
-
-Click **Edit layout** in the app window (or open the "Layout editor" link the
-console prints when running from source). It opens in your PC's browser and
-shows the deck as the tablet does, but clicking a button selects it instead of
-pressing keys:
-
-- Drag a button to move it, drag its yellow corner to resize it, or nudge it
-  with the arrow keys (Shift for bigger steps).
-- On the right, change its label, keys (picked from a list, so they're always
-  valid), how it presses, colour, icon, press animation and voice phrases. It
-  warns when another button uses the same keys or phrases.
-- Buttons tied to a Star Citizen keybind have **Follow game keybind** on: their
-  key comes from your in-game binds. Untick it to set your own key.
-- **Add button**, **Duplicate**, **Delete**, **Undo** and **Redo** are in the
-  toolbar (Ctrl+Z, Ctrl+Y, Ctrl+D, Delete and Ctrl+S work too).
-- The panel arrows and mode switches work, so you can reach every panel.
-
-**Save** checks the layout and stores it as your own copy (e.g.
-`my-hud.json`) in the settings folder; the built-in layouts never change. With
-**Use on tablets** (or phones) ticked, it becomes the active layout and
-connected tablets reload by themselves. The editor only works on the PC running
-Tablet Deck, not from other devices on the network. It edits the canvas layouts
-(`hud.json`, `hud-phone.json` and copies of them); adding new panels, and the
-older tabbed `star-citizen.json` layout, still mean editing the file.
-
-## Changing buttons
-
-Edit a layout file, then reload the page on the tablet. With the installed
-app, put your layout in `%APPDATA%\TabletDeck\layouts`. A file there with the
-same name as a built-in one (e.g. `hud.json`, copied from this repository's
-`layouts` folder) replaces it; one with a new name needs `layout` set in
-`config.json`. Button fields:
-
-| field      | meaning |
-|------------|---------|
-| `keys`     | Star Citizen key names joined with `+`: `r`, `lalt+n`, `np_1`, `f5`, `ralt+y` |
-| `mode`     | `tap` (quick press), `hold` (held while your finger is down), `timed` (held for `ms`) |
-| `color`    | `green`, `amber`, `red`, `blue` or blank (uses the theme's accent) |
-| `icon`     | icon name from `public/icons.js`; defaults to the button `id` |
-| `anim`     | press animation: `flash`, `ripple`, `gear`, `charge`, `burst`, `glow`, `recoil`, `streak`, `doors`, `lock`, `hazard`, `timed` |
-| `scAction` | Star Citizen action name; if a keybind file in `actionmaps` binds it to a key, that key wins. Listed in the keybind profile (see Keybinds) |
-
-Key names: `a`-`z`, `0`-`9`, `f1`-`f24`, `np_0`-`np_9`, `np_period`, `np_add`,
-`np_subtract`, `np_multiply`, `np_divide`, `np_enter`, `lalt`, `ralt`, `lctrl`,
-`rctrl`, `lshift`, `rshift`, `space`, `tab`, `enter`, `escape`, `backspace`,
-`insert`, `delete`, `home`, `end`, `pgup`, `pgdn`, `up`, `down`, `left`, `right`.
-
-## Voice commands
-
-Hold the mic button at the top of the deck, say a command, and let go. The PC
-listens with Windows' built-in speech recognition (offline, no account) through
-your default microphone, then presses that button's keys. The tablet shows what
-it heard, or "Didn't catch that".
-
-- Every button answers to its name ("landing gear", "fire laser", "max
-  shields"; `+` and `−` are said as "up" and "down", so "shields up").
-- Common commands have extra phrases: "engines on", "disable shields", "gear
-  up", "flight ready", "engage quantum", "lights on", "flares", "doors" and more.
-  They're in the `"voice"` lists in `layouts/hud.json`; add your own
-  there.
-- Most Star Citizen controls are toggles, so "engines on" and "engines off"
-  press the same key. The deck can't see the game, so it can't tell which state
-  you're in.
-- Eject, self-destruct and look behind don't respond to voice.
-- The focus check applies: nothing is pressed unless Star Citizen is in front.
-
-On the tablet, the **?** next to **Hold to talk** lists every phrase and the
-button it presses, with a search box. In the installed app, **Voice commands...** in the window lists every phrase
-and the button it presses, with a search box. The **Voice strictness** slider
-sets how sure the recognizer must be before a command counts (the
-`voiceConfidence` setting), and takes effect straight away. Under it, the window
-shows the last thing it heard and how sure it was, so you can speak a few
-commands and set the slider just below the numbers you get for correct ones.
-
-Commands are in English and need the English speech recognizer in Windows. If
-the PC window says "no en-US speech recognizer installed", add it under
-**Settings → Time & Language → Speech** (or Language → English → Options →
-Speech recognition), then restart Tablet Deck. If commands are often missed or
-misheard, try a headset mic, or change the strictness (the slider, or
-`voiceConfidence` in Settings).
-
-## Themes
-
-Tap the sliders button (top right) to pick a manufacturer theme. Each tablet
-remembers its own choice. **Night mode** in the same screen dims the whole deck
-for playing in a dark room. Themes are CSS variables in `public/themes.css`; add
-one by copying a block there and adding an entry to `THEMES` in `public/app.js`.
-Theme fonts come from Google Fonts; without internet access the tablet falls
-back to system fonts.
-
-<p align="center">
-  <img src="docs/themes.jpg" alt="The deck in all 12 manufacturer themes" width="100%">
-</p>
-
-## Settings (`config.json`, created on first run)
-
-The installed app keeps it in `%APPDATA%\TabletDeck\config.json` (the window's
-**Settings folder** button opens it). Most settings below can be changed with
-the window's **Settings** button instead of editing the file: the pairing code,
-port, focus check, tap length, and voice on/off and language. The app checks
-them, saves them and applies them; changing the port or voice restarts the
-server. Running from source, `config.json` is next to `server.js`.
-File paths in it can be absolute, or relative: `layouts/my.json` is looked up in
-the settings folder first, then among the built-in files.
-
-- `port`: server port (default 8765).
-- `token`: the pairing code. Change it to anything you like, or delete it to
-  generate a new random one. Restart the server afterwards.
-- `layout`: which layout file to serve to tablets and PCs.
-- `phoneLayout`: which layout file to serve to phones.
-- `actionmaps`: keybind files to read, in order (later files win). Defaults to
-  `keybinds/TabletDeck-StarCitizen.xml`, then your Star Citizen `actionmaps.xml`.
-- `tapMs`: how long a tap holds the key (default 60 ms).
-- `onlyWhenGameFocused`: only press keys while Star Citizen (`StarCitizen.exe`)
-  is the window in front (default `true`). Set it to `false` to send keys to
-  whichever window is in front, e.g. to try buttons out in Notepad.
-- `voice`: voice commands on or off (default `true`).
-- `voiceLanguage`: the Windows speech recognizer to use (default `en-US`; any
-  other English one works too if that's what's installed).
-- `voiceConfidence`: how sure the recognizer must be before a command counts,
-  from 0 to 1 (default 0.6). Raise it if it triggers on the wrong things, lower
-  it if it often says "Didn't catch that". The app window's Voice strictness
-  slider changes it too.
-- `autoUpdate`: installed app only. Check GitHub for new versions when the app
-  starts and once a day (default `true`). The window's checkbox changes it.
-
-## Safety
-
-- Only devices with the pairing code can press keys. Keep the server on your
+- Only devices with the pairing code can press keys. Keep Tablet Deck on your
   home network; don't expose its port to the internet.
-- Held keys are released if the tablet disconnects or goes quiet for 5 seconds.
-- Presses are skipped while another window is in front (see
-  `onlyWhenGameFocused`). Releasing a held button always goes through, so
-  switching windows mid-hold doesn't leave a key stuck down in the game.
-- If Star Citizen runs as administrator, run Tablet Deck (or `start.bat`) as
-  administrator too.
-  Windows blocks keypresses from a normal program into an elevated one.
+- Held keys are released if the tablet disconnects or goes quiet for 5 seconds,
+  and releasing a held button always goes through, so no key stays stuck.
+- No accounts, ads or tracking. The only internet traffic is the update check
+  (GitHub; you can turn it off) and the theme fonts the tablet loads from Google
+  Fonts. See [CODE_SIGNING.md](CODE_SIGNING.md#privacy).
+
+## Developers
+
+Running from source, the test sandbox, editing layouts by hand, building the
+installer, releasing and code signing are in
+**[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)**. Changes per version are in
+[CHANGELOG.md](CHANGELOG.md).
+
+Tablet Deck is [MIT licensed](LICENSE). Contributions and layout ideas are
+welcome; please open an issue first for bigger changes.
+
+<p align="center"><sub>Fan project. Not affiliated with or endorsed by Cloud Imperium Games.</sub></p>

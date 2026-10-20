@@ -114,7 +114,12 @@
   window.addEventListener("resize", fitStage);
 
   const D = {
-    send() {}, buzz() {}, refreshStatus() {}, openPicker() {}, openVoiceHelp() {}, toggleFullscreen() {}, bindTalk() {},
+    send() {}, buzz() {}, openPicker() {}, openVoiceHelp() {}, toggleFullscreen() {}, bindTalk() {},
+    // The preview isn't connected to anything; its status line says so instead of "Connecting…".
+    refreshStatus() {
+      for (const d of document.querySelectorAll(".js-dot")) d.classList.add("on");
+      for (const t of document.querySelectorAll(".js-status")) t.textContent = "Editing";
+    },
     store,
     deckIcon: window.deckIcon,
     emblemHtml: () => window.deckIcon("ship"),
