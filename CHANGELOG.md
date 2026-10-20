@@ -20,6 +20,11 @@ before tagging a release.
   dragging, and change their label, keys, press mode, colour, icon, animation
   and voice phrases, with undo. Saving makes your own copy of the layout, and
   tablets switch to it and reload by themselves.
+- Pick a layout on each tablet or phone: tap the sliders button (top right)
+  and choose under **Layout**. Each device remembers its own choice.
+- Three starter layouts with the panels picked for one kind of flying:
+  **Combat**, **Mining & Salvage** and **Hauling & Exploration**, for tablets
+  and phones.
 - Voice commands list on the tablet: the new **?** next to **Hold to talk**
   shows everything you can say and the button it presses, with a search box.
 

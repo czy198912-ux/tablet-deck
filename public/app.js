@@ -139,10 +139,35 @@
       cards.appendChild(card);
     }
   }
-  const openPicker = () => { $("picker").classList.add("open"); applyTheme(document.documentElement.dataset.theme); };
+  const openPicker = () => { $("picker").classList.add("open"); applyTheme(document.documentElement.dataset.theme); fillLayoutPick(); };
   const closePicker = () => $("picker").classList.remove("open");
   $("themeBtn").onclick = openPicker;
   $("closePicker").onclick = closePicker;
+
+  // ---------- layout choice ----------
+
+  // Each device can pick its own layout (e.g. Combat on one tablet, Mining on another);
+  // "" means the one chosen on the PC. Kept per device type, since phones have their own.
+  const layoutKey = `layout-${device}`;
+  let chosenLayout = store.get(layoutKey) || "";
+  function fillLayoutPick() {
+    fetch(`/layouts.json?t=${encodeURIComponent(token)}&device=${device}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data) => {
+        const pick = $("layoutPick");
+        pick.innerHTML = "";
+        const pcName = (data.layouts.find((l) => l.file === data.pcChoice) || {}).name || "default";
+        const add = (value, text) => { const o = document.createElement("option"); o.value = value; o.textContent = text; pick.appendChild(o); };
+        add("", `PC's choice (${pcName})`);
+        for (const l of data.layouts) add(l.file, l.custom ? `${l.name} (yours)` : l.name);
+        pick.value = data.layouts.some((l) => l.file === chosenLayout) ? chosenLayout : "";
+      })
+      .catch(() => {});
+  }
+  $("layoutPick").onchange = (e) => {
+    store.set(layoutKey, e.target.value);
+    location.reload();
+  };
 
   // Night mode dims the whole deck for playing in a dark room; each device remembers it.
   function applyNight(on) {
@@ -182,7 +207,7 @@
   }
 
   function connect() {
-    ws = new WebSocket(`ws://${location.host}/ws?t=${encodeURIComponent(token)}&device=${device}`);
+    ws = new WebSocket(`ws://${location.host}/ws?t=${encodeURIComponent(token)}&device=${device}&layout=${encodeURIComponent(chosenLayout)}`);
     ws.onopen = () => setOnline(true, "Connected");
     ws.onmessage = (e) => {
       let msg;
@@ -360,7 +385,7 @@
   }
 
   function load() {
-    fetch(`/layout.json?t=${encodeURIComponent(token)}&device=${device}`)
+    fetch(`/layout.json?t=${encodeURIComponent(token)}&device=${device}&layout=${encodeURIComponent(chosenLayout)}`)
       .then((r) => {
         if (r.status === 403) return Promise.reject("pair");
         return r.ok ? r.json() : Promise.reject(`Layout error (${r.status})`);

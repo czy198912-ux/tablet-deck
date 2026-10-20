@@ -269,13 +269,26 @@ up to date.
 
 ## Layouts
 
-`config.json` → `layout` picks what the tablet shows:
+`config.json` → `layout` picks what tablets show by default:
 
 - `layouts/hud.json` (default): the 1024×768 two-half HUD. Each half
   pages through panels with the arrows at the bottom: POWER/LANDING, Flight
   Assist, Shields, Targeting, Salvage and Mining on the left; QT/SYSTEMS, Operator
   Modes, Combat, Crew/Doors, On Foot and Emotes on the right.
+- Starter layouts with the HUD's panels picked and ordered for one kind of
+  flying: `layouts/combat.json` (power, shields, targeting, combat, operator
+  modes), `layouts/mining-salvage.json` (mining and salvage first) and
+  `layouts/hauling-exploration.json` (landing, flight assist, quantum, crew, on
+  foot). Each has a `-phone` version.
 - `layouts/star-citizen.json`: a simpler tabbed grid of buttons.
+
+Each tablet or phone can also pick its own: tap the sliders button (top right)
+and choose under **Layout**, e.g. Combat on one tablet and Mining & Salvage on
+another. "PC's choice" follows `config.json`. Layouts you saved in the layout
+editor are listed too. Voice commands always follow the PC's tablet layout.
+
+The starter layouts are generated from the HUD layouts. After changing
+`layouts/hud.json` or the phone layout, run `node tools/make-starter-layouts.js`.
 
 ### Phones
 
@@ -291,7 +304,8 @@ The page counts any screen whose short side is under 500 points as a phone. Add
 `&device=tablet` or `&device=phone` to the address to override that.
 
 The phone layout is generated from the tablet one, so keys and animations match.
-After editing `layouts/hud.json`, run `node tools/make-phone-layout.js`.
+After editing `layouts/hud.json`, run `node tools/make-phone-layout.js`, then
+`node tools/make-starter-layouts.js`.
 
 Canvas layouts place each element at `x`, `y`, `w`, `h` in canvas pixels (panel
 elements are relative to their half). Element types include `button`, `header`,

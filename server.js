@@ -215,8 +215,11 @@ function readActionmapOverrides(files) {
 // (grid pages, canvas panels, menus), so both layout styles share one code path.
 // The page asks for device=phone on small screens; phones get config.phoneLayout
 // when that file exists, everything else gets config.layout.
-function loadLayout(device) {
-  const text = (device === "phone" && config.phoneLayout && readConfigFile(config.phoneLayout)) || readConfigFile(config.layout);
+// A tablet may ask for another layout it picked (`chosen`, e.g. "layouts/combat.json");
+// it gets that one when it exists, else the PC's choice for its device.
+function loadLayout(device, chosen) {
+  const text = (chosen && layoutFiles().includes(chosen) && readConfigFile(chosen))
+    || (device === "phone" && config.phoneLayout && readConfigFile(config.phoneLayout)) || readConfigFile(config.layout);
   if (!text) throw new Error(`Layout file not found: ${config.layout}`);
   const layout = JSON.parse(text.toString("utf8"));
   return { layout, buttons: prepareLayout(layout) };
@@ -674,10 +677,26 @@ const server = http.createServer((req, res) => {
     res.end(JSON.stringify({ on: Boolean(config.voice), ready: Boolean(voice), commands: voiceList }));
     return;
   }
+  // Layouts a tablet can pick in its settings sheet: the ones made for its screen (phone
+  // layouts are under 500 px tall), plus tabbed grid layouts, which fit any screen.
+  if (url.pathname === "/layouts.json") {
+    if (url.searchParams.get("t") !== config.token) { res.writeHead(403); res.end("bad token"); return; }
+    const phone = url.searchParams.get("device") === "phone";
+    const layouts = [];
+    for (const file of layoutFiles()) {
+      try {
+        const l = JSON.parse(readConfigFile(file));
+        if (l.canvas && (l.canvas[1] < 500) !== phone) continue;
+        layouts.push({ file, name: l.name || file, custom: l.custom === true });
+      } catch { /* not a layout */ }
+    }
+    const pcChoice = phone && config.phoneLayout && readConfigFile(config.phoneLayout) ? config.phoneLayout : config.layout;
+    return sendJson(res, 200, { layouts, pcChoice });
+  }
   if (url.pathname === "/layout.json") {
     if (url.searchParams.get("t") !== config.token) { res.writeHead(403); res.end("bad token"); return; }
     try {
-      const { layout } = loadLayout(url.searchParams.get("device"));
+      const { layout } = loadLayout(url.searchParams.get("device"), url.searchParams.get("layout"));
       res.writeHead(200, { "Content-Type": MIME[".json"], "Cache-Control": "no-store" });
       res.end(JSON.stringify(layout, (k, v) => (k === "scancodes" ? undefined : v)));
     } catch (err) {
@@ -700,7 +719,7 @@ server.on("upgrade", (req, socket) => {
     socket.end("HTTP/1.1 403 Forbidden\r\n\r\n"); return;
   }
   let buttons;
-  try { ({ buttons } = loadLayout(url.searchParams.get("device"))); } catch (err) {
+  try { ({ buttons } = loadLayout(url.searchParams.get("device"), url.searchParams.get("layout"))); } catch (err) {
     console.error("Layout error:", err.message); socket.end("HTTP/1.1 500 Layout Error\r\n\r\n"); return;
   }
   wsAccept(req, socket);
