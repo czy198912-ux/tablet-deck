@@ -13,3 +13,6 @@ node_modules/
 # npm run build: intermediate files and the finished installer.
 build/
 dist/
+
+# scripts/build-site.js: the assembled website.
+_site/

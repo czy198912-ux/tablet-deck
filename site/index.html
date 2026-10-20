@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tablet Deck: a touch control deck for Star Citizen</title>
+<meta name="description" content="Turn any tablet or phone into a touch control panel for Star Citizen. HUD buttons, voice commands, a layout editor and 12 manufacturer themes. Free Windows app, no account. Fan project.">
+<meta property="og:title" content="Tablet Deck: a touch control deck for Star Citizen">
+<meta property="og:description" content="Turn any tablet or phone into a touch control panel for Star Citizen. Free, open source, no account.">
+<meta property="og:image" content="https://nodiecode.github.io/tablet-deck/img/banner.jpg">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#05090f">
+<link rel="icon" href="try/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700&family=Oxanium:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="top">
+  <a class="brand" href="./"><img src="try/icon.svg" alt="" width="28" height="28"><span>Tablet Deck</span></a>
+  <nav>
+    <a href="#features">Features</a>
+    <a href="#start">Get started</a>
+    <a href="#faq">FAQ</a>
+    <a href="try/">Try it</a>
+    <a href="https://github.com/nodieCode/tablet-deck">GitHub</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="hero-text">
+      <p class="kicker">// STAR CITIZEN CONTROL DECK</p>
+      <h1>Your tablet becomes<br>a <span>flight deck</span>.</h1>
+      <p class="lead">A HUD-style button deck in your tablet's or phone's browser. Every button presses real keys on your gaming PC: landing gear, quantum, shields, power, mining and more.</p>
+      <div class="cta">
+        <a class="btn primary js-download" href="https://github.com/nodieCode/tablet-deck/releases/latest">
+          <span class="ico" aria-hidden="true">⬇</span>
+          <span><b>Download for Windows</b><small class="js-version">Free · Windows 10 and 11</small></span>
+        </a>
+        <a class="btn" href="try/"><span class="ico" aria-hidden="true">▶</span><span><b>Try it in your browser</b><small>No install needed</small></span></a>
+      </div>
+      <p class="fine">Free and open source (MIT). No app on the tablet, no account.</p>
+    </div>
+    <div class="hero-shot">
+      <div class="tablet"><img src="img/demo.png" alt="The deck in action: landing gear, shields, flight ready and a quantum charge, then switching to the Drake theme" width="800" height="600"></div>
+    </div>
+  </section>
+
+  <p class="notice">Fan project. Not affiliated with or endorsed by Cloud Imperium Games. Star Citizen and the manufacturer names belong to their owners; the emblems are original designs.</p>
+
+  <section id="features" class="block">
+    <p class="kicker">// FEATURES</p>
+    <h2>Everything at your fingertips</h2>
+    <div class="cards">
+      <article class="card"><span class="icon js-icon" data-icon="ship"></span><h3>A HUD for your tablet</h3><p>Landing, power management, quantum, operator modes, shields, targeting, salvage, mining, doors and emotes, on a two-half HUD that pages through panels. Phones get their own layout.</p></article>
+      <article class="card"><span class="icon js-icon" data-icon="mic"></span><h3>Hold-to-talk voice</h3><p>"Landing gear", "engage quantum", "shields up". Hold the mic button and speak. Windows' built-in speech recognition, offline.</p></article>
+      <article class="card"><span class="icon js-icon" data-icon="sliders"></span><h3>12 manufacturer themes</h3><p>RSI, Drake, Aegis, Anvil, Origin, MISC, Crusader, Banu, Aopoa, Argo, Consolidated Outland and Esperia, with press animations and a night mode.</p></article>
+      <article class="card"><span class="icon js-icon" data-icon="grid"></span><h3>Layout editor</h3><p>Drag buttons around and change their keys, labels, icons and animations. Or pick a starter layout for Combat, Mining &amp; Salvage or Hauling &amp; Exploration.</p></article>
+      <article class="card"><span class="icon js-icon" data-icon="swap"></span><h3>Follows your keybinds</h3><p>Reads your Star Citizen keybinds, so rebinding in-game moves the button with it. An optional profile covers actions with no default key.</p></article>
+      <article class="card"><span class="icon js-icon" data-icon="power"></span><h3>A proper Windows app</h3><p>One installer. A window with the QR code, a tray icon, settings, start with Windows, and updates with one click.</p></article>
+    </div>
+  </section>
+
+  <section class="block split">
+    <div>
+      <p class="kicker">// ANY TABLET, ANY PHONE</p>
+      <h2>iPad, Android or iPhone</h2>
+      <p>It runs in the browser, so there's nothing to install on the tablet. Scan the QR code, add it to your home screen, and it opens full screen like an app. The screen stays awake mid-flight.</p>
+    </div>
+    <img src="img/hero.jpg" alt="The deck on an iPad and an iPhone" loading="lazy">
+  </section>
+
+  <section class="block">
+    <p class="kicker">// MAKE IT YOURS</p>
+    <h2>Twelve looks, one deck</h2>
+    <img class="wide" src="img/themes.jpg" alt="The deck in all 12 manufacturer themes" loading="lazy">
+  </section>
+
+  <section class="block split reverse">
+    <div>
+      <p class="kicker">// LAYOUT EDITOR</p>
+      <h2>Build your own deck</h2>
+      <p>The editor shows the deck exactly as your tablet does. Drag to move and resize, pick keys from a list so they're always valid, and set colours, icons, press animations and voice phrases. Save, and your tablets switch to it by themselves.</p>
+    </div>
+    <img src="img/editor.jpg" alt="The layout editor with the Engage Quantum button selected" loading="lazy">
+  </section>
+
+  <section id="start" class="block">
+    <p class="kicker">// GET STARTED</p>
+    <h2>Flying in three steps</h2>
+    <ol class="steps">
+      <li><b>Install</b><p>Download the installer and run it on your gaming PC. It adds Tablet Deck to the Start menu and, if you like, the Star Citizen keybind profile.</p></li>
+      <li><b>Pair</b><p>Open Tablet Deck and scan its QR code with your tablet's camera, or type the address and pairing code.</p></li>
+      <li><b>Fly</b><p>Click into Star Citizen and tap away. Keys only go through while the game is the window in front.</p></li>
+    </ol>
+    <div class="cta center">
+      <a class="btn primary js-download" href="https://github.com/nodieCode/tablet-deck/releases/latest"><span class="ico" aria-hidden="true">⬇</span><span><b>Download for Windows</b><small class="js-version">Free · Windows 10 and 11</small></span></a>
+    </div>
+  </section>
+
+  <section id="faq" class="block faq">
+    <p class="kicker">// FAQ</p>
+    <h2>Questions</h2>
+    <details><summary>Is it free?</summary><p>Yes, completely, and the source is on GitHub under the MIT license. It's a fan project, and there's no paid version.</p></details>
+    <details><summary>Is it a macro tool? Is it allowed?</summary><p>It presses ordinary keyboard keys, one press per tap, like a second keyboard. No automation or macros, and it doesn't touch the game's files or memory. Keys only go through while Star Citizen is the window in front.</p></details>
+    <details><summary>Windows says "Windows protected your PC". Is it safe?</summary><p>The installer isn't code-signed yet, so Windows doesn't know the publisher. Click <b>More info</b>, then <b>Run anyway</b>. Every release lists the installer's checksum, and all the code is public on GitHub.</p></details>
+    <details><summary>What do I need?</summary><p>Windows 10 or 11 on the gaming PC, and a tablet or phone with a browser on the same Wi-Fi or network. The voice commands need the English speech recognizer that comes with Windows.</p></details>
+    <details><summary>Does it work on a Mac or Linux PC?</summary><p>Not yet: the part that presses keys is Windows-only. The tablet can be anything with a browser.</p></details>
+    <details><summary>Does it collect any data?</summary><p>No accounts, ads or tracking. The app only checks GitHub for updates (you can turn that off), and the tablet loads the theme fonts from Google Fonts.</p></details>
+  </section>
+</main>
+
+<footer>
+  <p><a href="https://github.com/nodieCode/tablet-deck">GitHub</a> · <a href="https://github.com/nodieCode/tablet-deck/releases">Releases</a> · <a href="https://github.com/nodieCode/tablet-deck/blob/main/CHANGELOG.md">Changelog</a> · <a href="https://github.com/nodieCode/tablet-deck/issues">Report a problem</a></p>
+  <p class="fine">Tablet Deck is a fan project, not affiliated with or endorsed by Cloud Imperium Games. Star Citizen® is a trademark of Cloud Imperium Rights LLC. MIT licensed.</p>
+</footer>
+
+<script src="try/icons.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

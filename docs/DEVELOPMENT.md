@@ -228,13 +228,13 @@ which types keys into other programs. The workflow supports two ways:
 
 `site/` is the website at <https://nodiecode.github.io/tablet-deck/>. The
 **Website** workflow (`.github/workflows/pages.yml`) publishes it to GitHub Pages
-on every push to `main` that touches the site, the deck or the layouts. It
-copies the deck (`public/`) and the layouts in as `site/try/`, so the "Try it"
-page always runs the current deck in demo mode.
+on every push to `main` that touches the site, the deck, the layouts or the
+images. `scripts/build-site.js` puts it together in `_site/`: the page, the
+images from `docs/`, and the deck (`public/`) with the layouts as `try/`, set to
+demo mode, so the "Try it" page always runs the current deck.
 
-To preview it, run any static file server from the repository after copying,
-or just open `site/index.html` (the "Try it" page needs the copy step from the
-workflow).
+To preview it, run `node scripts/build-site.js` and serve `_site/` with any
+static file server (for example `npx serve _site`).
 
 ## Recording the demo
 
