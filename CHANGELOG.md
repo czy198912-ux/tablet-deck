@@ -5,6 +5,12 @@ section becomes the notes of its
 [GitHub release](https://github.com/nodieCode/tablet-deck/releases), so add one
 before tagging a release.
 
+## 1.2.1 (2026-10-20)
+
+- Behind the scenes: the release build uses current versions of GitHub's build
+  tools. Nothing changes in the app; this release tests updating with
+  **Update now**.
+
 ## 1.2.0 (2026-10-20)
 
 - Update checker: Tablet Deck tells you when a new version is out and installs
