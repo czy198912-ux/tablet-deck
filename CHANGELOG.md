@@ -5,6 +5,14 @@ section becomes the notes of its
 [GitHub release](https://github.com/nodieCode/tablet-deck/releases), so add one
 before tagging a release.
 
+## 1.4.2 (2026-10-22)
+
+- A maintenance release with no changes to how the app works.
+- The README explains that the tablet connection isn't encrypted, so Tablet
+  Deck is best kept to your home Wi-Fi rather than shared networks.
+- The app-window screenshot uses an example address and pairing code, and the
+  build no longer records the folder it was built in.
+
 ## 1.4.1 (2026-10-21)
 
 - The starter layouts (Combat, Mining & Salvage, Hauling & Exploration) now

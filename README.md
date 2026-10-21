@@ -379,6 +379,11 @@ the game's files or memory.
 
 - Only devices with the pairing code can press keys. Keep Tablet Deck on your
   home network; don't expose its port to the internet.
+- The tablet talks to the PC over plain `http`, so the connection isn't
+  encrypted. On your own home Wi-Fi that's fine, but on shared networks (LAN
+  parties, dorms, hotels) others on the same Wi-Fi could see your pairing code
+  and taps. The firewall rule only allows private networks, so Tablet Deck is
+  blocked on networks Windows marks as public.
 - Held keys are released if the tablet disconnects or goes quiet for 5 seconds,
   and releasing a held button always goes through, so no key stays stuck.
 - No accounts, ads or tracking. The only internet traffic is the update check
