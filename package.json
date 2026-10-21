@@ -1,6 +1,6 @@
 {
   "name": "tablet-deck",
-  "version": "1.4.2",
+  "version": "1.0.0",
   "private": true,
   "description": "Turn any tablet into a touch control panel for Star Citizen. Fan project, not affiliated with Cloud Imperium Games.",
   "license": "MIT",

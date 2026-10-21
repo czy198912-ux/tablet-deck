@@ -5,117 +5,36 @@ section becomes the notes of its
 [GitHub release](https://github.com/nodieCode/tablet-deck/releases), so add one
 before tagging a release.
 
-## Unreleased
+## 1.0.0 (2026-10-22)
 
-- **About 100 new voice phrases**, so you can say what comes naturally: "guns
-  mode", "scan mode", "full power to shields", "more engines", "previous
-  hostile", "turret one", "module two", "fire missile", "match velocity",
-  "open star map", "first person" and more. The **?** next to the mic lists
-  them all.
-- **Emotes now start with "emote"** ("emote wave", "emote dance"), so a stray
-  "wait", "point" or "sit" doesn't set one off. To keep the single words too,
-  tick **Emotes also answer to one word** in **Settings**.
+The first public release.
 
-## 1.4.2 (2026-10-22)
-
-- A maintenance release with no changes to how the app works.
-- The README explains that the tablet connection isn't encrypted, so Tablet
-  Deck is best kept to your home Wi-Fi rather than shared networks.
-- The app-window screenshot uses an example address and pairing code, and the
-  build no longer records the folder it was built in.
-
-## 1.4.1 (2026-10-21)
-
-- The starter layouts (Combat, Mining & Salvage, Hauling & Exploration) now
-  keep every panel; they just open on the panels for that kind of flying. So
-  Emotes, On Foot and the rest are always a few arrow taps away.
-- The two-finger swipe now flips the panel of the half you swipe over (like its
-  arrows), instead of changing the whole layout. Change layouts in the sliders
-  sheet.
-- The swipe is now off unless you turn it on (**2-finger swipe** in the sliders
-  sheet), so presses are instant by default.
-- Fixed: with swiping on, a missed finger lift could make later taps get
-  ignored, and a touch the browser cancelled could still press its button.
-
-## 1.4.0 (2026-10-20)
-
-- **Push-to-talk from a PC key:** in **Settings**, pick any key or mouse button
-  (Mouse 4/5 work well) to talk to Tablet Deck without touching the tablet.
-  Hold it to talk, or press once to start and again to stop. A soft sound plays
-  when it starts and stops listening, and the tablet's mic button lights up.
-  It only watches that one key; it doesn't record anything you type.
-- **Swipe between layouts:** swipe sideways with two fingers to switch to the
-  next or previous layout. Switching (by swipe or in the Layout list) now
-  happens in place, without replaying the intro or leaving full screen. Turn
-  swiping off with **2-finger swipe** in the sliders sheet.
-- **Open on PC:** buttons in the sliders sheet open websites in the PC's
-  browser: UEX (trading), Erkul (loadouts), SPViewer and SCMDB (missions,
-  crafting and mining) to start with. Change
-  the list in **Settings → Links**. The tablet only gets the names, so it can't
-  open anything else.
-
-## 1.3.0 (2026-10-20)
-
-- **Settings** button in the window: change the pairing code (or make a new
-  random one), the port, the "only while Star Citizen is in front" check, how
-  long a tap holds the key, and voice commands and their language, without
-  editing `config.json`. Settings also work when Tablet Deck couldn't start,
-  for example to pick another port when yours is taken.
-- **Install keybind profile...** (in Settings): finds your Star Citizen copies
-  (LIVE, PTU and so on), shows which already have the current Tablet Deck
-  Keyboard profile, and installs it into the ones you tick. You can also pick
-  the game folder yourself.
-- **Layout editor** (Edit layout in the window): move and resize buttons by
-  dragging, and change their label, keys, press mode, colour, icon, animation
-  and voice phrases, with undo. Saving makes your own copy of the layout, and
-  tablets switch to it and reload by themselves.
-- Pick a layout on each tablet or phone: tap the sliders button (top right)
-  and choose under **Layout**. Each device remembers its own choice.
-- Three starter layouts with the panels picked for one kind of flying:
-  **Combat**, **Mining & Salvage** and **Hauling & Exploration**, for tablets
-  and phones.
-- Voice commands list on the tablet: the new **?** next to **Hold to talk**
-  shows everything you can say and the button it presses, with a search box.
-
-## 1.2.1 (2026-10-20)
-
-- Behind the scenes: the release build uses current versions of GitHub's build
-  tools. Nothing changes in the app; this release tests updating with
-  **Update now**.
-
-## 1.2.0 (2026-10-20)
-
-- Update checker: Tablet Deck tells you when a new version is out and installs
-  it when you click **Update now**. It checks when it starts and once a day;
-  untick **Check for updates automatically** to turn that off, or use **Check
-  for updates now** in the tray menu. Updating from 1.1.0 or earlier still
-  means downloading the installer once.
-- After an update, the window offers this list of what's new.
-- **Voice commands...** lists every phrase you can say and the button it
-  presses, with a search box.
-- **Voice strictness** slider: set how sure speech recognition must be before a
-  command counts. The window shows the last thing it heard and how sure it was.
-
-## 1.1.0 (2026-10-20)
-
-- Tablet Deck now opens as an app window instead of a console. It shows the QR
-  code, address and pairing code, how many tablets are connected, whether voice
-  commands are ready, and a log of button presses.
-- Minimize the window to keep Tablet Deck running in the tray. Closing the
-  window quits, and any held keys are released first.
-- Optional **Start with Windows**, which starts Tablet Deck in the tray.
-- Clearer errors, for example when the port is already in use, with a
-  **Restart** button.
-
-## 1.0.0 (2026-10-20)
-
-- First release with a Windows installer: no Node.js or start.bat needed.
-- Installs to Program Files with a Start menu shortcut and an optional desktop
-  shortcut, and lets Tablet Deck through Windows Firewall on private networks
-  only.
-- Optional: installs the Tablet Deck Keyboard keybind profile into your Star
-  Citizen folder.
-- Settings live in `%APPDATA%\TabletDeck`. Uninstalling asks before deleting
-  them.
-- Includes the HUD deck for tablets and phones, 12 manufacturer themes, press
-  animations, night mode and hold-to-talk voice commands.
+- **A HUD-style control deck for any tablet or phone.** It runs in the browser,
+  so iPad, Android and iPhone all work, with no app or account. Scan the QR
+  code in the PC window to pair. Each button presses the real key on your PC,
+  and by default only while Star Citizen is the window in front.
+- **12 manufacturer themes**, press animations and a night mode.
+- **Layouts:** the Tablet Deck HUD, plus the **Combat**, **Mining & Salvage**
+  and **Hauling & Exploration** starter layouts, for tablets and phones. Each
+  device picks its own under **Layout** in the sliders sheet. You can turn on
+  a two-finger swipe there to flip panels.
+- **Layout editor** (**Edit layout** in the window): drag and resize buttons,
+  and change their label, keys, press mode, colour, icon, animation and voice
+  phrases, with undo.
+- **Voice commands:** hold the mic on the tablet, or set a push-to-talk key or
+  mouse button on the PC. Over 300 phrases like "gear up", "guns mode", "full
+  power to shields", "previous hostile" and "emote wave". The **?** next to the
+  mic lists them all, and the window has a **Voice strictness** slider.
+- **Follows your keybinds:** buttons read your Star Citizen keybinds, so
+  rebinding in-game moves them too. The optional Tablet Deck Keyboard profile
+  covers actions with no default key, and **Install keybind profile...** puts
+  it in your game folders.
+- **Open on PC:** buttons in the sliders sheet open UEX, Erkul, SPViewer and
+  SCMDB in the PC's browser. Change the list in **Settings**.
+- **A Windows app:** one installer, a window with the QR code, connected
+  tablets and a log of presses, a tray icon, optional **Start with Windows**,
+  and **Settings** for the pairing code, port, tap length, voice and more.
+- **Updates:** Tablet Deck tells you when a new version is out and installs it
+  when you click **Update now**. Turn the check off in the window if you like.
+- Lets itself through Windows Firewall on private networks only. Settings live
+  in `%APPDATA%\TabletDeck`, and uninstalling asks before deleting them.

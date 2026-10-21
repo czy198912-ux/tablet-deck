@@ -165,7 +165,7 @@ jobs:
 
           ## Download
 
-          Download **TabletDeck-Setup-$version.exe** below and run it. No Node.js needed. If you already have Tablet Deck 1.2.0 or later, it offers the update itself.
+          Download **TabletDeck-Setup-$version.exe** below and run it. No Node.js needed. Already have Tablet Deck? Run it over your copy; your settings are kept. After that it offers updates itself.
 
           If Windows shows "Windows protected your PC" (unknown publisher), click **More info**, then **Run anyway**. See the README for details.
 

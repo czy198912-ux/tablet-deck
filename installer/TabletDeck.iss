@@ -199,7 +199,7 @@ var
   Code: Integer;
 begin
   // Close a running copy (the window, the server, and the key sender and voice listener
-  // it started) so its files can be removed: politely first, then by force (1.0.0 had no window).
+  // it started) so its files can be removed: politely first, then by force (old versions had no window).
   if CurUninstallStep = usUninstall then
   begin
     CloseRunningApp();

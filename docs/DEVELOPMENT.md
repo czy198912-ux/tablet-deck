@@ -198,13 +198,13 @@ stages separately, for signing services.
 3. Commit, then push a matching tag:
 
 ```
-git tag v1.3.0
-git push origin v1.3.0
+git tag v1.0.1
+git push origin v1.0.1
 ```
 
 The **Release** workflow (`.github/workflows/release.yml`) builds the installer
 on GitHub and attaches it and its checksum to a new release. Installed copies
-from 1.2.0 on offer the update themselves. You can also run the workflow by hand
+offer the update themselves. You can also run the workflow by hand
 from the Actions tab to build without publishing.
 
 ## Code signing
