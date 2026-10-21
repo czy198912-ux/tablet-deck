@@ -90,11 +90,6 @@ function loadConfig() {
   let changed = false;
   if (!config.port) { config.port = 8765; changed = true; }
   if (!config.token) { config.token = crypto.randomBytes(4).toString("hex"); changed = true; }
-  // The default layouts were renamed from deck*.json; move older configs along.
-  const renamed = { "layouts/deck.json": "layouts/hud.json", "layouts/deck-phone.json": "layouts/hud-phone.json" };
-  for (const key of ["layout", "phoneLayout"]) {
-    if (renamed[config[key]]) { config[key] = renamed[config[key]]; changed = true; }
-  }
   if (!config.layout) { config.layout = "layouts/hud.json"; changed = true; }
   if (!config.phoneLayout) { config.phoneLayout = "layouts/hud-phone.json"; changed = true; }
   if (config.actionmaps === undefined) {

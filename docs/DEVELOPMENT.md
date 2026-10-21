@@ -68,8 +68,6 @@ arrows appear as "screen only", since they send nothing to the PC. The log comes
 from `/events`, which only exists in `--dry-run` and needs the pairing code.
 Against a normal server the page warns that taps send real keys.
 
-In Claude Code, `.claude/launch.json` has this as the **deck-sandbox** config.
-
 ### Demo mode
 
 `public/index.html?demo` runs the deck with no server at all: it loads the

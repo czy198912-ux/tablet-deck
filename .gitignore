@@ -16,3 +16,9 @@ dist/
 
 # scripts/build-site.js: the assembled website.
 _site/
+
+# Local tooling and notes, not part of the project: the working rules for AI coding
+# sessions, Claude Code's config, and drafts for posts about Tablet Deck.
+CLAUDE.md
+.claude/
+promo/

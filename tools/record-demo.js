@@ -187,7 +187,6 @@ function writeApng(file, W, H, frames) {
       if (x1 < 0) { x0 = 0; y0 = 0; x1 = 0; y1 = 0; } // nothing changed: a 1-pixel frame holds the time
     }
     const w = x1 - x0 + 1, h = y1 - y0 + 1;
-    if (process.env.DEMO_STATS) frame.box = `${x0},${y0} ${w}x${h}`;
     const fctl = Buffer.alloc(26);
     fctl.writeUInt32BE(seq++, 0);
     fctl.writeUInt32BE(w, 4); fctl.writeUInt32BE(h, 8);
@@ -197,7 +196,6 @@ function writeApng(file, W, H, frames) {
     fctl[24] = 0; fctl[25] = 0;   // keep the canvas; replace the area
     parts.push(chunk("fcTL", fctl));
     const data = encodeArea(frame.pixels, W, x0, y0, w, h);
-    if (process.env.DEMO_STATS) frame.bytes = data.length;
     if (i === 0) parts.push(chunk("IDAT", data));
     else {
       const seqBuf = Buffer.alloc(4);
@@ -285,38 +283,16 @@ function writeApng(file, W, H, frames) {
     await sleep(300);
 
     // At most FPS frames a second, each shown until the next; the last holds before the loop.
-    const kept = shots.filter((s, i) => i === 0 || s.time - shots[0].time >= 0); // all, then thin below
     const thinned = [];
-    for (const s of kept) if (!thinned.length || s.time - thinned[thinned.length - 1].time >= 1 / FPS) thinned.push(s);
+    for (const s of shots) if (!thinned.length || s.time - thinned[thinned.length - 1].time >= 1 / FPS) thinned.push(s);
     console.log(`Encoding ${thinned.length} of ${shots.length} frames...`);
     const frames = thinned.map((s, i) => ({
       pixels: decodePng(s.data).pixels,
       delay: i + 1 < thinned.length ? Math.max(20, (thinned[i + 1].time - s.time) * 1000) : 2000,
     }));
-    if (process.env.DEMO_STATS) {
-      // Which part of the screen changes most, to find animations that bloat the file.
-      const W = FRAME.width, T = 40, cols = Math.ceil(W / T), counts = new Uint32Array(cols * Math.ceil(FRAME.height / T));
-      for (let i = 1; i < frames.length; i++) {
-        const hit = new Uint8Array(counts.length);
-        for (let p = 0; p < W * FRAME.height; p++) {
-          const o = p * 3;
-          if (frames[i].pixels[o] !== frames[i - 1].pixels[o] || frames[i].pixels[o + 1] !== frames[i - 1].pixels[o + 1] || frames[i].pixels[o + 2] !== frames[i - 1].pixels[o + 2]) {
-            hit[Math.floor(p / W / T) * cols + Math.floor((p % W) / T)] = 1;
-          }
-        }
-        hit.forEach((h, k) => { counts[k] += h; });
-      }
-      const busy = [...counts].map((c, k) => [c, `${(k % cols) * T},${Math.floor(k / cols) * T}`]).filter(([c]) => c > frames.length * 0.4);
-      console.log(`40 px tiles changing in over 40% of frames: ${busy.length ? busy.map(([c, at]) => `${at}(${c})`).join(" ") : "none"}`);
-    }
     const { width, height } = decodePng(shots[0].data);
     fs.mkdirSync(path.dirname(OUT), { recursive: true });
     writeApng(OUT, width, height, frames);
-    if (process.env.DEMO_STATS) {
-      let t = 0;
-      const rows = frames.map((f, i) => { const r = { i, t: (t / 1000).toFixed(1), box: f.box, kb: Math.round(f.bytes / 1024) }; t += f.delay; return r; });
-      console.log(rows.sort((a, b) => b.kb - a.kb).slice(0, 15).map((r) => `#${r.i} at ${r.t}s ${r.box} ${r.kb} KB`).join("\n"));
-    }
     console.log(`Wrote ${path.relative(ROOT, OUT)}: ${width}x${height}, ${frames.length} frames, ${(fs.statSync(OUT).size / 1048576).toFixed(1)} MB.`);
   } finally {
     browser.close();

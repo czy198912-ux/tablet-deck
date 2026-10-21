@@ -1,5 +1,5 @@
 // Minimal QR code generator (byte mode, error correction level M, versions 1-40) for
-// printing the pairing link in the console. No dependencies.
+// the pairing link, in the console and the app window. No dependencies.
 //
 //   const qr = require("./qr");
 //   qr.matrix("http://192.168.1.20:8765/?t=1a2b")  -> rows of booleans (true = dark)
