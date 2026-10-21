@@ -294,7 +294,11 @@ you type.
 - Every button answers to its name ("landing gear", "fire laser", "max
   shields"; `+` and `−` are said as "up" and "down", so "shields up").
 - Common commands have extra phrases: "engines on", "gear up", "flight ready",
-  "engage quantum", "lights on", "flares" and more.
+  "engage quantum", "lights on", "flares", "guns mode", "full power to
+  shields", "previous hostile", "turret one", "open star map" and more.
+- Emotes start with "emote": "emote wave", "emote dance". That way a stray
+  "wait" or "point" doesn't set one off. To also use the single words, tick
+  **Emotes also answer to one word** in **Settings**.
 - Most Star Citizen controls are toggles, so "engines on" and "engines off"
   press the same key.
 - Eject, self-destruct and look behind don't respond to voice.
@@ -333,6 +337,7 @@ Uninstalling keeps them unless you choose to delete them.
 | `onlyWhenGameFocused` | only press keys while Star Citizen is in front; `false` sends them to whatever window is in front | `true` |
 | `voice` | voice commands on or off | `true` |
 | `voiceLanguage` | the Windows speech recognizer to use | `en-US` |
+| `shortEmotes` | emotes also answer to one word ("wave"), not only "emote wave" | `false` |
 | `voiceConfidence` | how sure the recognizer must be, from 0 to 1 (the Voice strictness slider) | `0.6` |
 | `autoUpdate` | check GitHub for new versions | `true` |
 | `pttKey`, `pttKeyName`, `pttMode`, `pttSound` | push-to-talk key on the PC (Windows key code, `0` = none), its name, `hold` or `toggle`, and the sound | none, `hold`, `true` |

@@ -1427,6 +1427,7 @@ class SettingsWindow : Form
         return new JavaScriptSerializer().Serialize(list);
     }
     readonly CheckBox pttSound = new CheckBox();
+    readonly CheckBox shortEmotes = new CheckBox();
     Button pttButton;
     int pttKey;          // Windows virtual-key code, 0 = none
     string pttName = "";
@@ -1489,7 +1490,7 @@ class SettingsWindow : Form
         BackColor = DeckWindow.Back;
         ForeColor = DeckWindow.Ink;
         Font = new Font("Segoe UI", 9.75f);
-        ClientSize = new Size(480, 690);
+        ClientSize = new Size(480, 720);
 
         Caption("Pairing code", 14);
         Field(code, 12, 36, 200);
@@ -1523,7 +1524,7 @@ class SettingsWindow : Form
         voiceOn.Text = "Voice commands";
         voiceOn.Checked = GetBool("voice", true);
         voiceOn.Bounds = new Rectangle(12, 276, 456, 24);
-        voiceOn.CheckedChanged += delegate { language.Enabled = voiceOn.Checked; };
+        voiceOn.CheckedChanged += delegate { language.Enabled = shortEmotes.Enabled = voiceOn.Checked; };
         Controls.Add(voiceOn);
         Caption("Voice language", 306);
         Field(language, 12, 328, 110);
@@ -1533,47 +1534,52 @@ class SettingsWindow : Form
         language.Text = Get("voiceLanguage", "en-US");
         language.Enabled = voiceOn.Checked;
         Hint("Needs that English speech recognizer installed in Windows (Settings > Time & Language > Speech).", 130, 326, 338);
+        shortEmotes.Text = "Emotes also answer to one word (\"wave\", not only \"emote wave\")";
+        shortEmotes.Checked = GetBool("shortEmotes", false);
+        shortEmotes.Enabled = voiceOn.Checked;
+        shortEmotes.Bounds = new Rectangle(12, 362, 456, 24);
+        Controls.Add(shortEmotes);
 
         // Push-to-talk from a key or mouse button on the PC (see native/voice.cs).
-        Caption("Push-to-talk key on the PC", 368);
+        Caption("Push-to-talk key on the PC", 398);
         pttKey = GetNumber("pttKey", 0);
         pttName = Get("pttKeyName", "");
-        pttButton = AddButton("", 12, 390, 190, delegate { StartCapture(); });
+        pttButton = AddButton("", 12, 420, 190, delegate { StartCapture(); });
         pttButton.MouseDown += (s, e) =>
         {
             if (!capturing) return;
             int vk = e.Button == MouseButtons.Middle ? 4 : e.Button == MouseButtons.XButton1 ? 5 : e.Button == MouseButtons.XButton2 ? 6 : 0;
             if (vk != 0) SetPttKey(vk);
         };
-        AddButton("None", 208, 390, 64, delegate { SetPttKey(0); });
-        Field(pttMode, 280, 392, 188);
+        AddButton("None", 208, 420, 64, delegate { SetPttKey(0); });
+        Field(pttMode, 280, 422, 188);
         pttMode.DropDownStyle = ComboBoxStyle.DropDownList;
         pttMode.FlatStyle = FlatStyle.Flat;
         pttMode.Items.AddRange(new object[] { "Hold to talk", "Press to start, again to stop" });
         pttMode.SelectedIndex = Get("pttMode", "hold") == "toggle" ? 1 : 0;
         pttSound.Text = "Play a sound when it starts and stops listening";
         pttSound.Checked = GetBool("pttSound", true);
-        pttSound.Bounds = new Rectangle(12, 428, 456, 24);
+        pttSound.Bounds = new Rectangle(12, 458, 456, 24);
         Controls.Add(pttSound);
-        Hint("Pick a key Star Citizen doesn't use, like a mouse side button, a numpad key or F13-F24: the key still reaches the game.", 12, 454, 456);
+        Hint("Pick a key Star Citizen doesn't use, like a mouse side button, a numpad key or F13-F24: the key still reaches the game.", 12, 484, 456);
         ShowPttKey();
 
         // Websites the tablet's "Open on PC" buttons open here, one per line: "Name | https://...".
-        Caption("Links the tablet can open on this PC", 498);
-        Field(links, 12, 520, 456);
+        Caption("Links the tablet can open on this PC", 528);
+        Field(links, 12, 550, 456);
         links.Multiline = true;
         links.ScrollBars = ScrollBars.Vertical;
         links.Height = 76;
         links.Font = new Font("Consolas", 9.5f);
         links.Text = LinksText();
-        Hint("One per line: Name | https://address. The tablet only sees the names, so it can't open anything else.", 12, 600, 456);
+        Hint("One per line: Name | https://address. The tablet only sees the names, so it can't open anything else.", 12, 630, 456);
 
-        AddButton("Install keybind profile...", 12, 644, 190, delegate
+        AddButton("Install keybind profile...", 12, 674, 190, delegate
         {
             using (var dialog = new KeybindProfileWindow(keybindProfile, Icon)) dialog.ShowDialog(this);
         });
-        var save = AddButton("Save", 280, 644, 90, delegate { Save(); });
-        var cancel = AddButton("Cancel", 378, 644, 90, delegate { DialogResult = DialogResult.Cancel; });
+        var save = AddButton("Save", 280, 674, 90, delegate { Save(); });
+        var cancel = AddButton("Cancel", 378, 674, 90, delegate { DialogResult = DialogResult.Cancel; });
         AcceptButton = save;
         CancelButton = cancel;
 
@@ -1664,6 +1670,7 @@ class SettingsWindow : Form
         }
         Change("pttMode", Get("pttMode", "hold"), pttMode.SelectedIndex == 1 ? "toggle" : "hold", false);
         Change("pttSound", OnOff(GetBool("pttSound", true)), OnOff(pttSound.Checked), false);
+        Change("shortEmotes", OnOff(GetBool("shortEmotes", false)), OnOff(shortEmotes.Checked), false);
         if (links.Text.Trim() != LinksText().Trim())
         {
             string json = LinksJson();

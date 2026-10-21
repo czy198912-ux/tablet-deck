@@ -58,6 +58,9 @@
       "id": "top-chat",
       "icon": "chat",
       "label": "Chat",
+      "voice": [
+        "open chat"
+      ],
       "keys": "f12",
       "verify": true,
       "mode": "tap",
@@ -72,6 +75,10 @@
       "id": "top-contacts",
       "icon": "party",
       "label": "Contacts",
+      "voice": [
+        "open contacts",
+        "friends list"
+      ],
       "keys": "f11",
       "mode": "tap",
       "x": 759,
@@ -85,6 +92,11 @@
       "id": "top-starmap",
       "icon": "starmap",
       "label": "Star Map",
+      "voice": [
+        "open star map",
+        "open map",
+        "map"
+      ],
       "keys": "f2",
       "mode": "tap",
       "x": 823,
@@ -99,7 +111,8 @@
       "icon": "mobiglas",
       "label": "mobiGlas",
       "voice": [
-        "mobi glass"
+        "mobi glass",
+        "open mobi glass"
       ],
       "keys": "f1",
       "mode": "tap",
@@ -260,6 +273,10 @@
           ],
           "id": "pl-request-dock",
           "label": "Request Docking",
+          "voice": [
+            "dock",
+            "request dock"
+          ],
           "keys": "lalt+n",
           "mode": "tap",
           "x": 4,
@@ -292,6 +309,9 @@
           "style": "dial",
           "id": "pl-dock-cam",
           "label": "Docking Camera",
+          "voice": [
+            "dock camera"
+          ],
           "keys": "0",
           "verify": true,
           "mode": "tap",
@@ -340,6 +360,10 @@
           "icon": "chev-max",
           "id": "pw-wep-max",
           "label": "Max Weapons",
+          "voice": [
+            "full power to weapons",
+            "maximum weapons"
+          ],
           "keys": "f5",
           "verify": true,
           "mode": "timed",
@@ -356,6 +380,12 @@
           "icon": "chev-max",
           "id": "pw-thr-max",
           "label": "Max Thrusters",
+          "voice": [
+            "full power to engines",
+            "full power to thrusters",
+            "max engines",
+            "maximum thrusters"
+          ],
           "keys": "f6",
           "verify": true,
           "mode": "timed",
@@ -372,6 +402,10 @@
           "icon": "chev-max",
           "id": "pw-shd-max",
           "label": "Max Shields",
+          "voice": [
+            "full power to shields",
+            "maximum shields"
+          ],
           "keys": "f7",
           "verify": true,
           "mode": "timed",
@@ -388,6 +422,10 @@
           "icon": "chev-up",
           "id": "pw-wep-up",
           "label": "Weapons +",
+          "voice": [
+            "more weapons",
+            "more power to weapons"
+          ],
           "keys": "f5",
           "verify": true,
           "mode": "tap",
@@ -403,6 +441,12 @@
           "icon": "chev-up",
           "id": "pw-thr-up",
           "label": "Thrusters +",
+          "voice": [
+            "engines up",
+            "more engines",
+            "more thrusters",
+            "more power to engines"
+          ],
           "keys": "f6",
           "verify": true,
           "mode": "tap",
@@ -418,6 +462,10 @@
           "icon": "chev-up",
           "id": "pw-shd-up",
           "label": "Shields +",
+          "voice": [
+            "more shields",
+            "more power to shields"
+          ],
           "keys": "f7",
           "verify": true,
           "mode": "tap",
@@ -460,6 +508,10 @@
           "icon": "chev-down",
           "id": "pw-wep-down",
           "label": "Weapons −",
+          "voice": [
+            "less weapons",
+            "less power to weapons"
+          ],
           "keys": "lalt+f5",
           "verify": true,
           "mode": "tap",
@@ -475,6 +527,12 @@
           "icon": "chev-down",
           "id": "pw-thr-down",
           "label": "Thrusters −",
+          "voice": [
+            "engines down",
+            "less engines",
+            "less thrusters",
+            "less power to engines"
+          ],
           "keys": "lalt+f6",
           "verify": true,
           "mode": "tap",
@@ -490,6 +548,10 @@
           "icon": "chev-down",
           "id": "pw-shd-down",
           "label": "Shields −",
+          "voice": [
+            "less shields",
+            "less power to shields"
+          ],
           "keys": "lalt+f7",
           "verify": true,
           "mode": "tap",
@@ -505,6 +567,9 @@
           "icon": "chev-min",
           "id": "pw-wep-min",
           "label": "Min Weapons",
+          "voice": [
+            "minimum weapons"
+          ],
           "keys": "lalt+f5",
           "verify": true,
           "mode": "timed",
@@ -521,6 +586,11 @@
           "icon": "chev-min",
           "id": "pw-thr-min",
           "label": "Min Thrusters",
+          "voice": [
+            "min engines",
+            "minimum engines",
+            "minimum thrusters"
+          ],
           "keys": "lalt+f6",
           "verify": true,
           "mode": "timed",
@@ -537,6 +607,9 @@
           "icon": "chev-min",
           "id": "pw-shd-min",
           "label": "Min Shields",
+          "voice": [
+            "minimum shields"
+          ],
           "keys": "lalt+f7",
           "verify": true,
           "mode": "timed",
@@ -554,7 +627,9 @@
           "id": "pw-reset",
           "label": "Reset All",
           "voice": [
-            "reset power"
+            "reset power",
+            "balance power",
+            "reset all power"
           ],
           "keys": "f8",
           "verify": true,
@@ -700,7 +775,8 @@
           "label": "SCM/NAV",
           "voice": [
             "switch master mode",
-            "toggle master mode"
+            "toggle master mode",
+            "master mode"
           ],
           "keys": "b",
           "verify": true,
@@ -723,6 +799,9 @@
               "id": "op-flight",
               "icon": "ship",
               "label": "Flight",
+              "voice": [
+                "flight mode"
+              ],
               "keys": "ralt+f",
               "scAction": "v_set_flight_mode",
               "mode": "tap",
@@ -733,6 +812,10 @@
               "anim": "recoil",
               "icon": "power-weapons",
               "label": "Guns",
+              "voice": [
+                "guns mode",
+                "gun mode"
+              ],
               "keys": "ralt+g",
               "scAction": "v_set_guns_mode",
               "mode": "tap",
@@ -742,6 +825,10 @@
               "id": "op-missile",
               "icon": "missile",
               "label": "Missiles",
+              "voice": [
+                "missile mode",
+                "missiles mode"
+              ],
               "keys": "ralt+t",
               "scAction": "v_set_missile_mode",
               "mode": "tap",
@@ -751,6 +838,9 @@
               "id": "op-quantum",
               "icon": "quantum-mode",
               "label": "Quantum",
+              "voice": [
+                "quantum mode"
+              ],
               "keys": "ralt+q",
               "scAction": "v_set_quantum_mode",
               "mode": "tap",
@@ -760,6 +850,11 @@
               "id": "op-scan",
               "icon": "scanning",
               "label": "Scanning",
+              "voice": [
+                "scan mode",
+                "scanning mode",
+                "scanner"
+              ],
               "keys": "ralt+v",
               "scAction": "v_set_scan_mode",
               "mode": "tap",
@@ -778,6 +873,9 @@
               "id": "op-salvage",
               "icon": "salvage",
               "label": "Salvage",
+              "voice": [
+                "salvage mode"
+              ],
               "keys": "ralt+s",
               "scAction": "v_set_salvage_mode",
               "mode": "tap",
@@ -886,6 +984,11 @@
               "id": "fa-limiter",
               "icon": "speed",
               "label": "Speed Limiter",
+              "voice": [
+                "speed limiter on",
+                "speed limiter off",
+                "toggle speed limiter"
+              ],
               "keys": "lalt+minus",
               "scAction": "v_ifcs_toggle_speed_limiter",
               "mode": "tap"
@@ -894,6 +997,10 @@
               "id": "fa-limiter-reset",
               "icon": "power-reset",
               "label": "Reset Limit",
+              "voice": [
+                "reset speed limit",
+                "reset speed limiter"
+              ],
               "keys": "lalt+s",
               "scAction": "v_ifcs_speed_limiter_reset_scm",
               "mode": "tap"
@@ -903,6 +1010,9 @@
               "anim": "streak",
               "icon": "chev-up",
               "label": "Speed Range +",
+              "voice": [
+                "increase speed range"
+              ],
               "keys": "lalt+y",
               "scAction": "v_speed_range_up",
               "mode": "tap"
@@ -911,6 +1021,9 @@
               "id": "fa-range-down",
               "icon": "chev-down",
               "label": "Speed Range −",
+              "voice": [
+                "decrease speed range"
+              ],
               "keys": "lctrl+y",
               "scAction": "v_speed_range_down",
               "mode": "tap"
@@ -919,6 +1032,11 @@
               "id": "fa-match",
               "icon": "target",
               "label": "Match Speed",
+              "voice": [
+                "match velocity",
+                "match target speed",
+                "match target"
+              ],
               "keys": "lctrl+v",
               "scAction": "v_target_match_vel",
               "mode": "tap"
@@ -927,6 +1045,10 @@
               "id": "fa-esp",
               "icon": "target",
               "label": "Toggle ESP",
+              "voice": [
+                "esp on",
+                "esp off"
+              ],
               "keys": "lalt+semicolon",
               "scAction": "v_ifcs_toggle_esp",
               "mode": "tap"
@@ -935,6 +1057,10 @@
               "id": "fa-gsafe",
               "icon": "power-shields",
               "label": "G-Safety",
+              "voice": [
+                "g force safety",
+                "toggle g safety"
+              ],
               "keys": "lalt+i",
               "scAction": "v_ifcs_toggle_gforce_safety",
               "mode": "tap",
@@ -966,6 +1092,10 @@
               "id": "fa-exit",
               "icon": "exit-seat",
               "label": "Exit Seat",
+              "voice": [
+                "get up",
+                "leave seat"
+              ],
               "keys": "y",
               "mode": "timed",
               "ms": 1200,
@@ -1095,6 +1225,10 @@
               "id": "tg-hostile",
               "icon": "target",
               "label": "Prev Hostile",
+              "voice": [
+                "previous hostile",
+                "previous enemy"
+              ],
               "keys": "lalt+5",
               "scAction": "v_target_cycle_hostile_back",
               "mode": "tap",
@@ -1104,6 +1238,9 @@
               "id": "tg-attacker",
               "icon": "target",
               "label": "Prev Attacker",
+              "voice": [
+                "previous attacker"
+              ],
               "keys": "lalt+4",
               "scAction": "v_target_cycle_attacker_back",
               "mode": "tap",
@@ -1113,6 +1250,9 @@
               "id": "tg-friendly",
               "icon": "target",
               "label": "Prev Friendly",
+              "voice": [
+                "previous friendly"
+              ],
               "keys": "lalt+6",
               "scAction": "v_target_cycle_friendly_back",
               "mode": "tap",
@@ -1122,6 +1262,10 @@
               "id": "tg-all",
               "icon": "target",
               "label": "Prev Any",
+              "voice": [
+                "previous target",
+                "previous any"
+              ],
               "keys": "lalt+7",
               "scAction": "v_target_cycle_all_back",
               "mode": "tap"
@@ -1130,6 +1274,10 @@
               "id": "tg-sub",
               "icon": "target",
               "label": "Prev Subtarget",
+              "voice": [
+                "previous subtarget",
+                "previous sub target"
+              ],
               "keys": "lalt+8",
               "scAction": "v_target_cycle_subitem_back",
               "mode": "tap"
@@ -1138,6 +1286,9 @@
               "id": "tg-view",
               "icon": "target",
               "label": "Prev In View",
+              "voice": [
+                "previous in view"
+              ],
               "keys": "lalt+v",
               "scAction": "v_target_cycle_in_view_back",
               "mode": "tap"
@@ -1259,6 +1410,9 @@
               "id": "mn-power-down",
               "icon": "chev-down",
               "label": "Laser Power −",
+              "voice": [
+                "less laser power"
+              ],
               "voiceMs": 600,
               "keys": "rctrl+s",
               "scAction": "v_decrease_mining_throttle",
@@ -1269,6 +1423,9 @@
               "id": "mn-power-up",
               "icon": "chev-up",
               "label": "Laser Power +",
+              "voice": [
+                "more laser power"
+              ],
               "voiceMs": 600,
               "keys": "rctrl+w",
               "scAction": "v_increase_mining_throttle",
@@ -1295,6 +1452,10 @@
               "id": "mn-module-1",
               "icon": "module",
               "label": "Module 1",
+              "voice": [
+                "module one",
+                "mining module one"
+              ],
               "keys": "lalt+1",
               "scAction": "v_mining_use_consumable1",
               "verify": true,
@@ -1305,6 +1466,10 @@
               "id": "mn-module-2",
               "icon": "module",
               "label": "Module 2",
+              "voice": [
+                "module two",
+                "mining module two"
+              ],
               "keys": "lalt+2",
               "scAction": "v_mining_use_consumable2",
               "verify": true,
@@ -1315,6 +1480,10 @@
               "id": "mn-module-3",
               "icon": "module",
               "label": "Module 3",
+              "voice": [
+                "module three",
+                "mining module three"
+              ],
               "keys": "lalt+3",
               "scAction": "v_mining_use_consumable3",
               "verify": true,
@@ -1340,6 +1509,9 @@
               "id": "md-flight",
               "icon": "ship",
               "label": "Flight",
+              "voice": [
+                "flight mode"
+              ],
               "keys": "ralt+f",
               "scAction": "v_set_flight_mode",
               "mode": "tap",
@@ -1350,6 +1522,10 @@
               "anim": "recoil",
               "icon": "power-weapons",
               "label": "Guns",
+              "voice": [
+                "guns mode",
+                "gun mode"
+              ],
               "keys": "ralt+g",
               "scAction": "v_set_guns_mode",
               "mode": "tap",
@@ -1359,6 +1535,10 @@
               "id": "md-missile",
               "icon": "missile",
               "label": "Missiles",
+              "voice": [
+                "missile mode",
+                "missiles mode"
+              ],
               "keys": "ralt+t",
               "scAction": "v_set_missile_mode",
               "mode": "tap",
@@ -1368,6 +1548,9 @@
               "id": "md-quantum",
               "icon": "quantum-mode",
               "label": "Quantum",
+              "voice": [
+                "quantum mode"
+              ],
               "keys": "ralt+q",
               "scAction": "v_set_quantum_mode",
               "mode": "tap",
@@ -1377,6 +1560,11 @@
               "id": "md-scan",
               "icon": "scanning",
               "label": "Scanning",
+              "voice": [
+                "scan mode",
+                "scanning mode",
+                "scanner"
+              ],
               "keys": "ralt+v",
               "scAction": "v_set_scan_mode",
               "mode": "tap",
@@ -1395,6 +1583,9 @@
               "id": "md-salvage",
               "icon": "salvage",
               "label": "Salvage",
+              "voice": [
+                "salvage mode"
+              ],
               "keys": "ralt+s",
               "scAction": "v_set_salvage_mode",
               "mode": "tap",
@@ -1459,6 +1650,11 @@
               "anim": "recoil",
               "icon": "missile",
               "label": "Launch Missile",
+              "voice": [
+                "fire missile",
+                "fire missiles",
+                "missile away"
+              ],
               "keys": "ralt+backslash",
               "scAction": "v_weapon_launch_missile_cinematic",
               "mode": "tap",
@@ -1468,6 +1664,9 @@
               "id": "cb-fewer",
               "icon": "missile",
               "label": "Fewer Missiles",
+              "voice": [
+                "less missiles"
+              ],
               "keys": "lctrl+g",
               "scAction": "v_weapon_decrease_max_missiles",
               "mode": "tap"
@@ -1476,6 +1675,10 @@
               "id": "cb-pips",
               "icon": "power-weapons",
               "label": "Lead / Lag Pips",
+              "voice": [
+                "toggle pips",
+                "switch pips"
+              ],
               "keys": "lalt+np_7",
               "scAction": "v_weapon_pip_toggle_lead_lag",
               "mode": "tap"
@@ -1499,6 +1702,10 @@
               "id": "cr-turret-1",
               "icon": "turret",
               "label": "Turret 1",
+              "voice": [
+                "turret one",
+                "remote turret one"
+              ],
               "keys": "np_1",
               "scAction": "v_enter_remote_turret_1",
               "mode": "tap"
@@ -1507,6 +1714,10 @@
               "id": "cr-turret-2",
               "icon": "turret",
               "label": "Turret 2",
+              "voice": [
+                "turret two",
+                "remote turret two"
+              ],
               "keys": "np_2",
               "scAction": "v_enter_remote_turret_2",
               "mode": "tap"
@@ -1515,6 +1726,10 @@
               "id": "cr-turret-3",
               "icon": "turret",
               "label": "Turret 3",
+              "voice": [
+                "turret three",
+                "remote turret three"
+              ],
               "keys": "np_3",
               "scAction": "v_enter_remote_turret_3",
               "mode": "tap"
@@ -1591,6 +1806,9 @@
               "id": "ft-inventory",
               "icon": "inventory",
               "label": "Inventory",
+              "voice": [
+                "open inventory"
+              ],
               "keys": "i",
               "mode": "tap"
             },
@@ -1600,7 +1818,9 @@
               "label": "3rd Person",
               "voice": [
                 "third person",
-                "camera"
+                "camera",
+                "first person",
+                "switch camera"
               ],
               "keys": "f4",
               "mode": "tap"

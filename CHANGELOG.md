@@ -5,6 +5,17 @@ section becomes the notes of its
 [GitHub release](https://github.com/nodieCode/tablet-deck/releases), so add one
 before tagging a release.
 
+## Unreleased
+
+- **About 100 new voice phrases**, so you can say what comes naturally: "guns
+  mode", "scan mode", "full power to shields", "more engines", "previous
+  hostile", "turret one", "module two", "fire missile", "match velocity",
+  "open star map", "first person" and more. The **?** next to the mic lists
+  them all.
+- **Emotes now start with "emote"** ("emote wave", "emote dance"), so a stray
+  "wait", "point" or "sit" doesn't set one off. To keep the single words too,
+  tick **Emotes also answer to one word** in **Settings**.
+
 ## 1.4.2 (2026-10-22)
 
 - A maintenance release with no changes to how the app works.

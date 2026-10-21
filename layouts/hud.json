@@ -8,10 +8,10 @@
     { "type": "talk", "label": "Hold to talk", "x": 371, "y": 14, "w": 196, "h": 52 },
     { "type": "voicehelp", "x": 573, "y": 14, "w": 52, "h": 52 },
     { "type": "button", "style": "top", "id": "top-atc", "label": "ATC", "voice": ["request landing", "call atc", "air traffic control"], "keys": "lalt+n", "mode": "tap", "x": 631, "y": 14, "w": 58, "h": 52 },
-    { "type": "button", "style": "top", "id": "top-chat", "icon": "chat", "label": "Chat", "keys": "f12", "verify": true, "mode": "tap", "x": 695, "y": 14, "w": 58, "h": 52 },
-    { "type": "button", "style": "top", "id": "top-contacts", "icon": "party", "label": "Contacts", "keys": "f11", "mode": "tap", "x": 759, "y": 14, "w": 58, "h": 52 },
-    { "type": "button", "style": "top", "id": "top-starmap", "icon": "starmap", "label": "Star Map", "keys": "f2", "mode": "tap", "x": 823, "y": 14, "w": 58, "h": 52 },
-    { "type": "button", "style": "top", "id": "top-mobiglas", "icon": "mobiglas", "label": "mobiGlas", "voice": ["mobi glass"], "keys": "f1", "mode": "tap", "x": 887, "y": 14, "w": 58, "h": 52 },
+    { "type": "button", "style": "top", "id": "top-chat", "icon": "chat", "label": "Chat", "voice": ["open chat"], "keys": "f12", "verify": true, "mode": "tap", "x": 695, "y": 14, "w": 58, "h": 52 },
+    { "type": "button", "style": "top", "id": "top-contacts", "icon": "party", "label": "Contacts", "voice": ["open contacts", "friends list"], "keys": "f11", "mode": "tap", "x": 759, "y": 14, "w": 58, "h": 52 },
+    { "type": "button", "style": "top", "id": "top-starmap", "icon": "starmap", "label": "Star Map", "voice": ["open star map", "open map", "map"], "keys": "f2", "mode": "tap", "x": 823, "y": 14, "w": 58, "h": 52 },
+    { "type": "button", "style": "top", "id": "top-mobiglas", "icon": "mobiglas", "label": "mobiGlas", "voice": ["mobi glass", "open mobi glass"], "keys": "f1", "mode": "tap", "x": 887, "y": 14, "w": 58, "h": 52 },
     { "type": "action", "action": "theme", "icon": "sliders", "x": 951, "y": 14, "w": 58, "h": 52 },
     { "type": "rule", "x": 14, "y": 72, "w": 996 },
     { "type": "divider", "x": 511, "y": 92, "h": 660 }
@@ -32,9 +32,9 @@
         { "type": "button", "when": ["approach", "landing"], "id": "pl-vtol", "anim": "streak", "label": "VTOL", "voice": ["toggle vtol"], "keys": "k", "mode": "tap", "x": 244, "y": 45, "w": 232, "h": 48 },
         { "type": "button", "when": ["approach", "landing"], "style": "dial", "id": "pl-autoland", "label": "Engage Auto Land", "voice": ["auto land", "land the ship"], "keys": "n", "mode": "timed", "ms": 1500, "x": 4, "y": 101, "w": 472, "h": 48 },
 
-        { "type": "button", "when": ["approach", "docking"], "id": "pl-request-dock", "label": "Request Docking", "keys": "lalt+n", "mode": "tap", "x": 4, "y": 45, "w": 232, "h": 48 },
+        { "type": "button", "when": ["approach", "docking"], "id": "pl-request-dock", "label": "Request Docking", "voice": ["dock", "request dock"], "keys": "lalt+n", "mode": "tap", "x": 4, "y": 45, "w": 232, "h": 48 },
         { "type": "button", "when": ["approach", "docking"], "id": "pl-dock-vtol", "anim": "streak", "label": "VTOL", "keys": "k", "mode": "tap", "x": 244, "y": 45, "w": 232, "h": 48 },
-        { "type": "button", "when": ["approach", "docking"], "style": "dial", "id": "pl-dock-cam", "label": "Docking Camera", "keys": "0", "verify": true, "mode": "tap", "x": 4, "y": 101, "w": 472, "h": 48 },
+        { "type": "button", "when": ["approach", "docking"], "style": "dial", "id": "pl-dock-cam", "label": "Docking Camera", "voice": ["dock camera"], "keys": "0", "verify": true, "mode": "tap", "x": 4, "y": 101, "w": 472, "h": 48 },
 
         { "type": "header", "text": "Power_management", "x": 2, "y": 184 },
         { "type": "vlabel", "text": "Max", "x": 2, "y": 216, "h": 64 },
@@ -42,27 +42,27 @@
         { "type": "vlabel", "text": "Decr", "x": 2, "y": 411, "h": 64 },
         { "type": "vlabel", "text": "Min", "x": 2, "y": 491, "h": 64 },
 
-        { "type": "button", "style": "chev", "icon": "chev-max", "id": "pw-wep-max", "label": "Max Weapons", "keys": "f5", "verify": true, "mode": "timed", "ms": 900, "color": "red", "x": 58, "y": 216, "w": 133, "h": 64 },
-        { "type": "button", "style": "chev", "icon": "chev-max", "id": "pw-thr-max", "label": "Max Thrusters", "keys": "f6", "verify": true, "mode": "timed", "ms": 900, "color": "blue", "x": 198, "y": 216, "w": 133, "h": 64 },
-        { "type": "button", "style": "chev", "icon": "chev-max", "id": "pw-shd-max", "label": "Max Shields", "keys": "f7", "verify": true, "mode": "timed", "ms": 900, "color": "green", "x": 338, "y": 216, "w": 133, "h": 64 },
+        { "type": "button", "style": "chev", "icon": "chev-max", "id": "pw-wep-max", "label": "Max Weapons", "voice": ["full power to weapons", "maximum weapons"], "keys": "f5", "verify": true, "mode": "timed", "ms": 900, "color": "red", "x": 58, "y": 216, "w": 133, "h": 64 },
+        { "type": "button", "style": "chev", "icon": "chev-max", "id": "pw-thr-max", "label": "Max Thrusters", "voice": ["full power to engines", "full power to thrusters", "max engines", "maximum thrusters"], "keys": "f6", "verify": true, "mode": "timed", "ms": 900, "color": "blue", "x": 198, "y": 216, "w": 133, "h": 64 },
+        { "type": "button", "style": "chev", "icon": "chev-max", "id": "pw-shd-max", "label": "Max Shields", "voice": ["full power to shields", "maximum shields"], "keys": "f7", "verify": true, "mode": "timed", "ms": 900, "color": "green", "x": 338, "y": 216, "w": 133, "h": 64 },
 
-        { "type": "button", "style": "chev", "icon": "chev-up", "id": "pw-wep-up", "label": "Weapons +", "keys": "f5", "verify": true, "mode": "tap", "color": "red", "x": 58, "y": 296, "w": 133, "h": 64 },
-        { "type": "button", "style": "chev", "icon": "chev-up", "id": "pw-thr-up", "label": "Thrusters +", "keys": "f6", "verify": true, "mode": "tap", "color": "blue", "x": 198, "y": 296, "w": 133, "h": 64 },
-        { "type": "button", "style": "chev", "icon": "chev-up", "id": "pw-shd-up", "label": "Shields +", "keys": "f7", "verify": true, "mode": "tap", "color": "green", "x": 338, "y": 296, "w": 133, "h": 64 },
+        { "type": "button", "style": "chev", "icon": "chev-up", "id": "pw-wep-up", "label": "Weapons +", "voice": ["more weapons", "more power to weapons"], "keys": "f5", "verify": true, "mode": "tap", "color": "red", "x": 58, "y": 296, "w": 133, "h": 64 },
+        { "type": "button", "style": "chev", "icon": "chev-up", "id": "pw-thr-up", "label": "Thrusters +", "voice": ["engines up", "more engines", "more thrusters", "more power to engines"], "keys": "f6", "verify": true, "mode": "tap", "color": "blue", "x": 198, "y": 296, "w": 133, "h": 64 },
+        { "type": "button", "style": "chev", "icon": "chev-up", "id": "pw-shd-up", "label": "Shields +", "voice": ["more shields", "more power to shields"], "keys": "f7", "verify": true, "mode": "tap", "color": "green", "x": 338, "y": 296, "w": 133, "h": 64 },
 
         { "type": "caption", "icon": "power-weapons", "text": "Weapons", "color": "red", "x": 58, "y": 364, "w": 133 },
         { "type": "caption", "icon": "power-engines", "text": "Thrusters", "color": "blue", "x": 198, "y": 364, "w": 133 },
         { "type": "caption", "icon": "power-shields", "text": "Shields", "color": "green", "x": 338, "y": 364, "w": 133 },
 
-        { "type": "button", "style": "chev", "icon": "chev-down", "id": "pw-wep-down", "label": "Weapons −", "keys": "lalt+f5", "verify": true, "mode": "tap", "color": "red", "x": 58, "y": 411, "w": 133, "h": 64 },
-        { "type": "button", "style": "chev", "icon": "chev-down", "id": "pw-thr-down", "label": "Thrusters −", "keys": "lalt+f6", "verify": true, "mode": "tap", "color": "blue", "x": 198, "y": 411, "w": 133, "h": 64 },
-        { "type": "button", "style": "chev", "icon": "chev-down", "id": "pw-shd-down", "label": "Shields −", "keys": "lalt+f7", "verify": true, "mode": "tap", "color": "green", "x": 338, "y": 411, "w": 133, "h": 64 },
+        { "type": "button", "style": "chev", "icon": "chev-down", "id": "pw-wep-down", "label": "Weapons −", "voice": ["less weapons", "less power to weapons"], "keys": "lalt+f5", "verify": true, "mode": "tap", "color": "red", "x": 58, "y": 411, "w": 133, "h": 64 },
+        { "type": "button", "style": "chev", "icon": "chev-down", "id": "pw-thr-down", "label": "Thrusters −", "voice": ["engines down", "less engines", "less thrusters", "less power to engines"], "keys": "lalt+f6", "verify": true, "mode": "tap", "color": "blue", "x": 198, "y": 411, "w": 133, "h": 64 },
+        { "type": "button", "style": "chev", "icon": "chev-down", "id": "pw-shd-down", "label": "Shields −", "voice": ["less shields", "less power to shields"], "keys": "lalt+f7", "verify": true, "mode": "tap", "color": "green", "x": 338, "y": 411, "w": 133, "h": 64 },
 
-        { "type": "button", "style": "chev", "icon": "chev-min", "id": "pw-wep-min", "label": "Min Weapons", "keys": "lalt+f5", "verify": true, "mode": "timed", "ms": 900, "color": "red", "x": 58, "y": 491, "w": 133, "h": 64 },
-        { "type": "button", "style": "chev", "icon": "chev-min", "id": "pw-thr-min", "label": "Min Thrusters", "keys": "lalt+f6", "verify": true, "mode": "timed", "ms": 900, "color": "blue", "x": 198, "y": 491, "w": 133, "h": 64 },
-        { "type": "button", "style": "chev", "icon": "chev-min", "id": "pw-shd-min", "label": "Min Shields", "keys": "lalt+f7", "verify": true, "mode": "timed", "ms": 900, "color": "green", "x": 338, "y": 491, "w": 133, "h": 64 },
+        { "type": "button", "style": "chev", "icon": "chev-min", "id": "pw-wep-min", "label": "Min Weapons", "voice": ["minimum weapons"], "keys": "lalt+f5", "verify": true, "mode": "timed", "ms": 900, "color": "red", "x": 58, "y": 491, "w": 133, "h": 64 },
+        { "type": "button", "style": "chev", "icon": "chev-min", "id": "pw-thr-min", "label": "Min Thrusters", "voice": ["min engines", "minimum engines", "minimum thrusters"], "keys": "lalt+f6", "verify": true, "mode": "timed", "ms": 900, "color": "blue", "x": 198, "y": 491, "w": 133, "h": 64 },
+        { "type": "button", "style": "chev", "icon": "chev-min", "id": "pw-shd-min", "label": "Min Shields", "voice": ["minimum shields"], "keys": "lalt+f7", "verify": true, "mode": "timed", "ms": 900, "color": "green", "x": 338, "y": 491, "w": 133, "h": 64 },
 
-        { "type": "button", "style": "wide", "icon": "power-reset", "id": "pw-reset", "label": "Reset All", "voice": ["reset power"], "keys": "f8", "verify": true, "mode": "tap", "x": 2, "y": 571, "w": 477, "h": 42 }
+        { "type": "button", "style": "wide", "icon": "power-reset", "id": "pw-reset", "label": "Reset All", "voice": ["reset power", "balance power", "reset all power"], "keys": "f8", "verify": true, "mode": "tap", "x": 2, "y": 571, "w": 477, "h": 42 }
       ]
     },
 
@@ -77,16 +77,16 @@
 
         { "type": "bracket", "x": 50, "y": 112, "w": 380, "h": 24 },
         { "type": "button", "style": "hero", "id": "qt-flight-ready", "anim": "ripple", "label": "Toggle Flight Ready", "voice": ["flight ready", "ready for flight"], "keys": "r", "mode": "tap", "color": "green", "x": 9, "y": 157, "w": 461, "h": 72 },
-        { "type": "button", "id": "qt-scm-nav", "anim": "streak", "label": "SCM/NAV", "voice": ["switch master mode", "toggle master mode"], "keys": "b", "verify": true, "mode": "tap", "x": 47, "y": 252, "w": 189, "h": 72 },
+        { "type": "button", "id": "qt-scm-nav", "anim": "streak", "label": "SCM/NAV", "voice": ["switch master mode", "toggle master mode", "master mode"], "keys": "b", "verify": true, "mode": "tap", "x": 47, "y": 252, "w": 189, "h": 72 },
         { "type": "menu", "label": "Oprt Mode", "title": "Operator mode", "x": 244, "y": 252, "w": 189, "h": 72,
           "options": [
-            { "id": "op-flight", "icon": "ship", "label": "Flight", "keys": "ralt+f", "scAction": "v_set_flight_mode", "mode": "tap", "color": "green" },
-            { "id": "op-guns", "anim": "recoil", "icon": "power-weapons", "label": "Guns", "keys": "ralt+g", "scAction": "v_set_guns_mode", "mode": "tap", "color": "red" },
-            { "id": "op-missile", "icon": "missile", "label": "Missiles", "keys": "ralt+t", "scAction": "v_set_missile_mode", "mode": "tap", "color": "red" },
-            { "id": "op-quantum", "icon": "quantum-mode", "label": "Quantum", "keys": "ralt+q", "scAction": "v_set_quantum_mode", "mode": "tap", "color": "blue" },
-            { "id": "op-scan", "icon": "scanning", "label": "Scanning", "keys": "ralt+v", "scAction": "v_set_scan_mode", "mode": "tap", "color": "blue" },
+            { "id": "op-flight", "icon": "ship", "label": "Flight", "voice": ["flight mode"], "keys": "ralt+f", "scAction": "v_set_flight_mode", "mode": "tap", "color": "green" },
+            { "id": "op-guns", "anim": "recoil", "icon": "power-weapons", "label": "Guns", "voice": ["guns mode", "gun mode"], "keys": "ralt+g", "scAction": "v_set_guns_mode", "mode": "tap", "color": "red" },
+            { "id": "op-missile", "icon": "missile", "label": "Missiles", "voice": ["missile mode", "missiles mode"], "keys": "ralt+t", "scAction": "v_set_missile_mode", "mode": "tap", "color": "red" },
+            { "id": "op-quantum", "icon": "quantum-mode", "label": "Quantum", "voice": ["quantum mode"], "keys": "ralt+q", "scAction": "v_set_quantum_mode", "mode": "tap", "color": "blue" },
+            { "id": "op-scan", "icon": "scanning", "label": "Scanning", "voice": ["scan mode", "scanning mode", "scanner"], "keys": "ralt+v", "scAction": "v_set_scan_mode", "mode": "tap", "color": "blue" },
             { "id": "op-mining", "icon": "mining", "label": "Mining", "keys": "ralt+m", "scAction": "v_set_mining_mode", "mode": "tap", "color": "amber" },
-            { "id": "op-salvage", "icon": "salvage", "label": "Salvage", "keys": "ralt+s", "scAction": "v_set_salvage_mode", "mode": "tap", "color": "amber" }
+            { "id": "op-salvage", "icon": "salvage", "label": "Salvage", "voice": ["salvage mode"], "keys": "ralt+s", "scAction": "v_set_salvage_mode", "mode": "tap", "color": "amber" }
           ] },
         { "type": "button", "style": "quantum", "id": "qt-engage", "anim": "charge", "label": "Engage Quantum", "voice": ["engage", "quantum jump", "jump"], "voiceMs": 1500, "keys": "b", "mode": "hold", "color": "blue", "x": 65, "y": 362, "w": 361, "h": 110 },
 
@@ -102,16 +102,16 @@
         { "type": "grid", "x": 0, "y": 8, "w": 480, "h": 604, "cols": 3, "buttons": [
           { "id": "fa-scm", "icon": "speed", "label": "Master: SCM", "voice": ["scm mode", "combat mode"], "keys": "ralt+insert", "scAction": "v_master_mode_set_scm", "mode": "tap", "color": "green" },
           { "id": "fa-nav", "anim": "streak", "icon": "quantum-mode", "label": "Master: NAV", "voice": ["nav mode", "navigation mode"], "keys": "ralt+np_period", "scAction": "v_master_mode_set_nav", "mode": "tap", "color": "blue" },
-          { "id": "fa-limiter", "icon": "speed", "label": "Speed Limiter", "keys": "lalt+minus", "scAction": "v_ifcs_toggle_speed_limiter", "mode": "tap" },
-          { "id": "fa-limiter-reset", "icon": "power-reset", "label": "Reset Limit", "keys": "lalt+s", "scAction": "v_ifcs_speed_limiter_reset_scm", "mode": "tap" },
-          { "id": "fa-range-up", "anim": "streak", "icon": "chev-up", "label": "Speed Range +", "keys": "lalt+y", "scAction": "v_speed_range_up", "mode": "tap" },
-          { "id": "fa-range-down", "icon": "chev-down", "label": "Speed Range −", "keys": "lctrl+y", "scAction": "v_speed_range_down", "mode": "tap" },
-          { "id": "fa-match", "icon": "target", "label": "Match Speed", "keys": "lctrl+v", "scAction": "v_target_match_vel", "mode": "tap" },
-          { "id": "fa-esp", "icon": "target", "label": "Toggle ESP", "keys": "lalt+semicolon", "scAction": "v_ifcs_toggle_esp", "mode": "tap" },
-          { "id": "fa-gsafe", "icon": "power-shields", "label": "G-Safety", "keys": "lalt+i", "scAction": "v_ifcs_toggle_gforce_safety", "mode": "tap", "color": "amber" },
+          { "id": "fa-limiter", "icon": "speed", "label": "Speed Limiter", "voice": ["speed limiter on", "speed limiter off", "toggle speed limiter"], "keys": "lalt+minus", "scAction": "v_ifcs_toggle_speed_limiter", "mode": "tap" },
+          { "id": "fa-limiter-reset", "icon": "power-reset", "label": "Reset Limit", "voice": ["reset speed limit", "reset speed limiter"], "keys": "lalt+s", "scAction": "v_ifcs_speed_limiter_reset_scm", "mode": "tap" },
+          { "id": "fa-range-up", "anim": "streak", "icon": "chev-up", "label": "Speed Range +", "voice": ["increase speed range"], "keys": "lalt+y", "scAction": "v_speed_range_up", "mode": "tap" },
+          { "id": "fa-range-down", "icon": "chev-down", "label": "Speed Range −", "voice": ["decrease speed range"], "keys": "lctrl+y", "scAction": "v_speed_range_down", "mode": "tap" },
+          { "id": "fa-match", "icon": "target", "label": "Match Speed", "voice": ["match velocity", "match target speed", "match target"], "keys": "lctrl+v", "scAction": "v_target_match_vel", "mode": "tap" },
+          { "id": "fa-esp", "icon": "target", "label": "Toggle ESP", "voice": ["esp on", "esp off"], "keys": "lalt+semicolon", "scAction": "v_ifcs_toggle_esp", "mode": "tap" },
+          { "id": "fa-gsafe", "icon": "power-shields", "label": "G-Safety", "voice": ["g force safety", "toggle g safety"], "keys": "lalt+i", "scAction": "v_ifcs_toggle_gforce_safety", "mode": "tap", "color": "amber" },
           { "id": "fa-lights", "anim": "glow", "icon": "lights", "label": "Lights", "voice": ["lights on", "lights off", "toggle lights"], "keys": "l", "mode": "tap" },
           { "id": "fa-look-behind", "icon": "eye", "label": "Look Behind", "voice": false, "keys": "lalt+period", "scAction": "v_view_look_behind", "mode": "hold" },
-          { "id": "fa-exit", "icon": "exit-seat", "label": "Exit Seat", "keys": "y", "mode": "timed", "ms": 1200, "color": "red" }
+          { "id": "fa-exit", "icon": "exit-seat", "label": "Exit Seat", "voice": ["get up", "leave seat"], "keys": "y", "mode": "timed", "ms": 1200, "color": "red" }
         ] }
       ]
     },
@@ -135,12 +135,12 @@
       "title": "Targeting",
       "elements": [
         { "type": "grid", "x": 0, "y": 8, "w": 480, "h": 604, "cols": 2, "buttons": [
-          { "id": "tg-hostile", "icon": "target", "label": "Prev Hostile", "keys": "lalt+5", "scAction": "v_target_cycle_hostile_back", "mode": "tap", "color": "red" },
-          { "id": "tg-attacker", "icon": "target", "label": "Prev Attacker", "keys": "lalt+4", "scAction": "v_target_cycle_attacker_back", "mode": "tap", "color": "red" },
-          { "id": "tg-friendly", "icon": "target", "label": "Prev Friendly", "keys": "lalt+6", "scAction": "v_target_cycle_friendly_back", "mode": "tap", "color": "green" },
-          { "id": "tg-all", "icon": "target", "label": "Prev Any", "keys": "lalt+7", "scAction": "v_target_cycle_all_back", "mode": "tap" },
-          { "id": "tg-sub", "icon": "target", "label": "Prev Subtarget", "keys": "lalt+8", "scAction": "v_target_cycle_subitem_back", "mode": "tap" },
-          { "id": "tg-view", "icon": "target", "label": "Prev In View", "keys": "lalt+v", "scAction": "v_target_cycle_in_view_back", "mode": "tap" }
+          { "id": "tg-hostile", "icon": "target", "label": "Prev Hostile", "voice": ["previous hostile", "previous enemy"], "keys": "lalt+5", "scAction": "v_target_cycle_hostile_back", "mode": "tap", "color": "red" },
+          { "id": "tg-attacker", "icon": "target", "label": "Prev Attacker", "voice": ["previous attacker"], "keys": "lalt+4", "scAction": "v_target_cycle_attacker_back", "mode": "tap", "color": "red" },
+          { "id": "tg-friendly", "icon": "target", "label": "Prev Friendly", "voice": ["previous friendly"], "keys": "lalt+6", "scAction": "v_target_cycle_friendly_back", "mode": "tap", "color": "green" },
+          { "id": "tg-all", "icon": "target", "label": "Prev Any", "voice": ["previous target", "previous any"], "keys": "lalt+7", "scAction": "v_target_cycle_all_back", "mode": "tap" },
+          { "id": "tg-sub", "icon": "target", "label": "Prev Subtarget", "voice": ["previous subtarget", "previous sub target"], "keys": "lalt+8", "scAction": "v_target_cycle_subitem_back", "mode": "tap" },
+          { "id": "tg-view", "icon": "target", "label": "Prev In View", "voice": ["previous in view"], "keys": "lalt+v", "scAction": "v_target_cycle_in_view_back", "mode": "tap" }
         ] }
       ]
     },
@@ -165,14 +165,14 @@
         { "type": "grid", "x": 0, "y": 116, "w": 480, "h": 252, "cols": 2, "buttons": [
           { "id": "mn-fire", "icon": "laser", "label": "Fire Laser", "voice": ["fire mining laser", "mining laser"], "keys": "rctrl+f", "scAction": "v_toggle_mining_laser_fire", "verify": true, "mode": "tap", "color": "red" },
           { "id": "mn-type", "icon": "swap", "label": "Fracture / Extract", "voice": ["fracture", "extract", "switch laser mode"], "keys": "rctrl+t", "scAction": "v_toggle_mining_laser_type", "verify": true, "mode": "tap", "color": "amber" },
-          { "id": "mn-power-down", "icon": "chev-down", "label": "Laser Power −", "voiceMs": 600, "keys": "rctrl+s", "scAction": "v_decrease_mining_throttle", "verify": true, "mode": "hold" },
-          { "id": "mn-power-up", "icon": "chev-up", "label": "Laser Power +", "voiceMs": 600, "keys": "rctrl+w", "scAction": "v_increase_mining_throttle", "verify": true, "mode": "hold" }
+          { "id": "mn-power-down", "icon": "chev-down", "label": "Laser Power −", "voice": ["less laser power"], "voiceMs": 600, "keys": "rctrl+s", "scAction": "v_decrease_mining_throttle", "verify": true, "mode": "hold" },
+          { "id": "mn-power-up", "icon": "chev-up", "label": "Laser Power +", "voice": ["more laser power"], "voiceMs": 600, "keys": "rctrl+w", "scAction": "v_increase_mining_throttle", "verify": true, "mode": "hold" }
         ] },
         { "type": "header", "text": "Modules", "x": 2, "y": 392 },
         { "type": "grid", "x": 0, "y": 416, "w": 480, "h": 120, "cols": 3, "buttons": [
-          { "id": "mn-module-1", "icon": "module", "label": "Module 1", "keys": "lalt+1", "scAction": "v_mining_use_consumable1", "verify": true, "mode": "tap", "color": "blue" },
-          { "id": "mn-module-2", "icon": "module", "label": "Module 2", "keys": "lalt+2", "scAction": "v_mining_use_consumable2", "verify": true, "mode": "tap", "color": "blue" },
-          { "id": "mn-module-3", "icon": "module", "label": "Module 3", "keys": "lalt+3", "scAction": "v_mining_use_consumable3", "verify": true, "mode": "tap", "color": "blue" }
+          { "id": "mn-module-1", "icon": "module", "label": "Module 1", "voice": ["module one", "mining module one"], "keys": "lalt+1", "scAction": "v_mining_use_consumable1", "verify": true, "mode": "tap", "color": "blue" },
+          { "id": "mn-module-2", "icon": "module", "label": "Module 2", "voice": ["module two", "mining module two"], "keys": "lalt+2", "scAction": "v_mining_use_consumable2", "verify": true, "mode": "tap", "color": "blue" },
+          { "id": "mn-module-3", "icon": "module", "label": "Module 3", "voice": ["module three", "mining module three"], "keys": "lalt+3", "scAction": "v_mining_use_consumable3", "verify": true, "mode": "tap", "color": "blue" }
         ] }
       ]
     },
@@ -181,13 +181,13 @@
       "title": "Operator Modes",
       "elements": [
         { "type": "grid", "x": 0, "y": 8, "w": 480, "h": 604, "cols": 2, "buttons": [
-          { "id": "md-flight", "icon": "ship", "label": "Flight", "keys": "ralt+f", "scAction": "v_set_flight_mode", "mode": "tap", "color": "green" },
-          { "id": "md-guns", "anim": "recoil", "icon": "power-weapons", "label": "Guns", "keys": "ralt+g", "scAction": "v_set_guns_mode", "mode": "tap", "color": "red" },
-          { "id": "md-missile", "icon": "missile", "label": "Missiles", "keys": "ralt+t", "scAction": "v_set_missile_mode", "mode": "tap", "color": "red" },
-          { "id": "md-quantum", "icon": "quantum-mode", "label": "Quantum", "keys": "ralt+q", "scAction": "v_set_quantum_mode", "mode": "tap", "color": "blue" },
-          { "id": "md-scan", "icon": "scanning", "label": "Scanning", "keys": "ralt+v", "scAction": "v_set_scan_mode", "mode": "tap", "color": "blue" },
+          { "id": "md-flight", "icon": "ship", "label": "Flight", "voice": ["flight mode"], "keys": "ralt+f", "scAction": "v_set_flight_mode", "mode": "tap", "color": "green" },
+          { "id": "md-guns", "anim": "recoil", "icon": "power-weapons", "label": "Guns", "voice": ["guns mode", "gun mode"], "keys": "ralt+g", "scAction": "v_set_guns_mode", "mode": "tap", "color": "red" },
+          { "id": "md-missile", "icon": "missile", "label": "Missiles", "voice": ["missile mode", "missiles mode"], "keys": "ralt+t", "scAction": "v_set_missile_mode", "mode": "tap", "color": "red" },
+          { "id": "md-quantum", "icon": "quantum-mode", "label": "Quantum", "voice": ["quantum mode"], "keys": "ralt+q", "scAction": "v_set_quantum_mode", "mode": "tap", "color": "blue" },
+          { "id": "md-scan", "icon": "scanning", "label": "Scanning", "voice": ["scan mode", "scanning mode", "scanner"], "keys": "ralt+v", "scAction": "v_set_scan_mode", "mode": "tap", "color": "blue" },
           { "id": "md-mining", "icon": "mining", "label": "Mining", "keys": "ralt+m", "scAction": "v_set_mining_mode", "mode": "tap", "color": "amber" },
-          { "id": "md-salvage", "icon": "salvage", "label": "Salvage", "keys": "ralt+s", "scAction": "v_set_salvage_mode", "mode": "tap", "color": "amber" }
+          { "id": "md-salvage", "icon": "salvage", "label": "Salvage", "voice": ["salvage mode"], "keys": "ralt+s", "scAction": "v_set_salvage_mode", "mode": "tap", "color": "amber" }
         ] }
       ]
     },
@@ -199,9 +199,9 @@
           { "id": "cb-decoy", "anim": "burst", "icon": "decoy", "label": "Decoy", "voice": ["flares", "launch decoy"], "keys": "g", "mode": "tap", "color": "amber" },
           { "id": "cb-noise", "anim": "burst", "icon": "noise", "label": "Noise", "voice": ["chaff", "launch noise"], "keys": "h", "mode": "tap", "color": "amber" },
           { "id": "cb-panic", "anim": "burst", "icon": "decoy", "label": "Panic Decoys", "voice": ["panic"], "keys": "lctrl+h", "scAction": "v_weapon_countermeasure_decoy_launch_panic", "mode": "tap", "color": "red" },
-          { "id": "cb-missile", "anim": "recoil", "icon": "missile", "label": "Launch Missile", "keys": "ralt+backslash", "scAction": "v_weapon_launch_missile_cinematic", "mode": "tap", "color": "red" },
-          { "id": "cb-fewer", "icon": "missile", "label": "Fewer Missiles", "keys": "lctrl+g", "scAction": "v_weapon_decrease_max_missiles", "mode": "tap" },
-          { "id": "cb-pips", "icon": "power-weapons", "label": "Lead / Lag Pips", "keys": "lalt+np_7", "scAction": "v_weapon_pip_toggle_lead_lag", "mode": "tap" }
+          { "id": "cb-missile", "anim": "recoil", "icon": "missile", "label": "Launch Missile", "voice": ["fire missile", "fire missiles", "missile away"], "keys": "ralt+backslash", "scAction": "v_weapon_launch_missile_cinematic", "mode": "tap", "color": "red" },
+          { "id": "cb-fewer", "icon": "missile", "label": "Fewer Missiles", "voice": ["less missiles"], "keys": "lctrl+g", "scAction": "v_weapon_decrease_max_missiles", "mode": "tap" },
+          { "id": "cb-pips", "icon": "power-weapons", "label": "Lead / Lag Pips", "voice": ["toggle pips", "switch pips"], "keys": "lalt+np_7", "scAction": "v_weapon_pip_toggle_lead_lag", "mode": "tap" }
         ] }
       ]
     },
@@ -210,9 +210,9 @@
       "title": "Crew/Doors",
       "elements": [
         { "type": "grid", "x": 0, "y": 8, "w": 480, "h": 604, "cols": 2, "buttons": [
-          { "id": "cr-turret-1", "icon": "turret", "label": "Turret 1", "keys": "np_1", "scAction": "v_enter_remote_turret_1", "mode": "tap" },
-          { "id": "cr-turret-2", "icon": "turret", "label": "Turret 2", "keys": "np_2", "scAction": "v_enter_remote_turret_2", "mode": "tap" },
-          { "id": "cr-turret-3", "icon": "turret", "label": "Turret 3", "keys": "np_3", "scAction": "v_enter_remote_turret_3", "mode": "tap" },
+          { "id": "cr-turret-1", "icon": "turret", "label": "Turret 1", "voice": ["turret one", "remote turret one"], "keys": "np_1", "scAction": "v_enter_remote_turret_1", "mode": "tap" },
+          { "id": "cr-turret-2", "icon": "turret", "label": "Turret 2", "voice": ["turret two", "remote turret two"], "keys": "np_2", "scAction": "v_enter_remote_turret_2", "mode": "tap" },
+          { "id": "cr-turret-3", "icon": "turret", "label": "Turret 3", "voice": ["turret three", "remote turret three"], "keys": "np_3", "scAction": "v_enter_remote_turret_3", "mode": "tap" },
           { "id": "cr-doors-toggle", "anim": "doors", "icon": "doors", "label": "Toggle Doors", "voice": ["doors"], "keys": "np_period", "scAction": "v_toggle_all_doors", "mode": "tap", "color": "amber" },
           { "id": "cr-doors-open", "anim": "doors", "set": true, "icon": "doors", "label": "Open Doors", "keys": "lalt+o", "scAction": "v_open_all_doors", "mode": "tap", "color": "green" },
           { "id": "cr-doors-close", "anim": "doors", "set": false, "icon": "doors", "label": "Close Doors", "keys": "rctrl+lbracket", "scAction": "v_close_all_doors", "mode": "tap", "color": "amber" },
@@ -226,8 +226,8 @@
       "title": "On Foot",
       "elements": [
         { "type": "grid", "x": 0, "y": 8, "w": 480, "h": 604, "cols": 2, "buttons": [
-          { "id": "ft-inventory", "icon": "inventory", "label": "Inventory", "keys": "i", "mode": "tap" },
-          { "id": "ft-camera", "icon": "camera", "label": "3rd Person", "voice": ["third person", "camera"], "keys": "f4", "mode": "tap" },
+          { "id": "ft-inventory", "icon": "inventory", "label": "Inventory", "voice": ["open inventory"], "keys": "i", "mode": "tap" },
+          { "id": "ft-camera", "icon": "camera", "label": "3rd Person", "voice": ["third person", "camera", "first person", "switch camera"], "keys": "f4", "mode": "tap" },
           { "id": "ft-walk", "icon": "walk", "label": "Walk", "keys": "ralt+w", "scAction": "walk", "mode": "tap" },
           { "id": "ft-drop", "icon": "drop", "label": "Drop Item", "keys": "ralt+d", "scAction": "drop", "mode": "tap", "color": "amber" },
           { "id": "ft-inspect", "icon": "eye", "label": "Inspect Item", "keys": "ralt+i", "scAction": "inspect", "mode": "tap" },

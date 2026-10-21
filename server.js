@@ -135,6 +135,7 @@ const SETTINGS = {
   autoUpdate: onOff,
   onlyWhenGameFocused: onOff,
   voice: onOff,
+  shortEmotes: onOff,
   token: (v) => (/^[a-z0-9]{1,32}$/i.test(v) ? v.toLowerCase() : undefined),
   port: wholeNumber(1024, 65535),
   tapMs: wholeNumber(20, 1000),
@@ -443,11 +444,18 @@ function spoken(label) {
 // Phrase -> button id: each button's label plus its "voice" phrases. "voice": false leaves a
 // button out (eject, self-destruct). A phrase that fits buttons with different keys is
 // dropped rather than guessed; buttons with the same keys (e.g. Mining in two panels) share it.
+// Emotes answer to "emote wave", so a stray "wait" or "point" doesn't set one off; with
+// shortEmotes they answer to "wave" as well.
 function voiceCommands(buttons) {
   const byPhrase = new Map(); // phrase -> button, or null when ambiguous
   for (const btn of buttons.values()) {
     if (btn.voice === false) continue;
-    for (const phrase of [btn.label, ...(btn.voice || [])].map(spoken).filter(Boolean)) {
+    let phrases = [btn.label, ...(btn.voice || [])].map(spoken).filter(Boolean);
+    if (/^emote_/.test(btn.scAction || "")) {
+      const prefixed = phrases.map((p) => (p.startsWith("emote ") ? p : `emote ${p}`));
+      phrases = config.shortEmotes ? [...prefixed, ...phrases] : prefixed;
+    }
+    for (const phrase of phrases) {
       const other = byPhrase.get(phrase);
       if (other === undefined) byPhrase.set(phrase, btn);
       else if (other && other.keys !== btn.keys) {
@@ -946,6 +954,8 @@ function applySetting(name, text) {
     sendPushToTalk();
     if (voiceStatus) ui({ ...voiceStatus, ptt: config.pttKey ? config.pttKeyName || "on" : "" });
   }
+  // The listener restarts with the new phrases.
+  if (name === "shortEmotes" && voice) voice.kill();
   sendReady();
 }
 
