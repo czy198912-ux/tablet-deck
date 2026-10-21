@@ -153,13 +153,15 @@ async function buildApp() {
   // A packed app can't list its files, so the list goes in too (for the layout editor).
   fs.writeFileSync(path.join(BUILD, "bundled-files.json"), JSON.stringify(assets));
   const blob = path.join(BUILD, "sea.blob");
+  // Paths relative to the repository: the script's path ends up inside the .exe, and it
+  // shouldn't carry the folder it was built in.
   fs.writeFileSync(path.join(BUILD, "sea-config.json"), JSON.stringify({
-    main: path.join(BUILD, "bundle.js"),
-    output: blob,
+    main: "build/bundle.js",
+    output: "build/sea.blob",
     disableExperimentalSEAWarning: true,
-    assets: { ...Object.fromEntries(assets.map((a) => [a, path.join(ROOT, a)])), "bundled-files.json": path.join(BUILD, "bundled-files.json") },
+    assets: { ...Object.fromEntries(assets.map((a) => [a, a])), "bundled-files.json": "build/bundled-files.json" },
   }, null, 2));
-  run(process.execPath, ["--experimental-sea-config", path.join(BUILD, "sea-config.json")]);
+  execFileSync(process.execPath, ["--experimental-sea-config", "build/sea-config.json"], { cwd: ROOT, stdio: "inherit" });
   console.log(`${assets.length} bundled files`);
 
   const exe = path.join(APP, "TabletDeckServer.exe");
