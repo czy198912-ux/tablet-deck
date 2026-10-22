@@ -1,0 +1,31 @@
+name: Layout idea
+description: Buttons or a panel you'd like on the deck, or a new starter layout.
+labels: [enhancement]
+body:
+  - type: dropdown
+    id: activity
+    attributes:
+      label: What is it for?
+      options:
+        - Combat
+        - Mining
+        - Salvage
+        - Hauling and trading
+        - Exploration
+        - Multi-crew
+        - On foot
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: buttons
+    attributes:
+      label: Which buttons, and where?
+      description: The actions you want, and on which panel or page. Their Star Citizen keybinding names help if you know them (e.g. "Cycle Missile Type").
+    validations:
+      required: true
+  - type: textarea
+    id: sketch
+    attributes:
+      label: Sketch or screenshot
+      description: Optional. A photo of a paper sketch is fine. If you built it in the layout editor, you can attach your layout's .json file.

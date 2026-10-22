@@ -1,0 +1,27 @@
+name: Feature request
+description: An idea for something Tablet Deck could do.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like?
+      placeholder: "e.g. A button that ..."
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: How would you use it in the game?
+      description: What you're doing in Star Citizen when you'd want it helps a lot.
+    validations:
+      required: true
+  - type: textarea
+    id: else
+    attributes:
+      label: Anything else
+      description: How you do it today, other tools that do it, screenshots or sketches.
+  - type: markdown
+    attributes:
+      value: |
+        Tablet Deck sends one key press per tap and never reads or changes the game, so it can't add macros, automation or anything that reads game data.

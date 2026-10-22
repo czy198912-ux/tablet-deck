@@ -1,0 +1,10 @@
+# Shown before the issue forms. Points people at answers that already exist, and sends
+# security problems to a private report instead of a public issue.
+blank_issues_enabled: false
+contact_links:
+  - name: Troubleshooting
+    url: https://github.com/nodieCode/tablet-deck#troubleshooting
+    about: The tablet can't connect, buttons do nothing in the game, voice or Windows warnings. Most problems are answered here.
+  - name: Report a security problem
+    url: https://github.com/nodieCode/tablet-deck/security/advisories/new
+    about: Please report security problems privately, not as a public issue. See SECURITY.md.
