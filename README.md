@@ -394,6 +394,8 @@ the game's files or memory.
 - No accounts, ads or tracking. The only internet traffic is the update check
   (GitHub; you can turn it off) and the theme fonts the tablet loads from Google
   Fonts. See [CODE_SIGNING.md](CODE_SIGNING.md#privacy).
+- Found a security problem? Please report it privately; see
+  [SECURITY.md](SECURITY.md).
 
 ## Developers
 
