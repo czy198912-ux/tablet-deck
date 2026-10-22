@@ -182,7 +182,9 @@ and Node.js 20 or newer. `scripts/build.js`:
 4. packs `server.js`, `qr.js`, `public/`, `layouts/` and `keybinds/` into
    `TabletDeckServer.exe` with Node's
    [single executable application](https://nodejs.org/api/single-executable-applications.html)
-   feature;
+   feature, and writes `THIRD-PARTY-NOTICES.txt` with that Node.js's licence (see
+   [THIRD-PARTY-NOTICES.md](../THIRD-PARTY-NOTICES.md); set `NODE_LICENSE` if the
+   build can't find Node's `LICENSE` file);
 5. signs the files when `SIGN_CMD` is set;
 6. runs Inno Setup on `installer/TabletDeck.iss` and writes the checksum.
 

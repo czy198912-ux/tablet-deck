@@ -67,6 +67,7 @@ Source: "{#BuildDir}\app\{#ServerExe}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#BuildDir}\app\native\*.exe"; DestDir: "{app}\native"; Flags: ignoreversion
 Source: "{#BuildDir}\app\keybinds\TabletDeck-StarCitizen.xml"; DestDir: "{app}\keybinds"; Flags: ignoreversion
 Source: "LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"; Flags: ignoreversion
+Source: "{#BuildDir}\app\THIRD-PARTY-NOTICES.txt"; DestDir: "{app}"; Flags: ignoreversion
 ; The copy in the game folder stays on uninstall: the player may have it loaded in-game.
 Source: "{#BuildDir}\app\keybinds\TabletDeck-StarCitizen.xml"; DestDir: "{code:MappingsDir}"; Tasks: scprofile; Check: HasStarCitizen; Flags: ignoreversion uninsneveruninstall
 

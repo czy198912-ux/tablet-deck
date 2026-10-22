@@ -5,6 +5,11 @@ section becomes the notes of its
 [GitHub release](https://github.com/nodieCode/tablet-deck/releases), so add one
 before tagging a release.
 
+## Unreleased
+
+- The installer now includes `THIRD-PARTY-NOTICES.txt` with the licence of the
+  Node.js runtime inside `TabletDeckServer.exe`.
+
 ## 1.0.0 (2026-10-22)
 
 The first public release.

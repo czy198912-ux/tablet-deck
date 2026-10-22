@@ -402,7 +402,10 @@ installer, releasing and code signing are in
 **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)**. Changes per version are in
 [CHANGELOG.md](CHANGELOG.md).
 
-Tablet Deck is [MIT licensed](LICENSE). Contributions and layout ideas are
-welcome; please open an issue first for bigger changes.
+Tablet Deck is [MIT licensed](LICENSE); the third-party software it ships is
+listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md). Contributions and
+layout ideas are welcome; please
+[open an issue](https://github.com/nodieCode/tablet-deck/issues/new/choose) first
+for bigger changes.
 
 <p align="center"><sub>Fan project. Not affiliated with or endorsed by Cloud Imperium Games.</sub></p>

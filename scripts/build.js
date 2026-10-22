@@ -9,7 +9,8 @@
 // 3. Compiles the app window (native/launcher.cs -> TabletDeck.exe), the key sender and the
 //    voice listener, with version info.
 // 4. Packs server.js, qr.js, public/, layouts/ and keybinds/ into TabletDeckServer.exe, a
-//    Node single executable application made from the node.exe running this script.
+//    Node single executable application made from the node.exe running this script, and
+//    writes THIRD-PARTY-NOTICES.txt with that Node.js's licence.
 // 5. Signs the .exe files, if SIGN_CMD is set (see below).
 // 6. Runs Inno Setup on installer/TabletDeck.iss (which signs the installer too, with
 //    SIGN_CMD) and writes the installer's SHA-256 checksum next to it.
@@ -189,6 +190,26 @@ async function buildApp() {
     "--set-version-string", "InternalName", "TabletDeckServer",
   ]);
   await inject(exe, "NODE_SEA_BLOB", fs.readFileSync(blob), { sentinelFuse: "NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2" });
+
+  step("Writing the third-party notices");
+  // TabletDeckServer.exe contains the Node.js runtime, whose licence (covering the
+  // libraries Node bundles, like OpenSSL and V8) has to ship with every copy. The
+  // Node.js download from nodejs.org has it next to node.exe (one folder up on Linux and
+  // macOS); NODE_LICENSE overrides.
+  const nodeDir = path.dirname(process.execPath);
+  const nodeLicense = firstExisting([process.env.NODE_LICENSE, path.join(nodeDir, "LICENSE"), path.join(nodeDir, "..", "LICENSE")]);
+  if (!nodeLicense) {
+    throw new Error(`Node.js's LICENSE file isn't next to ${process.execPath}. Set NODE_LICENSE to its path ` +
+      "(it's in the Node.js zip from nodejs.org).");
+  }
+  fs.writeFileSync(path.join(APP, "THIRD-PARTY-NOTICES.txt"), [
+    "Tablet Deck includes the third-party software below. Tablet Deck itself is",
+    "MIT licensed (LICENSE.txt). See THIRD-PARTY-NOTICES.md in the source for details.",
+    "",
+    `== Node.js ${process.version}, in TabletDeckServer.exe (https://nodejs.org)`,
+    "",
+    fs.readFileSync(nodeLicense, "utf8"),
+  ].join("\n").replace(/\r?\n/g, "\r\n"));
 
   step(SIGN_CMD ? "Signing" : "Signing skipped (SIGN_CMD not set)");
   for (const file of [window, exe, ...natives]) sign(file);
