@@ -398,6 +398,7 @@ async function releaseCombo(scancodes) {
 // Tells a tablet a press was skipped because the game isn't the window in front.
 function skipped(btn, client) {
   console.log(`${btn.label}: skipped, Star Citizen not focused`);
+  ui({ t: "press", label: btn.label, blocked: true });
   client?.send({ t: "blocked", id: btn.id });
 }
 
@@ -443,6 +444,7 @@ function applyState(btn) {
 async function tapButton(btn, client, ms = btn.ms || config.tapMs, kind = btn.mode === "timed" ? "timed" : "tap") {
   if (!(await gameFocused())) { skipped(btn, client); return; }
   console.log(`${btn.label} (${btn.keys}) tap`);
+  ui({ t: "press", label: btn.label });
   report(btn, kind, { ms });
   applyState(btn);
   await pressCombo(btn.scancodes);
@@ -924,6 +926,7 @@ server.on("upgrade", (req, socket) => {
       }
       if (held.get(btn.id) !== hold) return;
       console.log(`${btn.label} (${btn.keys}) down`);
+      ui({ t: "press", label: btn.label });
       applyState(btn);
       report(btn, "down");
       hold.pressing = pressCombo(btn.scancodes);
