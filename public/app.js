@@ -527,25 +527,44 @@
 
   // ---------- pairing + load ----------
 
+  // Shown until the device has a working pairing code. The deck's own controls stay hidden
+  // (body.pairing), since none of them work before pairing.
   function showPairing(wrong) {
     setOnline(false, "Not paired");
+    document.body.classList.add("pairing");
     tabs.innerHTML = "";
     grid.innerHTML = `
-      <form id="pair">
-        <p></p>
-        <input id="code" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="32" placeholder="pairing code">
+      <form id="pair" novalidate>
+        <div class="pair-emblem"></div>
+        <h2><b>//</b> Pair this device</h2>
+        <p class="pair-help">Open <strong>Tablet Deck</strong> on your gaming PC and type the pairing code its window shows.</p>
+        <label for="code">Pairing code</label>
+        <input id="code" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="32"
+          placeholder="e.g. 1a2b3c4d" aria-describedby="pairError">
+        <p id="pairError" class="pair-error" role="alert" hidden></p>
         <button type="submit">Connect</button>
+        <p class="pair-hint">Quicker: scan the QR code in the Tablet Deck window with this device's camera.</p>
       </form>`;
-    grid.querySelector("p").textContent = wrong
-      ? "That pairing code didn't match. Check the code shown in the Tablet Deck window on your PC."
-      : "Enter the pairing code shown in the Tablet Deck window on your PC.";
-    const input = $("code");
+    grid.querySelector(".pair-emblem").innerHTML = emblemSvg((themeById[document.documentElement.dataset.theme] || THEMES[0]).emblem);
+    const input = $("code"), error = $("pairError"), button = grid.querySelector("#pair button");
+    const fail = (text) => {
+      error.textContent = text;
+      error.hidden = false;
+      input.classList.add("bad");
+      input.setAttribute("aria-invalid", "true");
+      buzz([30, 60, 30]);
+    };
     input.value = token;
+    input.oninput = () => { input.classList.remove("bad"); input.removeAttribute("aria-invalid"); error.hidden = true; };
+    if (wrong) fail("That code didn't match. Check the code in the Tablet Deck window on your PC and try again.");
     input.focus();
     $("pair").onsubmit = (e) => {
       e.preventDefault();
       token = input.value.trim().toLowerCase();
-      if (token) load();
+      if (!token) { fail("Type the pairing code first."); return; }
+      button.disabled = true;
+      button.textContent = "Connecting…";
+      load();
     };
   }
 
@@ -586,6 +605,7 @@
       .then((l) => {
         const first = !layout;
         if (!DEMO) store.set("token", token);
+        document.body.classList.remove("pairing");
         showLayout(l);
         if (DEMO) {
           setOnline(true, "Demo");
