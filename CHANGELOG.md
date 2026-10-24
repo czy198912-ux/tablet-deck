@@ -5,7 +5,7 @@ section becomes the notes of its
 [GitHub release](https://github.com/nodieCode/tablet-deck/releases), so add one
 before tagging a release.
 
-## Unreleased
+## 1.2.0 (2026-10-24)
 
 - **A new look for the app window:** HUD panels with corner brackets over a
   field of drifting stars that follows the mouse; click an empty spot to send a
