@@ -277,6 +277,7 @@
     store.set("night", on ? "1" : "");
   }
   $("nightBtn").onclick = () => applyNight(!document.documentElement.hasAttribute("data-night"));
+  $("resetStatesBtn").onclick = resetStates;
   applyNight(store.get("night") === "1");
 
   // ---------- connection ----------
@@ -317,7 +318,9 @@
       let msg;
       try { msg = JSON.parse(e.data); } catch { return; }
       if (msg.t === "blocked") { toast("Star Citizen not focused"); buzz([30, 60, 30]); }
-      else if (msg.t === "hello") applyVoiceStatus(msg.voiceStatus || { state: msg.voice ? "ready" : "off" });
+      else if (msg.t === "hello") { applyVoiceStatus(msg.voiceStatus || { state: msg.voice ? "ready" : "off" }); states = msg.states || {}; showStates(); }
+      else if (msg.t === "state") { states[msg.group] = msg.on; showStates(msg.group); }
+      else if (msg.t === "states") { states = msg.states || {}; showStates(); }
       else if (msg.t === "voice-status") applyVoiceStatus(msg);
       else if (msg.t === "heard") toast(`Heard: ${msg.text || msg.label}`);
       else if (msg.t === "unheard") toast("Didn't catch that");
@@ -369,8 +372,34 @@
 
   const buzz = (ms = 12) => { if (navigator.vibrate) navigator.vibrate(ms); };
 
+  // ---------- lit buttons ----------
+
+  // On/off state per group (doors open, gear down), kept by the PC so every tablet and
+  // voice command agree. Buttons with a "state" light up while their group is on.
+  let states = {};
+  function showStates(group) {
+    for (const el of document.querySelectorAll("[data-state-group]")) {
+      if (group === undefined || el.dataset.stateGroup === group) el._showState(Boolean(states[el.dataset.stateGroup]), group !== undefined);
+    }
+  }
+  // Demo mode has no PC, so presses change the state here, the way server.js does.
+  function demoState(btn) {
+    const s = btn.state;
+    states[s.group] = typeof s.set === "boolean" ? s.set : !states[s.group];
+    showStates(s.group);
+  }
+  function resetStates() {
+    if (DEMO) { states = {}; showStates(); } else send({ t: "reset-states" });
+    toast("Button lights reset");
+  }
+
   function bindButton(el, btn) {
     const fx = window.DeckFX.attach(el, btn);
+    if (btn.state && typeof btn.state.group === "string") {
+      el.dataset.stateGroup = btn.state.group;
+      el._showState = fx.show;
+      fx.show(Boolean(states[btn.state.group]), false);
+    }
     let pointer = null;
     let waiting = null; // a press held back in case a second finger starts a swipe
     const press = (e) => {
@@ -379,6 +408,7 @@
       buzz();
       send({ t: btn.mode === "hold" ? "down" : "tap", id: btn.id });
       fx.down(e);
+      if (DEMO && el.dataset.stateGroup) demoState(btn);
     };
     el.addEventListener("pointerdown", (e) => {
       if (pointer !== null || swipe) return; // fingers that are part of a swipe press nothing

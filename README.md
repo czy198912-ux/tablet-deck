@@ -247,6 +247,19 @@ sideways with two fingers over a half to flip it to its next or previous panel,
 like its arrows. So a swipe never presses anything, a press then waits a moment
 (60 ms) in case a second finger follows; with it off, presses are instant.
 
+### Lit buttons
+
+Buttons that switch something on stay lit until you switch it off: **Open
+Doors** stays lit until you press **Close Doors**, **Landing Gear** shows
+DEPLOYED, and the power toggles, lights, VTOL, flight ready, speed limiter, ESP,
+G-safety and door locks light up while they're on. Every tablet shows the same,
+voice commands count too, and a press the focus check skips changes nothing.
+
+Tablet Deck can't see the game, so the lights only follow what Tablet Deck
+pressed. If you use the keyboard, the game changes something by itself, or you
+respawn, they can be wrong: **Reset button lights** under **Display** in Deck
+settings turns them all off. They also start off whenever Tablet Deck starts.
+
 ### Open websites on the PC
 
 **Deck settings** on the tablet has an **Open on PC** section: tap **UEX**

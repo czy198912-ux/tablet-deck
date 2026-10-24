@@ -243,9 +243,15 @@ body.pairing.offline main { opacity: 1; filter: none; }
   display: flex; align-items: center; gap: 14px; width: 100%; min-height: 56px; padding: 8px 12px; text-align: left;
   background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.14); border-radius: 10px; color: #e8eef5;
 }
-.sheet-switch .sw-text { flex: 1; display: flex; flex-direction: column; gap: 3px; }
-.sheet-switch .sw-text b { font: 600 15px/1.2 "Exo 2", system-ui, sans-serif; letter-spacing: .04em; }
-.sheet-switch .sw-text span { color: #8aa0b8; font: 13px/1.35 "Exo 2", system-ui, sans-serif; }
+.sheet-switch .sw-text, .sheet-action .sw-text { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+/* A one-off action in the same style as the switch rows. */
+.sheet-action {
+  display: flex; align-items: center; width: 100%; min-height: 56px; padding: 8px 12px; text-align: left;
+  background: rgba(255,255,255,.04); border: 1px dashed rgba(255,255,255,.22); border-radius: 10px; color: #e8eef5;
+}
+.sheet-action:active { background: rgba(79,179,255,.15); }
+.sw-text b { font: 600 15px/1.2 "Exo 2", system-ui, sans-serif; letter-spacing: .04em; }
+.sw-text span { color: #8aa0b8; font: 13px/1.35 "Exo 2", system-ui, sans-serif; }
 .sw-knob {
   position: relative; flex: none; width: 50px; height: 28px; border-radius: 999px;
   background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.3); transition: background .2s, border-color .2s;

@@ -28,12 +28,12 @@
           "labels": { "landing": "Landing mode", "docking": "Docking mode" } },
         { "type": "switch", "group": "approach", "values": ["landing", "docking"], "label": "Switch mode", "x": 367, "y": 8, "w": 112, "h": 28 },
 
-        { "type": "button", "when": ["approach", "landing"], "id": "pl-gear", "anim": "gear", "label": "Landing Gear", "voice": ["gear", "gear up", "gear down", "deploy landing gear", "retract landing gear"], "keys": "n", "mode": "tap", "x": 4, "y": 45, "w": 232, "h": 48 },
-        { "type": "button", "when": ["approach", "landing"], "id": "pl-vtol", "anim": "streak", "label": "VTOL", "voice": ["toggle vtol"], "keys": "k", "mode": "tap", "x": 244, "y": 45, "w": 232, "h": 48 },
+        { "type": "button", "when": ["approach", "landing"], "id": "pl-gear", "anim": "gear", "label": "Landing Gear", "state": {"group": "gear"}, "voice": ["gear", "gear up", "gear down", "deploy landing gear", "retract landing gear"], "keys": "n", "mode": "tap", "x": 4, "y": 45, "w": 232, "h": 48 },
+        { "type": "button", "when": ["approach", "landing"], "id": "pl-vtol", "anim": "streak", "label": "VTOL", "state": {"group": "vtol"}, "voice": ["toggle vtol"], "keys": "k", "mode": "tap", "x": 244, "y": 45, "w": 232, "h": 48 },
         { "type": "button", "when": ["approach", "landing"], "style": "dial", "id": "pl-autoland", "label": "Engage Auto Land", "voice": ["auto land", "land the ship"], "keys": "n", "mode": "timed", "ms": 1500, "x": 4, "y": 101, "w": 472, "h": 48 },
 
         { "type": "button", "when": ["approach", "docking"], "id": "pl-request-dock", "label": "Request Docking", "voice": ["dock", "request dock"], "keys": "lalt+n", "mode": "tap", "x": 4, "y": 45, "w": 232, "h": 48 },
-        { "type": "button", "when": ["approach", "docking"], "id": "pl-dock-vtol", "anim": "streak", "label": "VTOL", "keys": "k", "mode": "tap", "x": 244, "y": 45, "w": 232, "h": 48 },
+        { "type": "button", "when": ["approach", "docking"], "id": "pl-dock-vtol", "anim": "streak", "label": "VTOL", "state": {"group": "vtol"}, "keys": "k", "mode": "tap", "x": 244, "y": 45, "w": 232, "h": 48 },
         { "type": "button", "when": ["approach", "docking"], "style": "dial", "id": "pl-dock-cam", "label": "Docking Camera", "voice": ["dock camera"], "keys": "0", "verify": true, "mode": "tap", "x": 4, "y": 101, "w": 472, "h": 48 },
 
         { "type": "header", "text": "Power_management", "x": 2, "y": 184 },
@@ -70,13 +70,13 @@
       "title": "QT/Systems",
       "elements": [
         { "type": "header", "text": "Ship_systems", "x": 2, "y": 10 },
-        { "type": "button", "style": "tile", "icon": "power", "id": "qt-pwr", "anim": "ripple", "label": "PWR", "voice": ["power", "power on", "power off", "toggle power"], "keys": "u", "mode": "tap", "color": "green", "x": 1, "y": 35, "w": 117, "h": 72 },
-        { "type": "button", "style": "tile", "icon": "power-weapons", "id": "qt-wep", "anim": "ripple", "label": "WEP", "voice": ["weapons on", "weapons off", "enable weapons", "disable weapons", "toggle weapons"], "keys": "p", "verify": true, "mode": "tap", "color": "red", "x": 123, "y": 35, "w": 117, "h": 72 },
-        { "type": "button", "style": "tile", "icon": "power-engines", "id": "qt-thr", "anim": "ripple", "label": "THR", "voice": ["engines", "engines on", "engines off", "turn on engines", "turn off engines", "toggle engines", "thrusters on", "thrusters off"], "keys": "i", "verify": true, "mode": "tap", "color": "blue", "x": 244, "y": 35, "w": 117, "h": 72 },
-        { "type": "button", "style": "tile", "icon": "power-shields", "id": "qt-shld", "anim": "ripple", "label": "SHLD", "voice": ["shields on", "shields off", "enable shields", "disable shields", "toggle shields"], "keys": "o", "verify": true, "mode": "tap", "color": "green", "x": 365, "y": 35, "w": 117, "h": 72 },
+        { "type": "button", "style": "tile", "icon": "power", "id": "qt-pwr", "anim": "ripple", "label": "PWR", "state": {"group": "power"}, "voice": ["power", "power on", "power off", "toggle power"], "keys": "u", "mode": "tap", "color": "green", "x": 1, "y": 35, "w": 117, "h": 72 },
+        { "type": "button", "style": "tile", "icon": "power-weapons", "id": "qt-wep", "anim": "ripple", "label": "WEP", "state": {"group": "weapons-power"}, "voice": ["weapons on", "weapons off", "enable weapons", "disable weapons", "toggle weapons"], "keys": "p", "verify": true, "mode": "tap", "color": "red", "x": 123, "y": 35, "w": 117, "h": 72 },
+        { "type": "button", "style": "tile", "icon": "power-engines", "id": "qt-thr", "anim": "ripple", "label": "THR", "state": {"group": "thruster-power"}, "voice": ["engines", "engines on", "engines off", "turn on engines", "turn off engines", "toggle engines", "thrusters on", "thrusters off"], "keys": "i", "verify": true, "mode": "tap", "color": "blue", "x": 244, "y": 35, "w": 117, "h": 72 },
+        { "type": "button", "style": "tile", "icon": "power-shields", "id": "qt-shld", "anim": "ripple", "label": "SHLD", "state": {"group": "shield-power"}, "voice": ["shields on", "shields off", "enable shields", "disable shields", "toggle shields"], "keys": "o", "verify": true, "mode": "tap", "color": "green", "x": 365, "y": 35, "w": 117, "h": 72 },
 
         { "type": "bracket", "x": 50, "y": 112, "w": 380, "h": 24 },
-        { "type": "button", "style": "hero", "id": "qt-flight-ready", "anim": "ripple", "label": "Toggle Flight Ready", "voice": ["flight ready", "ready for flight"], "keys": "r", "mode": "tap", "color": "green", "x": 9, "y": 157, "w": 461, "h": 72 },
+        { "type": "button", "style": "hero", "id": "qt-flight-ready", "anim": "ripple", "label": "Toggle Flight Ready", "state": {"group": "flight-ready"}, "voice": ["flight ready", "ready for flight"], "keys": "r", "mode": "tap", "color": "green", "x": 9, "y": 157, "w": 461, "h": 72 },
         { "type": "button", "id": "qt-scm-nav", "anim": "streak", "label": "SCM/NAV", "voice": ["switch master mode", "toggle master mode", "master mode"], "keys": "b", "verify": true, "mode": "tap", "x": 47, "y": 252, "w": 189, "h": 72 },
         { "type": "menu", "label": "Oprt Mode", "title": "Operator mode", "x": 244, "y": 252, "w": 189, "h": 72,
           "options": [
@@ -102,14 +102,14 @@
         { "type": "grid", "x": 0, "y": 8, "w": 480, "h": 604, "cols": 3, "buttons": [
           { "id": "fa-scm", "icon": "speed", "label": "Master: SCM", "voice": ["scm mode", "combat mode"], "keys": "ralt+insert", "scAction": "v_master_mode_set_scm", "mode": "tap", "color": "green" },
           { "id": "fa-nav", "anim": "streak", "icon": "quantum-mode", "label": "Master: NAV", "voice": ["nav mode", "navigation mode"], "keys": "ralt+np_period", "scAction": "v_master_mode_set_nav", "mode": "tap", "color": "blue" },
-          { "id": "fa-limiter", "icon": "speed", "label": "Speed Limiter", "voice": ["speed limiter on", "speed limiter off", "toggle speed limiter"], "keys": "lalt+minus", "scAction": "v_ifcs_toggle_speed_limiter", "mode": "tap" },
+          { "id": "fa-limiter", "icon": "speed", "label": "Speed Limiter", "state": {"group": "speed-limiter"}, "voice": ["speed limiter on", "speed limiter off", "toggle speed limiter"], "keys": "lalt+minus", "scAction": "v_ifcs_toggle_speed_limiter", "mode": "tap" },
           { "id": "fa-limiter-reset", "icon": "power-reset", "label": "Reset Limit", "voice": ["reset speed limit", "reset speed limiter"], "keys": "lalt+s", "scAction": "v_ifcs_speed_limiter_reset_scm", "mode": "tap" },
           { "id": "fa-range-up", "anim": "streak", "icon": "chev-up", "label": "Speed Range +", "voice": ["increase speed range"], "keys": "lalt+y", "scAction": "v_speed_range_up", "mode": "tap" },
           { "id": "fa-range-down", "icon": "chev-down", "label": "Speed Range −", "voice": ["decrease speed range"], "keys": "lctrl+y", "scAction": "v_speed_range_down", "mode": "tap" },
           { "id": "fa-match", "icon": "target", "label": "Match Speed", "voice": ["match velocity", "match target speed", "match target"], "keys": "lctrl+v", "scAction": "v_target_match_vel", "mode": "tap" },
-          { "id": "fa-esp", "icon": "target", "label": "Toggle ESP", "voice": ["esp on", "esp off"], "keys": "lalt+semicolon", "scAction": "v_ifcs_toggle_esp", "mode": "tap" },
-          { "id": "fa-gsafe", "icon": "power-shields", "label": "G-Safety", "voice": ["g force safety", "toggle g safety"], "keys": "lalt+i", "scAction": "v_ifcs_toggle_gforce_safety", "mode": "tap", "color": "amber" },
-          { "id": "fa-lights", "anim": "glow", "icon": "lights", "label": "Lights", "voice": ["lights on", "lights off", "toggle lights"], "keys": "l", "mode": "tap" },
+          { "id": "fa-esp", "icon": "target", "label": "Toggle ESP", "state": {"group": "esp"}, "voice": ["esp on", "esp off"], "keys": "lalt+semicolon", "scAction": "v_ifcs_toggle_esp", "mode": "tap" },
+          { "id": "fa-gsafe", "icon": "power-shields", "label": "G-Safety", "state": {"group": "g-safety"}, "voice": ["g force safety", "toggle g safety"], "keys": "lalt+i", "scAction": "v_ifcs_toggle_gforce_safety", "mode": "tap", "color": "amber" },
+          { "id": "fa-lights", "anim": "glow", "icon": "lights", "label": "Lights", "state": {"group": "lights"}, "voice": ["lights on", "lights off", "toggle lights"], "keys": "l", "mode": "tap" },
           { "id": "fa-look-behind", "icon": "eye", "label": "Look Behind", "voice": false, "keys": "lalt+period", "scAction": "v_view_look_behind", "mode": "hold" },
           { "id": "fa-exit", "icon": "exit-seat", "label": "Exit Seat", "voice": ["get up", "leave seat"], "keys": "y", "mode": "timed", "ms": 1200, "color": "red" }
         ] }
@@ -213,11 +213,11 @@
           { "id": "cr-turret-1", "icon": "turret", "label": "Turret 1", "voice": ["turret one", "remote turret one"], "keys": "np_1", "scAction": "v_enter_remote_turret_1", "mode": "tap" },
           { "id": "cr-turret-2", "icon": "turret", "label": "Turret 2", "voice": ["turret two", "remote turret two"], "keys": "np_2", "scAction": "v_enter_remote_turret_2", "mode": "tap" },
           { "id": "cr-turret-3", "icon": "turret", "label": "Turret 3", "voice": ["turret three", "remote turret three"], "keys": "np_3", "scAction": "v_enter_remote_turret_3", "mode": "tap" },
-          { "id": "cr-doors-toggle", "anim": "doors", "icon": "doors", "label": "Toggle Doors", "voice": ["doors"], "keys": "np_period", "scAction": "v_toggle_all_doors", "mode": "tap", "color": "amber" },
-          { "id": "cr-doors-open", "anim": "doors", "set": true, "icon": "doors", "label": "Open Doors", "keys": "lalt+o", "scAction": "v_open_all_doors", "mode": "tap", "color": "green" },
-          { "id": "cr-doors-close", "anim": "doors", "set": false, "icon": "doors", "label": "Close Doors", "keys": "rctrl+lbracket", "scAction": "v_close_all_doors", "mode": "tap", "color": "amber" },
-          { "id": "cr-doors-lock", "icon": "lock", "label": "Lock Doors", "keys": "rctrl+rbracket", "scAction": "v_lock_all_doors", "mode": "tap", "color": "red" },
-          { "id": "cr-doors-unlock", "icon": "unlock", "label": "Unlock Doors", "keys": "lalt+u", "scAction": "v_unlock_all_doors", "mode": "tap", "color": "green" }
+          { "id": "cr-doors-toggle", "anim": "doors", "icon": "doors", "label": "Toggle Doors", "state": {"group": "doors"}, "voice": ["doors"], "keys": "np_period", "scAction": "v_toggle_all_doors", "mode": "tap", "color": "amber" },
+          { "id": "cr-doors-open", "anim": "doors", "set": true, "icon": "doors", "label": "Open Doors", "state": {"group": "doors", "set": true}, "keys": "lalt+o", "scAction": "v_open_all_doors", "mode": "tap", "color": "green" },
+          { "id": "cr-doors-close", "anim": "doors", "set": false, "icon": "doors", "label": "Close Doors", "state": {"group": "doors", "set": false}, "keys": "rctrl+lbracket", "scAction": "v_close_all_doors", "mode": "tap", "color": "amber" },
+          { "id": "cr-doors-lock", "icon": "lock", "label": "Lock Doors", "state": {"group": "door-lock", "set": true, "on": "LOCKED"}, "keys": "rctrl+rbracket", "scAction": "v_lock_all_doors", "mode": "tap", "color": "red" },
+          { "id": "cr-doors-unlock", "icon": "unlock", "label": "Unlock Doors", "state": {"group": "door-lock", "set": false}, "keys": "lalt+u", "scAction": "v_unlock_all_doors", "mode": "tap", "color": "green" }
         ] }
       ]
     },

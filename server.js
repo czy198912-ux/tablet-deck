@@ -421,12 +421,27 @@ function report(btn, kind, extra = {}) {
   });
 }
 
+// Buttons with a "state" switch something on or off in the game (doors open, gear down,
+// lights on). The state is kept here, per group, so every tablet, voice commands and
+// redrawn panels agree; buttons light up while their group is on. "set": true or false
+// sets it (Open/Close Doors), otherwise a press flips it. The deck can't see the game, so
+// this is only what Tablet Deck pressed: it starts all off, and tablets can reset it.
+const buttonStates = new Map(); // group -> true while on
+function applyState(btn) {
+  const s = btn.state;
+  if (!s || typeof s.group !== "string") return;
+  const on = typeof s.set === "boolean" ? s.set : !buttonStates.get(s.group);
+  if (on) buttonStates.set(s.group, true); else buttonStates.delete(s.group);
+  for (const c of tablets) c.send({ t: "state", group: s.group, on });
+}
+
 // Presses a button's keys for `ms`, then releases them, unless the game isn't in front.
 // `kind` (tap, timed, voice) only labels the press in the sandbox log.
 async function tapButton(btn, client, ms = btn.ms || config.tapMs, kind = btn.mode === "timed" ? "timed" : "tap") {
   if (!(await gameFocused())) { skipped(btn, client); return; }
   console.log(`${btn.label} (${btn.keys}) tap`);
   report(btn, kind, { ms });
+  applyState(btn);
   await pressCombo(btn.scancodes);
   await sleep(ms);
   await releaseCombo(btn.scancodes);
@@ -814,7 +829,7 @@ server.on("upgrade", (req, socket) => {
   ui({ t: "clients", count: ++connectedTablets });
   const client = { send: (obj) => { if (!socket.destroyed) wsSend(socket, JSON.stringify(obj)); } };
   tablets.add(client);
-  client.send({ t: "hello", voice: Boolean(config.voice), voiceStatus: tabletVoice });
+  client.send({ t: "hello", voice: Boolean(config.voice), voiceStatus: tabletVoice, states: Object.fromEntries(buttonStates) });
 
   const held = new Map(); // button id -> { sc } currently pressed by this tablet
   let lastSeen = Date.now();
@@ -845,6 +860,11 @@ server.on("upgrade", (req, socket) => {
       return;
     }
     if (msg.t === "open") { openLink(msg.index, client); return; }
+    if (msg.t === "reset-states") {
+      buttonStates.clear();
+      for (const c of tablets) c.send({ t: "states", states: {} });
+      return;
+    }
     const btn = buttons.get(msg.id);
     if (!btn) return;
     if (msg.t === "down" && !held.has(btn.id)) {
@@ -858,6 +878,7 @@ server.on("upgrade", (req, socket) => {
       }
       if (held.get(btn.id) !== hold) return;
       console.log(`${btn.label} (${btn.keys}) down`);
+      applyState(btn);
       report(btn, "down");
       await pressCombo(btn.scancodes);
     } else if (msg.t === "up" && held.has(btn.id)) {

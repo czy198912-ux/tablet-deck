@@ -5,12 +5,12 @@
     {
       "name": "Flight",
       "buttons": [
-        { "id": "flight-ready", "label": "Flight Ready", "keys": "r", "mode": "tap", "color": "green" },
-        { "id": "power", "label": "Power On/Off", "keys": "u", "mode": "tap", "color": "green" },
-        { "id": "gear", "label": "Landing Gear", "keys": "n", "mode": "tap", "color": "amber" },
+        { "id": "flight-ready", "label": "Flight Ready", "state": {"group": "flight-ready"}, "keys": "r", "mode": "tap", "color": "green" },
+        { "id": "power", "label": "Power On/Off", "state": {"group": "power"}, "keys": "u", "mode": "tap", "color": "green" },
+        { "id": "gear", "label": "Landing Gear", "state": {"group": "gear"}, "keys": "n", "mode": "tap", "color": "amber" },
         { "id": "request-landing", "label": "Request Landing", "keys": "lalt+n", "mode": "tap", "color": "amber" },
-        { "id": "vtol", "label": "VTOL", "keys": "k", "mode": "tap" },
-        { "id": "lights", "label": "Lights", "keys": "l", "mode": "tap" },
+        { "id": "vtol", "label": "VTOL", "state": {"group": "vtol"}, "keys": "k", "mode": "tap" },
+        { "id": "lights", "label": "Lights", "state": {"group": "lights"}, "keys": "l", "mode": "tap" },
         { "id": "quantum-jump", "label": "Quantum Jump (hold)", "keys": "b", "mode": "hold", "color": "blue" },
         { "id": "master-scm", "icon": "speed", "label": "Master Mode: SCM", "keys": "ralt+insert", "scAction": "v_master_mode_set_scm", "mode": "tap", "color": "green" },
         { "id": "master-nav", "icon": "quantum-mode", "label": "Master Mode: NAV", "keys": "ralt+np_period", "scAction": "v_master_mode_set_nav", "mode": "tap", "color": "blue" },
@@ -85,7 +85,7 @@
         { "id": "doors-close", "icon": "doors", "label": "Close All Doors", "keys": "rctrl+lbracket", "scAction": "v_close_all_doors", "mode": "tap", "color": "amber" },
         { "id": "doors-lock", "icon": "lock", "label": "Lock All Doors", "keys": "rctrl+rbracket", "scAction": "v_lock_all_doors", "mode": "tap", "color": "red" },
         { "id": "doors-unlock", "icon": "unlock", "label": "Unlock All Doors", "keys": "lalt+u", "scAction": "v_unlock_all_doors", "mode": "tap", "color": "green" },
-        { "id": "doors", "label": "Toggle All Doors", "keys": "np_period", "scAction": "v_toggle_all_doors", "mode": "tap", "color": "amber" }
+        { "id": "doors", "label": "Toggle All Doors", "state": {"group": "doors"}, "keys": "np_period", "scAction": "v_toggle_all_doors", "mode": "tap", "color": "amber" }
       ]
     },
     {

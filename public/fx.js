@@ -1,8 +1,10 @@
 // Press animations for deck buttons (adapted from the Key Press Animations sheet).
 // DeckFX.attach(el, def) adds an effect layer to a button and returns
-// { down(event), up() }, called by the button's pointer handlers.
-// Effects are visual only: the deck can't see game state, so toggles such as
-// DEPLOYED/RETRACTED simply flip on each press.
+// { down(event), up(), show(on, animate) }: down/up are called by the button's pointer
+// handlers, show by app.js when the PC's state for the button's group changes.
+// Buttons with a "state" light up from that shared state (kept by the server, so it
+// survives redraws and matches other tablets and voice); their presses only play the
+// tap effect. Without "state", toggles such as DEPLOYED/RETRACTED flip on each press.
 (() => {
   const CIRC = 251.33;
   const el = (tag, cls) => { const n = document.createElement(tag); if (cls) n.className = cls; return n; };
@@ -14,6 +16,15 @@
   const retrigger = (t, cls) => { t.classList.remove(cls); void t.offsetWidth; t.classList.add(cls); };
   const flash = (t) => once(t._fx, el("span", "fx-flash"));
   const setState = (t, s) => { if (t._state) t._state.textContent = s; };
+  // Lit look for stateful buttons whose animation has no state of its own (VTOL, ESP,
+  // door locks): the "on" border and glow, and ON/OFF (or the state's own "on" word).
+  // Buttons that only switch off ("set": false) never stay lit.
+  function showPlain(t, on, def) {
+    const s = def.state;
+    if (s.set === false) return;
+    t.classList.toggle("fx-on", on);
+    setState(t, on ? s.on || "ON" : s.set === true ? "" : "OFF");
+  }
 
   // Runs onProgress(0..1) for ms, then onDone; returns a cancel function.
   function progress(ms, onProgress, onDone) {
@@ -36,18 +47,18 @@
 
     ripple: {
       setup(t) { setState(t, "OFF"); },
-      down(t, e) {
+      show(t, on) { t.classList.toggle("fx-on", on); setState(t, on ? "ONLINE" : "OFF"); },
+      down(t, e, def) {
         const r = t.getBoundingClientRect();
         const sx = r.width / t.offsetWidth || 1;
         const x = ((e?.clientX ?? r.left + r.width / 2) - r.left) / sx;
         const y = ((e?.clientY ?? r.top + r.height / 2) - r.top) / sx;
-        const on = t.classList.toggle("fx-on");
         for (let i = 0; i < 2; i++) {
           const s = el("span", "fx-ripple");
           s.style.left = `${x}px`; s.style.top = `${y}px`; s.style.animationDelay = `${i * 130}ms`;
           once(t._fx, s);
         }
-        setState(t, on ? "ONLINE" : "OFF");
+        if (!def.state) this.show(t, !t.classList.contains("fx-on"));
       },
     },
 
@@ -60,11 +71,16 @@
         }
         setState(t, "RETRACTED");
       },
-      down(t) {
-        const on = t.classList.toggle("fx-on");
-        setState(t, on ? "DEPLOYING…" : "RETRACTING…");
+      show(t, on, def, animate) {
+        t.classList.toggle("fx-on", on);
         clearTimeout(t._tm);
+        if (!animate) { setState(t, on ? "DEPLOYED" : "RETRACTED"); return; }
+        setState(t, on ? "DEPLOYING…" : "RETRACTING…");
         t._tm = setTimeout(() => setState(t, on ? "DEPLOYED" : "RETRACTED"), 750);
+      },
+      down(t, e, def) {
+        if (def.state) retrigger(t, "fx-kick");
+        else this.show(t, !t.classList.contains("fx-on"), def, true);
       },
     },
 
@@ -115,10 +131,14 @@
 
     glow: {
       setup(t) { t._fx.append(el("span", "fx-beam")); setState(t, "OFF"); },
-      down(t) {
-        const on = t.classList.toggle("fx-on");
-        if (on) retrigger(t, "fx-flicker"); else t.classList.remove("fx-flicker");
+      show(t, on, def, animate) {
+        t.classList.toggle("fx-on", on);
+        if (on && animate) retrigger(t, "fx-flicker"); else if (!on) t.classList.remove("fx-flicker");
         setState(t, on ? "ON" : "OFF");
+      },
+      down(t, e, def) {
+        if (def.state) retrigger(t, "fx-kick");
+        else this.show(t, !t.classList.contains("fx-on"), def, true);
       },
     },
 
@@ -150,23 +170,31 @@
         t._fx.append(el("span", "fx-door l"), el("span", "fx-door r"));
         if (def.set === undefined) setState(t, "CLOSED");
       },
-      down(t, e, def) {
-        const on = def.set === undefined ? t.classList.toggle("fx-on") : def.set;
-        if (def.set !== undefined) {
-          // One-way buttons: start from the opposite position (no transition) so the
-          // doors always visibly slide open or shut; open ones close again afterwards.
-          clearTimeout(t._tm);
-          t.classList.add("fx-notrans");
-          t.classList.toggle("fx-on", !on);
-          void t.offsetWidth;
-          t.classList.remove("fx-notrans");
-          t.classList.toggle("fx-on", on);
-          if (on) t._tm = setTimeout(() => t.classList.remove("fx-on"), 1600);
-          return;
-        }
-        setState(t, on ? "OPENING…" : "CLOSING…");
+      // Toggle Doors shows OPEN/CLOSED; Open Doors stays open (lit) while the doors are
+      // open; Close Doors never stays lit.
+      show(t, on, def, animate) {
+        if (def.set === false) return;
+        t.classList.toggle("fx-on", on);
         clearTimeout(t._tm);
+        if (def.set === true) { setState(t, on ? "OPEN" : ""); return; }
+        if (!animate) { setState(t, on ? "OPEN" : "CLOSED"); return; }
+        setState(t, on ? "OPENING…" : "CLOSING…");
         t._tm = setTimeout(() => setState(t, on ? "OPEN" : "CLOSED"), 750);
+      },
+      down(t, e, def) {
+        // With a shared state, the PC's answer moves the doors; Close still plays its slide.
+        if (def.state && def.set !== false) { retrigger(t, "fx-kick"); return; }
+        if (def.set === undefined) { this.show(t, !t.classList.contains("fx-on"), def, true); return; }
+        // One-way buttons: start from the opposite position (no transition) so the
+        // doors always visibly slide open or shut; open ones close again afterwards.
+        const on = def.set;
+        clearTimeout(t._tm);
+        t.classList.add("fx-notrans");
+        t.classList.toggle("fx-on", !on);
+        void t.offsetWidth;
+        t.classList.remove("fx-notrans");
+        t.classList.toggle("fx-on", on);
+        if (on) t._tm = setTimeout(() => t.classList.remove("fx-on"), 1600);
       },
     },
 
@@ -270,11 +298,12 @@
       t.classList.add("fx-host", `fxa-${name}`);
       t._fx = el("span", "fx-layer");
       t.prepend(t._fx);
-      if (STATEFUL.has(name)) { t._state = el("span", "fx-state"); t.append(t._state); }
+      if (STATEFUL.has(name) || def.state) { t._state = el("span", "fx-state"); t.append(t._state); }
       a.setup?.call(a, t, def);
       return {
         down: (e) => a.down?.call(a, t, e, def),
         up: () => a.up?.call(a, t, def),
+        show: (on, animate) => (a.show ? a.show.call(a, t, on, def, animate) : showPlain(t, on, def)),
       };
     },
     // One-off effects for controls that aren't buttons (the eject slider).

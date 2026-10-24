@@ -112,6 +112,10 @@ The deck should feel like a ship's display, not a web page:
 - **Lines are thin** (1px), corners are bracketed (the intro screen, the
   banner, the website), and glow comes from a `drop-shadow` of the element's own
   colour, not from a separate colour.
+- **Lit buttons** (a `state` that's on) use the "on" look from `fx.css`: the
+  border and glow in the button's colour, and a one-word status (ON, OPEN,
+  DEPLOYED, LOCKED). In button grids the status sits top right, elsewhere under
+  the label. Buttons that only switch something off never stay lit.
 - **Icons** are line icons on a 48×48 grid in `public/icons.js`, drawn with
   `currentColor`, using the theme's `--icon-stroke`. Add new ones in the same
   style, not as images.

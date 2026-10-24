@@ -230,6 +230,11 @@ body.canvas-mode { overflow: hidden; }
 
 .hud-grid { display: grid; align-content: start; }
 .hud-grid > .hud-btn { position: relative; }
+/* In button grids the label sits at the bottom left (tablet) or on one row (phone), so the
+   status line ("OFF", "LOCKED") goes in the free top-right corner instead of under it. */
+.hud-grid .fx-state { left: auto; right: 10px; top: 9px; bottom: auto; text-align: right; }
+.hud-grid .s-std:has(> .fx-state) { padding-bottom: 0; }
+.compact .hud-grid .fx-state, .hud-grid.compact .fx-state { right: 7px; top: 5px; }
 .hud-grid.compact .hud-btn { font-size: 12px; }
 
 /* ---------- operator mode menu ---------- */

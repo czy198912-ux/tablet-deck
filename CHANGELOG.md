@@ -11,6 +11,12 @@ before tagging a release.
   when the code doesn't match, and a hint to scan the QR code instead. The
   deck's buttons stay hidden until the device is paired. It also no longer
   looks greyed out.
+- **Lit buttons:** buttons that switch something on stay lit until it's
+  switched off. Open Doors stays lit until Close Doors, Landing Gear shows
+  Deployed, and the power toggles, lights, VTOL, flight ready, speed limiter,
+  ESP, G-safety and door locks light up while on. The state is kept on the PC,
+  so it survives paging and reloads, matches on every tablet and follows voice
+  commands. **Reset button lights** in Deck settings turns them all off.
 - **Deck settings:** the sliders sheet is now organised in sections (Layout,
   Display, Open on PC, Theme), with real on/off switches for night mode and
   two-finger swipe.

@@ -216,6 +216,9 @@
           "id": "pl-gear",
           "anim": "gear",
           "label": "Landing Gear",
+          "state": {
+            "group": "gear"
+          },
           "voice": [
             "gear",
             "gear up",
@@ -239,6 +242,9 @@
           "id": "pl-vtol",
           "anim": "streak",
           "label": "VTOL",
+          "state": {
+            "group": "vtol"
+          },
           "voice": [
             "toggle vtol"
           ],
@@ -298,6 +304,9 @@
           "id": "pl-dock-vtol",
           "anim": "streak",
           "label": "VTOL",
+          "state": {
+            "group": "vtol"
+          },
           "keys": "k",
           "mode": "tap",
           "x": 184,
@@ -331,6 +340,9 @@
           "anim": "glow",
           "icon": "lights",
           "label": "Lights",
+          "state": {
+            "group": "lights"
+          },
           "voice": [
             "lights on",
             "lights off",
@@ -368,6 +380,9 @@
           "id": "ph-limiter",
           "icon": "speed",
           "label": "Speed Limiter",
+          "state": {
+            "group": "speed-limiter"
+          },
           "voice": [
             "speed limiter on",
             "speed limiter off",
@@ -737,6 +752,9 @@
           "id": "qt-pwr",
           "anim": "ripple",
           "label": "PWR",
+          "state": {
+            "group": "power"
+          },
           "voice": [
             "power",
             "power on",
@@ -758,6 +776,9 @@
           "id": "qt-wep",
           "anim": "ripple",
           "label": "WEP",
+          "state": {
+            "group": "weapons-power"
+          },
           "voice": [
             "weapons on",
             "weapons off",
@@ -781,6 +802,9 @@
           "id": "qt-thr",
           "anim": "ripple",
           "label": "THR",
+          "state": {
+            "group": "thruster-power"
+          },
           "voice": [
             "engines",
             "engines on",
@@ -807,6 +831,9 @@
           "id": "qt-shld",
           "anim": "ripple",
           "label": "SHLD",
+          "state": {
+            "group": "shield-power"
+          },
           "voice": [
             "shields on",
             "shields off",
@@ -829,6 +856,9 @@
           "id": "qt-flight-ready",
           "anim": "ripple",
           "label": "Toggle Flight Ready",
+          "state": {
+            "group": "flight-ready"
+          },
           "voice": [
             "flight ready",
             "ready for flight"
@@ -1274,6 +1304,9 @@
               "id": "fa-limiter",
               "icon": "speed",
               "label": "Speed Limiter",
+              "state": {
+                "group": "speed-limiter"
+              },
               "voice": [
                 "speed limiter on",
                 "speed limiter off",
@@ -1335,6 +1368,9 @@
               "id": "fa-esp",
               "icon": "target",
               "label": "Toggle ESP",
+              "state": {
+                "group": "esp"
+              },
               "voice": [
                 "esp on",
                 "esp off"
@@ -1347,6 +1383,9 @@
               "id": "fa-gsafe",
               "icon": "power-shields",
               "label": "G-Safety",
+              "state": {
+                "group": "g-safety"
+              },
               "voice": [
                 "g force safety",
                 "toggle g safety"
@@ -1361,6 +1400,9 @@
               "anim": "glow",
               "icon": "lights",
               "label": "Lights",
+              "state": {
+                "group": "lights"
+              },
               "voice": [
                 "lights on",
                 "lights off",
@@ -1887,6 +1929,9 @@
               "anim": "doors",
               "icon": "doors",
               "label": "Toggle Doors",
+              "state": {
+                "group": "doors"
+              },
               "voice": [
                 "doors"
               ],
@@ -1901,6 +1946,10 @@
               "set": true,
               "icon": "doors",
               "label": "Open Doors",
+              "state": {
+                "group": "doors",
+                "set": true
+              },
               "keys": "lalt+o",
               "scAction": "v_open_all_doors",
               "mode": "tap",
@@ -1912,6 +1961,10 @@
               "set": false,
               "icon": "doors",
               "label": "Close Doors",
+              "state": {
+                "group": "doors",
+                "set": false
+              },
               "keys": "rctrl+lbracket",
               "scAction": "v_close_all_doors",
               "mode": "tap",
@@ -1921,6 +1974,11 @@
               "id": "cr-doors-lock",
               "icon": "lock",
               "label": "Lock Doors",
+              "state": {
+                "group": "door-lock",
+                "set": true,
+                "on": "LOCKED"
+              },
               "keys": "rctrl+rbracket",
               "scAction": "v_lock_all_doors",
               "mode": "tap",
@@ -1930,6 +1988,10 @@
               "id": "cr-doors-unlock",
               "icon": "unlock",
               "label": "Unlock Doors",
+              "state": {
+                "group": "door-lock",
+                "set": false
+              },
               "keys": "lalt+u",
               "scAction": "v_unlock_all_doors",
               "mode": "tap",

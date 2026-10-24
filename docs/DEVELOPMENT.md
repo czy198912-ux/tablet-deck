@@ -115,6 +115,7 @@ Button fields:
 | `anim` | press animation: `flash`, `ripple`, `gear`, `charge`, `burst`, `glow`, `recoil`, `streak`, `doors`, `lock`, `hazard`, `timed` |
 | `voice` | extra voice phrases, or `false` to leave the button out of voice commands |
 | `scAction` | Star Citizen action name; if a keybind file in `actionmaps` binds it, that key wins |
+| `state` | makes the button light up while something is on: `{ "group": "doors" }` flips the group on each press, `"set": true` / `false` turns it on or off (Open/Close Doors), and `"on"` replaces the word shown while lit (default `ON`). Buttons in the same group share the state; the server keeps it (see "Lit buttons" in the README) |
 
 Key names: `a`-`z`, `0`-`9`, `f1`-`f24`, `np_0`-`np_9`, `np_period`, `np_add`,
 `np_subtract`, `np_multiply`, `np_divide`, `np_enter`, `lalt`, `ralt`, `lctrl`,
