@@ -208,7 +208,10 @@ git push origin v1.0.1
 The **Release** workflow (`.github/workflows/release.yml`) builds the installer
 on GitHub and attaches it and its checksum to a new release. Installed copies
 offer the update themselves. You can also run the workflow by hand
-from the Actions tab to build without publishing.
+from the Actions tab to build without publishing. Run by hand with **Publish**
+ticked, it publishes the version in `package.json` instead, tagging the commit
+it ran on, for when pushing a tag isn't possible. It stops if that version is
+already released.
 
 ## Code signing
 

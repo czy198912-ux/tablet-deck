@@ -2,6 +2,8 @@
 #
 #   git tag v1.0.0 && git push origin v1.0.0    build and publish "Tablet Deck 1.0.0"
 #   Actions tab -> Release -> Run workflow       build only; download it from the run's artifacts
+#   ... -> Run workflow with "Publish" ticked     build and publish the version in package.json,
+#                                                tagging the commit it ran on
 #
 # The tag must match "version" in package.json.
 name: Release
@@ -10,6 +12,11 @@ on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish a release for the version in package.json (creates its v<version> tag)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write # create the release and upload the installer
@@ -45,13 +52,30 @@ jobs:
 
       - run: npm ci
 
+      # RELEASE_TAG is the release this run publishes: the pushed tag, or v<version> when
+      # run by hand with "Publish" ticked. Empty for a build-only run.
+      - name: Work out the release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = ""
+          if ("${{ github.ref_type }}" -eq "tag") { $tag = "${{ github.ref_name }}" }
+          elseif ("${{ inputs.publish }}" -eq "true") {
+            $tag = "v" + (Get-Content package.json -Raw | ConvertFrom-Json).version
+            gh release view $tag 2>$null | Out-Null
+            if ($LASTEXITCODE -eq 0) { throw "$tag is already released. Set a new version in package.json first." }
+            $global:LASTEXITCODE = 0
+          }
+          "RELEASE_TAG=$tag" >> $env:GITHUB_ENV
+
       - name: Check the tag matches package.json and CHANGELOG.md
-        if: startsWith(github.ref, 'refs/tags/')
+        if: env.RELEASE_TAG != ''
         shell: pwsh
         run: |
           $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
-          if ("${{ github.ref_name }}" -ne "v$version") {
-            throw "Tag ${{ github.ref_name }} doesn't match package.json version $version. Update package.json or the tag."
+          if ($env:RELEASE_TAG -ne "v$version") {
+            throw "Tag $env:RELEASE_TAG doesn't match package.json version $version. Update package.json or the tag."
           }
           node scripts/release-notes.js $version > $null
           if ($LASTEXITCODE -ne 0) { throw "Add a '## $version' section to CHANGELOG.md." }
@@ -149,12 +173,12 @@ jobs:
             dist/*.sha256
 
       - name: Publish the release
-        if: startsWith(github.ref, 'refs/tags/')
+        if: env.RELEASE_TAG != ''
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $version = "${{ github.ref_name }}".TrimStart("v")
+          $version = $env:RELEASE_TAG.TrimStart("v")
           $setup = "dist/TabletDeck-Setup-$version.exe"
           $hash = (Get-Content "$setup.sha256").Split(" ")[0]
           $changes = (node scripts/release-notes.js $version) -join "`n"
@@ -173,4 +197,5 @@ jobs:
 
           > Fan project. Not affiliated with or endorsed by Cloud Imperium Games.
           "@
-          gh release create "${{ github.ref_name }}" $setup "$setup.sha256" --title "Tablet Deck $version" --notes $notes
+          # --target tags this commit when the tag doesn't exist yet (a run by hand).
+          gh release create $env:RELEASE_TAG $setup "$setup.sha256" --target "${{ github.sha }}" --title "Tablet Deck $version" --notes $notes
