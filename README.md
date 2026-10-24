@@ -439,6 +439,7 @@ the game's files or memory.
   Fonts. See [CODE_SIGNING.md](CODE_SIGNING.md#privacy).
 - Found a security problem? Please report it privately; see
   [SECURITY.md](SECURITY.md).
+- [Code signing policy](CODE_SIGNING.md): who builds and signs releases, and how.
 
 ## Developers
 

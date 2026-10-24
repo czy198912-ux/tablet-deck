@@ -1,8 +1,7 @@
 # Code signing policy
 
-Tablet Deck plans to sign its releases with free code signing from
-[SignPath.io](https://about.signpath.io) and a certificate by
-[SignPath Foundation](https://signpath.org).
+Free code signing provided by [SignPath.io](https://about.signpath.io),
+certificate by [SignPath Foundation](https://signpath.org).
 
 > Status: not signed yet. Until SignPath Foundation approves the project,
 > releases are unsigned and Windows shows an "unknown publisher" warning (see
@@ -20,14 +19,17 @@ Each release's Windows files, all built from this repository:
 - `native/voice.exe`, the voice listener (`native/voice.cs`)
 
 They're built only by the **Release** workflow (`.github/workflows/release.yml`)
-on GitHub-hosted runners, from a version tag in this repository. Nothing built
-on a personal computer is signed. Every signing request is approved by hand in
-SignPath before it's signed.
+on GitHub-hosted runners, from this repository's `main` branch, when a release
+is published (a version tag, or the workflow run by hand with **Publish**).
+Test builds and anything built on a personal computer are never signed. Every
+signing request is approved by hand in SignPath before it's signed.
 
 ## Team
 
 - Committers and reviewers: [nodieCode](https://github.com/nodieCode)
 - Approvers: [nodieCode](https://github.com/nodieCode)
+
+Team members use multi-factor authentication on GitHub and SignPath.
 
 ## Privacy
 

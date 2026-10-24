@@ -224,7 +224,7 @@ which types keys into other programs. The workflow supports two ways:
   stages so SignPath signs the app files before they go into the installer, and
   then the installer. The artifact configurations to paste into SignPath are in
   `.signpath/artifact-configurations/`. [CODE_SIGNING.md](../CODE_SIGNING.md) is
-  the signing policy.
+  the signing policy, and [docs/SIGNPATH.md](SIGNPATH.md) the setup steps.
 - **Your own certificate:** a `.pfx` in the `SIGNING_CERT_PFX_BASE64` and
   `SIGNING_CERT_PASSWORD` secrets.
 
