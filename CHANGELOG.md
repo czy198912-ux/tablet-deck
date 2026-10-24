@@ -15,6 +15,9 @@ before tagging a release.
   presses of the last minute, including those held back because Star Citizen
   wasn't in front.
 - The app window has a dark title bar on Windows 10 and 11.
+- **Settings, Voice commands and Install keybind profile** have the same look.
+  Settings is now sorted into panels (Pairing, Keys, Voice, Push-to-talk,
+  Links) with on/off switches.
 
 ## 1.1.0 (2026-10-24)
 

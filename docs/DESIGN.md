@@ -151,6 +151,12 @@ is **Bahnschrift** (Windows 10 and later), falling back to Segoe UI, with
 Consolas for the address and pairing code. Its readouts show only real data,
 never decoration made to look like data.
 
+The app's other windows (Settings, Voice commands, Install keybind profile) use
+the same panels, buttons and switches (`HudDialog`) over the same stars, standing
+still. Fields you type into or pick from stay real Windows controls, in the
+house colours inside a drawn frame that lights up in the accent colour while it
+has focus.
+
 ## Motion, night mode and layering
 
 - **Keep motion short.** UI transitions (paging, sheets, toasts) take about

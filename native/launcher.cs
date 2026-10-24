@@ -74,6 +74,29 @@ static class Program
 // Sizes are in 96-dpi pixels; HudView scales everything for the screen.
 static class Hud
 {
+    [DllImport("dwmapi.dll")]
+    static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
+
+    [DllImport("uxtheme.dll", CharSet = CharSet.Unicode)]
+    static extern int SetWindowTheme(IntPtr hwnd, string app, string idList);
+
+    // A dark title bar (Windows 10 2004 and later use attribute 20, earlier builds 19).
+    public static void DarkTitleBar(Form form)
+    {
+        int on = 1;
+        try
+        {
+            if (DwmSetWindowAttribute(form.Handle, 20, ref on, 4) != 0) DwmSetWindowAttribute(form.Handle, 19, ref on, 4);
+        }
+        catch (Exception) { }
+    }
+
+    // Dark scrollbars on a list or text box (Windows 10 1809 and later).
+    public static void DarkScrollbars(Control c)
+    {
+        c.HandleCreated += delegate { try { SetWindowTheme(c.Handle, "DarkMode_Explorer", null); } catch (Exception) { } };
+    }
+
     public static readonly Color Back = Color.FromArgb(5, 9, 15);
     public static readonly Color Panel = Color.FromArgb(11, 23, 38);
     public static readonly Color PanelHi = Color.FromArgb(18, 37, 59);
@@ -225,10 +248,14 @@ class HudView : Control
         public int Value, Min, Max = 100;
         public MethodInvoker Click;   // buttons and links; switches after On flips
         public MethodInvoker Changed; // the slider, on every step
+        public Action<MouseButtons> OtherButton; // a middle or side mouse button pressed on it
     }
 
     [DllImport("user32.dll")]
     static extern bool SystemParametersInfo(int action, int param, ref int value, int winIni);
+
+    [DllImport("user32.dll")]
+    static extern short GetKeyState(int key);
 
     class Star { public float X, Y, Depth, Size, Phase, Glow; public int Alpha; }
     class Pulse { public float X, Y, Age; }
@@ -569,9 +596,13 @@ class HudView : Control
         base.OnMouseDown(e);
         Focus();
         showFocus = false;
-        if (e.Button != MouseButtons.Left) return;
         var p = new PointF(e.X / Zoom, e.Y / Zoom);
         var item = ItemAt(p);
+        if (e.Button != MouseButtons.Left)
+        {
+            if (item != null && item.OtherButton != null) item.OtherButton(e.Button);
+            return;
+        }
         tips.Hide(this);
         if (item == null)
         {
@@ -624,18 +655,26 @@ class HudView : Control
         var key = keyData & Keys.KeyCode;
         if (key != Keys.Tab || (keyData & (Keys.Control | Keys.Alt)) != 0) return base.ProcessDialogKey(keyData);
         var usable = Items.FindAll(i => i.Visible && i.Enabled);
-        if (usable.Count == 0) return base.ProcessDialogKey(keyData);
-        int at = usable.IndexOf(focused);
-        at = (keyData & Keys.Shift) != 0 ? (at <= 0 ? usable.Count - 1 : at - 1) : (at + 1) % usable.Count;
+        int at = usable.IndexOf(focused) + ((keyData & Keys.Shift) != 0 ? -1 : 1);
+        if (focused == null || at < 0 || at >= usable.Count)
+        {
+            // Past the last item (or before the first): on to the window's other controls.
+            focused = null;
+            Redraw();
+            return base.ProcessDialogKey(keyData);
+        }
         focused = usable[at];
         showFocus = true;
         Redraw();
         return true;
     }
 
+    // Arrow keys move the slider; Enter and Space press the focused item instead of the
+    // window's default button.
     protected override bool IsInputKey(Keys keyData)
     {
         var key = keyData & Keys.KeyCode;
+        if ((key == Keys.Enter || key == Keys.Space) && focused != null && showFocus) return true;
         return key == Keys.Left || key == Keys.Right || key == Keys.Up || key == Keys.Down || base.IsInputKey(keyData);
     }
 
@@ -652,28 +691,216 @@ class HudView : Control
         else if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space) Activate(focused);
     }
 
-    protected override void OnGotFocus(EventArgs e) { base.OnGotFocus(e); Redraw(); }
+    // Tabbed into from another control: start at the first item, or the last with Shift.
+    // Focus that comes with the window opening or a click shows no focus ring.
+    protected override void OnGotFocus(EventArgs e)
+    {
+        base.OnGotFocus(e);
+        var usable = Items.FindAll(i => i.Visible && i.Enabled);
+        bool tab = false;
+        try { tab = GetKeyState(0x09) < 0; } // VK_TAB is down
+        catch (Exception) { }
+        if (focused == null && usable.Count > 0 && tab)
+        {
+            focused = (ModifierKeys & Keys.Shift) != 0 ? usable[usable.Count - 1] : usable[0];
+            showFocus = true;
+        }
+        Redraw();
+    }
     protected override void OnLostFocus(EventArgs e) { base.OnLostFocus(e); Redraw(); }
+}
+
+// The other windows' HUD look: the main window's stars, standing still, and its panels,
+// buttons and switches, drawn by a HudView. Fields that take typing or picking (text
+// boxes, number boxes, lists) stay real Windows controls on top, in the house colours
+// inside a drawn frame. Positions are in 96-dpi pixels, like HudView's.
+class HudDialog : Form
+{
+    // Text drawn in a panel: a caption, a hint or a status line. Change Text or Color, then Redraw.
+    protected class Note
+    {
+        public string Text = "";
+        public Color Color = Hud.Dim;
+        public RectangleF Box;
+        public Font Font;
+        public bool Caption;
+    }
+
+    protected readonly HudView hud = new HudView();
+    // A panel's title and box; set Box again in Arrange to move it.
+    protected class PanelPart
+    {
+        public string Title;
+        public RectangleF Box;
+    }
+
+    readonly List<PanelPart> panels = new List<PanelPart>();
+    readonly List<Note> notes = new List<Note>();
+    readonly List<Control> fields = new List<Control>();
+    readonly Dictionary<Control, RectangleF> frames = new Dictionary<Control, RectangleF>();
+    // Enter and Esc, the window's default and cancel buttons.
+    protected MethodInvoker Accept, Cancel;
+
+    protected HudDialog(string title, Icon icon, int width, int height)
+    {
+        SuspendLayout();
+        Text = title;
+        Icon = icon;
+        ShowInTaskbar = false;
+        BackColor = Hud.Back;
+        ForeColor = Hud.Ink;
+        Font = new Font("Segoe UI", 9.75f);
+        AutoScaleMode = AutoScaleMode.None; // HudView scales itself, and Place the fields
+        using (var g = CreateGraphics()) hud.Zoom = g.DpiX / 96f;
+        ClientSize = new Size((int)(width * hud.Zoom), (int)(height * hud.Zoom));
+        StartPosition = FormStartPosition.CenterParent;
+        hud.Dock = DockStyle.Fill;
+        hud.DrawContent = DrawDialog;
+        Controls.Add(hud);
+        hud.SizeChanged += delegate { Arrange(); PlaceFields(); Redraw(); };
+    }
+
+    // Resizable windows move their panels, notes and fields here (see Frame).
+    protected virtual void Arrange() { }
+
+    protected void Frame(Control c, RectangleF frame) { frames[c] = frame; }
+
+    protected override void OnHandleCreated(EventArgs e)
+    {
+        base.OnHandleCreated(e);
+        Hud.DarkTitleBar(this);
+    }
+
+    // Fonts and options set after Field change a field's height, so place them again now.
+    protected override void OnLoad(EventArgs e)
+    {
+        base.OnLoad(e);
+        Arrange();
+        PlaceFields();
+    }
+
+    protected void Redraw() { hud.Redraw(); }
+
+    protected PanelPart Panel(string title, float x, float y, float w, float h)
+    {
+        var panel = new PanelPart { Title = title, Box = new RectangleF(x, y, w, h) };
+        panels.Add(panel);
+        return panel;
+    }
+
+    // A small letter-spaced label above a field.
+    protected Note Caption(string text, float x, float y)
+    {
+        var note = new Note { Text = text.ToUpperInvariant(), Box = new RectangleF(x, y, 400, 14), Font = Hud.Label(10.5f), Caption = true };
+        notes.Add(note);
+        return note;
+    }
+
+    // Wrapping text: help under a field, or a status message.
+    protected Note Hint(string text, float x, float y, float w, float h)
+    {
+        var note = new Note { Text = text, Box = new RectangleF(x, y, w, h), Font = Hud.Body(11.5f) };
+        notes.Add(note);
+        return note;
+    }
+
+    protected HudView.Item Button(string text, float x, float y, float w, MethodInvoker click)
+    {
+        var item = hud.Add(HudView.Kind.Button, text, click);
+        item.Box = new RectangleF(x, y, w, 28);
+        return item;
+    }
+
+    protected HudView.Item Primary(string text, float x, float y, float w, MethodInvoker click)
+    {
+        var item = Button(text, x, y, w, click);
+        item.Kind = HudView.Kind.Primary;
+        return item;
+    }
+
+    protected HudView.Item Switch(string text, bool on, float x, float y, float w)
+    {
+        var item = hud.Add(HudView.Kind.Switch, text, null);
+        item.On = on;
+        item.Box = new RectangleF(x, y, w, 22);
+        return item;
+    }
+
+    // A real control in a drawn frame (x, y, w, h is the frame). Text boxes and lists lose
+    // their own border, so the frame is the only one; the frame lights up while it has focus.
+    protected T Field<T>(T c, float x, float y, float w, float h) where T : Control
+    {
+        c.BackColor = Hud.Panel;
+        c.ForeColor = Hud.Ink;
+        var text = c as TextBoxBase;
+        if (text != null) text.BorderStyle = BorderStyle.None;
+        var list = c as ListBox;
+        if (list != null) list.BorderStyle = BorderStyle.None;
+        var view = c as ListView;
+        if (view != null) view.BorderStyle = BorderStyle.None;
+        var number = c as UpDownBase;
+        if (number != null) number.BorderStyle = BorderStyle.None;
+        if (list != null || view != null || (text != null && text.Multiline)) Hud.DarkScrollbars(c);
+        frames[c] = new RectangleF(x, y, w, h);
+        c.GotFocus += delegate { Redraw(); };
+        c.LostFocus += delegate { Redraw(); };
+        c.EnabledChanged += delegate { Redraw(); };
+        fields.Add(c);
+        hud.Controls.Add(c);
+        PlaceFields();
+        return c;
+    }
+
+    // Fields sit inside their frames: single-line ones centred, the rest filling it.
+    void PlaceFields()
+    {
+        float z = hud.Zoom;
+        foreach (var c in fields)
+        {
+            var f = frames[c];
+            var text = c as TextBoxBase;
+            bool oneLine = c is ComboBox || c is UpDownBase || (text != null && !text.Multiline);
+            if (c is ComboBox)
+                c.Bounds = new Rectangle((int)(f.X * z), (int)((f.Y + 1) * z), (int)(f.Width * z), (int)((f.Height - 2) * z));
+            else if (oneLine)
+            {
+                int inner = Math.Max(c.Height, c.Font.Height); // single-line boxes size their own height
+                c.Bounds = new Rectangle((int)((f.X + 7) * z), (int)(f.Y * z + (f.Height * z - inner) / 2), (int)((f.Width - 9) * z), inner);
+            }
+            else c.Bounds = new Rectangle((int)((f.X + 6) * z), (int)((f.Y + 5) * z), (int)((f.Width - 8) * z), (int)((f.Height - 9) * z));
+        }
+    }
+
+    void DrawDialog(Graphics g)
+    {
+        foreach (var p in panels) Hud.PanelBox(g, p.Box, p.Title);
+        foreach (var c in fields)
+        {
+            if (c is ComboBox) continue; // a flat combo box draws its own frame
+            var f = frames[c];
+            using (var fill = new SolidBrush(Hud.Panel)) g.FillRectangle(fill, f);
+            using (var pen = new Pen(c.ContainsFocus ? Hud.Accent : c.Enabled ? Hud.Line : Hud.Fade(Hud.Line, 120), 1f))
+                g.DrawRectangle(pen, f.X, f.Y, f.Width, f.Height);
+        }
+        foreach (var n in notes)
+        {
+            if (n.Caption) Hud.Spaced(g, n.Text, n.Font, n.Color, n.Box.X, n.Box.Y, 1.6f);
+            else Hud.Wrapped(g, n.Text, n.Font, n.Color, n.Box);
+        }
+    }
+
+    // Enter presses the default button and Esc the cancel one, unless a drawn item or a
+    // field that takes them has the focus.
+    protected override bool ProcessDialogKey(Keys keyData)
+    {
+        if (keyData == Keys.Enter && Accept != null) { Accept(); return true; }
+        if (keyData == Keys.Escape && Cancel != null) { Cancel(); return true; }
+        return base.ProcessDialogKey(keyData);
+    }
 }
 
 class DeckWindow : Form
 {
-    // The house colours, for the other windows (see Hud).
-    public static readonly Color Back = Hud.Back;
-    public static readonly Color Panel = Hud.Panel;
-    public static readonly Color Accent = Hud.Accent;
-    public static readonly Color Ink = Hud.Ink;
-    public static readonly Color Dim = Hud.Dim;
-    public static readonly Color Good = Hud.Good;
-    public static readonly Color Warn = Hud.Warn;
-    public static readonly Color Bad = Hud.Bad;
-
-    [DllImport("dwmapi.dll")]
-    static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
-
-    [DllImport("uxtheme.dll", CharSet = CharSet.Unicode)]
-    static extern int SetWindowTheme(IntPtr hwnd, string app, string idList);
-
     const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
     const string RunValue = "Tablet Deck";
     // The window's size in 96-dpi pixels; it scales with the screen.
@@ -825,7 +1052,7 @@ class DeckWindow : Form
         log.DetectUrls = false;
         log.WordWrap = true;
         log.ScrollBars = RichTextBoxScrollBars.Vertical;
-        log.HandleCreated += delegate { try { SetWindowTheme(log.Handle, "DarkMode_Explorer", null); } catch (Exception) { } };
+        Hud.DarkScrollbars(log);
         hud.Controls.Add(log);
 
         hud.SizeChanged += delegate { Arrange(); };
@@ -865,16 +1092,10 @@ class DeckWindow : Form
         ShowWhatsNewAfterUpdate();
     }
 
-    // A dark title bar to match (Windows 10 2004 and later use attribute 20, earlier builds 19).
     protected override void OnHandleCreated(EventArgs e)
     {
         base.OnHandleCreated(e);
-        int on = 1;
-        try
-        {
-            if (DwmSetWindowAttribute(Handle, 20, ref on, 4) != 0) DwmSetWindowAttribute(Handle, 19, ref on, 4);
-        }
-        catch (Exception) { }
+        Hud.DarkTitleBar(this);
     }
 
     // The stars only move while this window is in front.
@@ -1211,7 +1432,7 @@ class DeckWindow : Form
             return;
         }
         if (line.Trim() == "") return;
-        AppendLog(line, error ? Warn : Ink);
+        AppendLog(line, error ? Hud.Warn : Hud.Ink);
     }
 
     void OnEvent(Dictionary<string, object> ev)
@@ -1584,7 +1805,7 @@ class DeckWindow : Form
     {
         string text = "Update failed: " + why + (why.EndsWith("?") || why.EndsWith(".") ? "" : ".");
         ShowBanner(text, "info");
-        AppendLog(text, Warn);
+        AppendLog(text, Hud.Warn);
     }
 
     // Where Update now saves the installer; emptied when the window next starts.
@@ -1645,7 +1866,7 @@ class DeckWindow : Form
                 foreach (var change in dialog.Changes) SendToServer("set " + change.Key + " " + change.Value);
                 if (dialog.NeedsRestart)
                 {
-                    AppendLog("Restarting the server for the new settings...", Dim);
+                    AppendLog("Restarting the server for the new settings...", Hud.Dim);
                     StopServer();
                     StartServer();
                 }
@@ -1667,12 +1888,12 @@ class DeckWindow : Form
                 {
                     string errors = proc.StandardError.ReadToEnd();
                     proc.WaitForExit(10000);
-                    if (errors.Trim() != "") AppendLog(errors.Trim(), Warn);
+                    if (errors.Trim() != "") AppendLog(errors.Trim(), Hud.Warn);
                 }
             }
             catch (Exception ex)
             {
-                AppendLog("Couldn't save the settings: " + ex.Message, Warn);
+                AppendLog("Couldn't save the settings: " + ex.Message, Hud.Warn);
                 return;
             }
             if (server == null) StartServer();
@@ -1769,73 +1990,62 @@ class DeckWindow : Form
 
 // Everything the voice listener understands, with a search box: what to say and which
 // button it presses. The list comes from the server, so it matches the current layout.
-class VoiceCommandsWindow : Form
+class VoiceCommandsWindow : HudDialog
 {
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, string lParam);
 
     readonly List<string[]> commands;
-    readonly Label note = new Label();
+    readonly PanelPart panel;
+    readonly Note note, presses;
     readonly TextBox search = new TextBox();
     readonly ListView list = new ListView();
 
-    public VoiceCommandsWindow(List<string[]> commands, Icon icon)
+    public VoiceCommandsWindow(List<string[]> commands, Icon icon) : base("Voice commands", icon, 540, 580)
     {
         this.commands = commands;
-        SuspendLayout();
-        Text = "Voice commands";
-        Icon = icon;
-        ShowInTaskbar = false;
-        BackColor = DeckWindow.Back;
-        ForeColor = DeckWindow.Ink;
-        Font = new Font("Segoe UI", 9.75f);
-        ClientSize = new Size(520, 560);
-        MinimumSize = new Size(420, 320);
+        MinimumSize = SizeFromClientSize(new Size((int)(440 * hud.Zoom), (int)(340 * hud.Zoom)));
         StartPosition = FormStartPosition.CenterScreen;
 
-        note.Text = "Hold the mic button on the tablet and say one of these. Most Star Citizen controls are toggles, " +
-            "so \"engines on\" and \"engines off\" press the same key.";
-        note.ForeColor = DeckWindow.Dim;
-        note.Bounds = new Rectangle(12, 10, 496, 40);
-        note.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-
-        search.Bounds = new Rectangle(12, 56, 496, 24);
-        search.BackColor = DeckWindow.Panel;
-        search.ForeColor = DeckWindow.Ink;
-        search.BorderStyle = BorderStyle.FixedSingle;
-        search.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+        panel = Panel("COMMANDS", 16, 16, 508, 548);
+        note = Hint("Hold the mic button on the tablet and say one of these. Most Star Citizen controls are toggles, " +
+            "so \"engines on\" and \"engines off\" press the same key.", 32, 44, 476, 36);
+        Field(search, 32, 86, 476, 28);
         search.TextChanged += delegate { Fill(); };
         search.HandleCreated += delegate { SendMessage(search.Handle, 0x1501, (IntPtr)1, "Search, e.g. shields or quantum"); }; // EM_SETCUEBANNER
-
-        list.Bounds = new Rectangle(12, 90, 496, 458);
+        Caption("Say", 38, 126);
+        presses = Caption("Presses", 300, 126);
+        Field(list, 32, 144, 476, 404);
         list.View = View.Details;
         list.FullRowSelect = true;
-        list.HeaderStyle = ColumnHeaderStyle.Nonclickable;
-        list.BackColor = DeckWindow.Panel;
-        list.ForeColor = DeckWindow.Ink;
-        list.BorderStyle = BorderStyle.None;
-        list.Columns.Add("Say", 270);
+        list.HeaderStyle = ColumnHeaderStyle.None; // the captions above are the headings
+        list.Columns.Add("Say", 262);
         list.Columns.Add("Presses", 200);
-        list.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-
-        Controls.Add(note);
-        Controls.Add(search);
-        Controls.Add(list);
-        AutoScaleDimensions = new SizeF(96f, 96f);
-        AutoScaleMode = AutoScaleMode.Dpi;
         ResumeLayout(false);
+        Cancel = Close;
     }
 
-    protected override void OnLoad(EventArgs e)
+    protected override void Arrange()
     {
-        base.OnLoad(e);
-        // Column widths aren't scaled with the window, so scale them for the screen's DPI.
-        using (var g = CreateGraphics())
+        var area = hud.Area;
+        float w = area.Width - 32, h = area.Height - 32;
+        panel.Box = new RectangleF(16, 16, w, h);
+        note.Box = new RectangleF(32, 44, w - 32, 36);
+        Frame(search, new RectangleF(32, 86, w - 32, 28));
+        presses.Box.X = 38 + (w - 44) * 0.55f;
+        Frame(list, new RectangleF(32, 144, w - 32, h - 144));
+        // Column widths aren't scaled with the window, so set them for its size and the screen.
+        float inner = (w - 32 - 26) * hud.Zoom;
+        if (list.Columns.Count == 2)
         {
-            float scale = g.DpiX / 96f;
-            list.Columns[0].Width = (int)(270 * scale);
-            list.Columns[1].Width = (int)(200 * scale);
+            list.Columns[0].Width = (int)(inner * 0.55f);
+            list.Columns[1].Width = (int)(inner * 0.45f);
         }
+    }
+
+    protected override void OnShown(EventArgs e)
+    {
+        base.OnShown(e);
         search.Focus();
     }
 
@@ -1858,7 +2068,7 @@ class VoiceCommandsWindow : Form
 // Copies the Tablet Deck Keyboard profile (keybinds\TabletDeck-StarCitizen.xml in the
 // install folder) into Star Citizen's Controls\Mappings folder, for each copy of the game
 // (LIVE, PTU and so on) the player ticks. Found by searching the drives, or picked by hand.
-class KeybindProfileWindow : Form
+class KeybindProfileWindow : HudDialog
 {
     static readonly string[] Channels = { "LIVE", "PTU", "EPTU", "HOTFIX", "TECH-PREVIEW" };
     const string ProfileName = "TabletDeck-StarCitizen.xml";
@@ -1866,72 +2076,50 @@ class KeybindProfileWindow : Form
     readonly string profile;
     readonly List<string> games = new List<string>(); // ...\StarCitizen\<channel>, same order as list
     readonly CheckedListBox list = new CheckedListBox();
-    readonly Label status = new Label();
+    readonly Note status;
 
-    public KeybindProfileWindow(string profile, Icon icon)
+    public KeybindProfileWindow(string profile, Icon icon) : base("Install keybind profile", icon, 560, 452)
     {
         this.profile = profile;
-        SuspendLayout();
-        Text = "Install keybind profile";
-        Icon = icon;
-        ShowInTaskbar = false;
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         MinimizeBox = false;
-        StartPosition = FormStartPosition.CenterParent;
-        BackColor = DeckWindow.Back;
-        ForeColor = DeckWindow.Ink;
-        Font = new Font("Segoe UI", 9.75f);
-        ClientSize = new Size(560, 420);
 
-        Controls.Add(new Label
-        {
-            Text = "Copies the Tablet Deck Keyboard profile into Star Citizen, so buttons for actions with no default key work. Tick the copies of the game to install it into.",
-            ForeColor = DeckWindow.Ink, Bounds = new Rectangle(12, 12, 536, 40),
-        });
-        list.Bounds = new Rectangle(12, 58, 536, 130);
+        Panel("STAR CITIZEN COPIES", 16, 16, 528, 248);
+        var intro = Hint("Copies the Tablet Deck Keyboard profile into Star Citizen, so buttons for actions with no default key work. " +
+            "Tick the copies of the game to install it into.", 32, 44, 496, 36);
+        intro.Color = Hud.Ink;
+        Field(list, 32, 86, 496, 126);
         list.CheckOnClick = true;
-        list.BackColor = DeckWindow.Panel;
-        list.ForeColor = DeckWindow.Ink;
-        list.BorderStyle = BorderStyle.None;
         list.HorizontalScrollbar = true;
-        Controls.Add(list);
-        MakeButton("Choose game folder...", 12, 196, 170, delegate { ChooseFolder(); });
+        Button("Choose game folder...", 32, 222, 210, delegate { ChooseFolder(); });
 
-        status.Bounds = new Rectangle(12, 236, 536, 140);
-        status.ForeColor = DeckWindow.Dim;
-        status.UseMnemonic = false;
-        Controls.Add(status);
+        Panel("STATUS", 16, 276, 528, 116);
+        status = Hint("", 32, 304, 496, 80);
 
-        var install = MakeButton("Install", 358, 382, 90, delegate { Install(); });
-        var close = MakeButton("Close", 458, 382, 90, delegate { Close(); });
-        AcceptButton = install;
-        CancelButton = close;
-
-        AutoScaleDimensions = new SizeF(96f, 96f);
-        AutoScaleMode = AutoScaleMode.Dpi;
+        var install = Primary("Install", 348, 408, 96, delegate { Install(); });
+        Button("Close", 448, 408, 96, delegate { Close(); });
+        Accept = delegate { if (install.Enabled) Install(); };
+        Cancel = Close;
         ResumeLayout(false);
 
         if (!File.Exists(profile))
         {
-            status.Text = "The profile file is missing (" + profile + "). Reinstall Tablet Deck.";
-            status.ForeColor = DeckWindow.Bad;
+            ShowStatus("The profile file is missing (" + profile + "). Reinstall Tablet Deck.", Hud.Bad);
             install.Enabled = false;
             return;
         }
         foreach (var game in FindGames()) AddGame(game);
-        status.Text = games.Count == 0
+        ShowStatus(games.Count == 0
             ? "Star Citizen wasn't found in the usual places. Click \"Choose game folder...\" and pick the StarCitizen folder (the one with LIVE in it)."
-            : "Found " + games.Count + (games.Count == 1 ? " copy" : " copies") + " of the game. Missing one? Click \"Choose game folder...\".";
+            : "Found " + games.Count + (games.Count == 1 ? " copy" : " copies") + " of the game. Missing one? Click \"Choose game folder...\".", Hud.Dim);
     }
 
-    Button MakeButton(string text, int x, int y, int w, EventHandler click)
+    void ShowStatus(string text, Color color)
     {
-        var b = new Button { Text = text, FlatStyle = FlatStyle.Flat, BackColor = DeckWindow.Panel, ForeColor = DeckWindow.Ink, Cursor = Cursors.Hand, Bounds = new Rectangle(x, y, w, 30) };
-        b.FlatAppearance.BorderColor = DeckWindow.Accent;
-        b.Click += click;
-        Controls.Add(b);
-        return b;
+        status.Text = text;
+        status.Color = color;
+        Redraw();
     }
 
     // ...\StarCitizen\<channel> folders in the usual install places, and one or two folder
@@ -2004,13 +2192,11 @@ class KeybindProfileWindow : Form
                     if (Directory.Exists(Path.Combine(root, channel))) candidates.Add(Path.Combine(root, channel));
             if (candidates.Count == 0)
             {
-                status.Text = "That folder doesn't look like Star Citizen. Pick the StarCitizen folder, the one with LIVE in it.";
-                status.ForeColor = DeckWindow.Warn;
+                ShowStatus("That folder doesn't look like Star Citizen. Pick the StarCitizen folder, the one with LIVE in it.", Hud.Warn);
                 return;
             }
             foreach (var game in candidates) AddGame(game);
-            status.Text = "Added. Tick the copies of the game to install the profile into, then click Install.";
-            status.ForeColor = DeckWindow.Dim;
+            ShowStatus("Added. Tick the copies of the game to install the profile into, then click Install.", Hud.Dim);
         }
     }
 
@@ -2035,8 +2221,7 @@ class KeybindProfileWindow : Form
         }
         if (done.Count == 0 && failed.Count == 0)
         {
-            status.Text = "Nothing ticked. Tick the copies of the game to install the profile into.";
-            status.ForeColor = DeckWindow.Warn;
+            ShowStatus("Nothing ticked. Tick the copies of the game to install the profile into.", Hud.Warn);
             return;
         }
         var text = new StringBuilder();
@@ -2049,8 +2234,7 @@ class KeybindProfileWindow : Form
         if (failed.Count > 0)
             text.Append((done.Count > 0 ? "\n\n" : "") + "Couldn't copy into " + string.Join("; ", failed.ToArray()) +
                 ". Try running Tablet Deck as administrator, or copy " + profile + " by hand.");
-        status.Text = text.ToString();
-        status.ForeColor = failed.Count > 0 ? DeckWindow.Warn : DeckWindow.Good;
+        ShowStatus(text.ToString(), failed.Count > 0 ? Hud.Warn : Hud.Good);
         // Refresh the states shown in the list.
         var again = new List<string>(games);
         games.Clear();
@@ -2061,7 +2245,7 @@ class KeybindProfileWindow : Form
 
 // Settings that would otherwise mean editing config.json. Only what changed ends up in
 // Changes, as setting name -> text value (see SETTINGS in server.js).
-class SettingsWindow : Form
+class SettingsWindow : HudDialog
 {
     public readonly List<KeyValuePair<string, string>> Changes = new List<KeyValuePair<string, string>>();
     public bool NeedsRestart; // port or voice changes take a server restart
@@ -2069,9 +2253,9 @@ class SettingsWindow : Form
     readonly Dictionary<string, object> current;
     readonly TextBox code = new TextBox();
     readonly NumericUpDown port = new NumericUpDown();
-    readonly CheckBox focus = new CheckBox();
+    readonly HudView.Item focus;
     readonly NumericUpDown tap = new NumericUpDown();
-    readonly CheckBox voiceOn = new CheckBox();
+    readonly HudView.Item voiceOn;
     readonly ComboBox language = new ComboBox();
     readonly ComboBox pttMode = new ComboBox();
     readonly TextBox links = new TextBox();
@@ -2113,9 +2297,7 @@ class SettingsWindow : Form
         if (list.Count > 12) { MessageBox.Show(this, "Up to 12 links, please.", "Tablet Deck", MessageBoxButtons.OK, MessageBoxIcon.Warning); return null; }
         return new JavaScriptSerializer().Serialize(list);
     }
-    readonly CheckBox pttSound = new CheckBox();
-    readonly CheckBox shortEmotes = new CheckBox();
-    Button pttButton;
+    readonly HudView.Item pttSound, shortEmotes, pttButton;
     int pttKey;          // Windows virtual-key code, 0 = none
     string pttName = "";
     bool capturing;      // waiting for the player to press the push-to-talk key
@@ -2126,7 +2308,8 @@ class SettingsWindow : Form
     {
         if (capturing) { capturing = false; ShowPttKey(); return; } // a second click cancels
         capturing = true;
-        pttButton.Text = "Press a key or mouse button...";
+        pttButton.Text = "Press a key or button...";
+        Redraw();
     }
 
     // While capturing, every key (Tab, Enter and Alt included) is the push-to-talk key; Esc cancels.
@@ -2150,6 +2333,7 @@ class SettingsWindow : Form
     void ShowPttKey()
     {
         pttButton.Text = pttKey == 0 ? "None: click to set" : pttName;
+        Redraw();
     }
 
     static string KeyName(int vk)
@@ -2163,143 +2347,99 @@ class SettingsWindow : Form
         return System.Text.RegularExpressions.Regex.Replace(name, "[^A-Za-z0-9 +-]", "");
     }
 
+    // Two columns of panels: pairing, keys and voice on the left, push-to-talk and links on
+    // the right, and the buttons along the bottom.
     public SettingsWindow(Dictionary<string, object> current, bool portFromCommandLine, Icon icon, string keybindProfile)
+        : base("Tablet Deck settings", icon, 800, 584)
     {
         this.current = current;
-        SuspendLayout();
-        Text = "Tablet Deck settings";
-        Icon = icon;
-        ShowInTaskbar = false;
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         MinimizeBox = false;
-        StartPosition = FormStartPosition.CenterParent;
-        BackColor = DeckWindow.Back;
-        ForeColor = DeckWindow.Ink;
-        Font = new Font("Segoe UI", 9.75f);
-        ClientSize = new Size(480, 720);
 
-        Caption("Pairing code", 14);
-        Field(code, 12, 36, 200);
+        Panel("PAIRING", 16, 16, 376, 184);
+        Caption("Pairing code", 32, 48);
+        Field(code, 32, 64, 186, 28);
         code.Font = new Font("Consolas", 11f);
         code.MaxLength = 32;
         code.Text = Get("token", "");
-        AddButton("New random code", 222, 34, 150, delegate { code.Text = RandomCode(); });
-        Hint("Letters and numbers. Tablets already paired keep working until they reload; new ones need the new code.", 12, 66, 456);
-
-        Caption("Port", 108);
-        Field(port, 12, 130, 90);
+        Button("New random code", 228, 64, 148, delegate { code.Text = RandomCode(); });
+        Hint("Letters and numbers. Tablets already paired keep working until they reload; new ones need the new code.", 32, 98, 344, 32);
+        Caption("Port", 32, 136);
+        Field(port, 32, 152, 90, 28);
         port.Minimum = 1024;
         port.Maximum = 65535;
         port.Value = Math.Max(1024, Math.Min(65535, GetNumber("port", 8765)));
         port.Enabled = !portFromCommandLine;
         Hint(portFromCommandLine ? "Set with --port when Tablet Deck was started, so it can't be changed here."
-            : "Changing it restarts the server. Tablets then need the new address or QR code.", 112, 128, 356);
+            : "Changing it restarts the server. Tablets then need the new address or QR code.", 134, 150, 242, 34);
 
-        focus.Text = "Only press keys while Star Citizen is the window in front";
-        focus.Checked = GetBool("onlyWhenGameFocused", true);
-        focus.Bounds = new Rectangle(12, 176, 456, 24);
-        Controls.Add(focus);
-
-        Caption("Tap length", 212);
-        Field(tap, 12, 234, 70);
+        Panel("KEYS", 16, 212, 376, 132);
+        focus = Switch("Only press keys while Star Citizen is in front", GetBool("onlyWhenGameFocused", true), 32, 244, 344);
+        focus.Tip = "Keys never reach another window, like a browser or chat, by accident.";
+        Caption("Tap length", 32, 278);
+        Field(tap, 32, 294, 80, 28);
         tap.Minimum = 20;
         tap.Maximum = 1000;
         tap.Value = Math.Max(20, Math.Min(1000, GetNumber("tapMs", 60)));
-        Hint("milliseconds a tap holds the key. Raise it if the game misses taps.", 90, 236, 378);
+        Hint("milliseconds a tap holds the key. Raise it if the game misses taps.", 124, 292, 252, 34);
 
-        voiceOn.Text = "Voice commands";
-        voiceOn.Checked = GetBool("voice", true);
-        voiceOn.Bounds = new Rectangle(12, 276, 456, 24);
-        voiceOn.CheckedChanged += delegate { language.Enabled = shortEmotes.Enabled = voiceOn.Checked; };
-        Controls.Add(voiceOn);
-        Caption("Voice language", 306);
-        Field(language, 12, 328, 110);
+        Panel("VOICE", 16, 356, 376, 168);
+        voiceOn = Switch("Voice commands", GetBool("voice", true), 32, 388, 344);
+        voiceOn.Click = delegate { language.Enabled = shortEmotes.Enabled = voiceOn.On; Redraw(); };
+        Caption("Voice language", 32, 422);
+        Field(language, 32, 438, 110, 28);
         language.DropDownStyle = ComboBoxStyle.DropDown;
         language.FlatStyle = FlatStyle.Flat;
         language.Items.AddRange(new object[] { "en-US", "en-GB", "en-AU", "en-CA", "en-IN" });
         language.Text = Get("voiceLanguage", "en-US");
-        language.Enabled = voiceOn.Checked;
-        Hint("Needs that English speech recognizer installed in Windows (Settings > Time & Language > Speech).", 130, 326, 338);
-        shortEmotes.Text = "Emotes also answer to one word (\"wave\", not only \"emote wave\")";
-        shortEmotes.Checked = GetBool("shortEmotes", false);
-        shortEmotes.Enabled = voiceOn.Checked;
-        shortEmotes.Bounds = new Rectangle(12, 362, 456, 24);
-        Controls.Add(shortEmotes);
+        Hint("Needs that English speech recognizer installed in Windows (Settings > Time & Language > Speech).", 154, 434, 222, 48);
+        shortEmotes = Switch("Emotes also answer to one word, like \"wave\"", GetBool("shortEmotes", false), 32, 490, 344);
+        shortEmotes.Tip = "Without this, emotes need \"emote\" first (\"emote wave\"), so a stray word doesn't set one off.";
+        language.Enabled = shortEmotes.Enabled = voiceOn.On;
 
         // Push-to-talk from a key or mouse button on the PC (see native/voice.cs).
-        Caption("Push-to-talk key on the PC", 398);
+        Panel("PUSH-TO-TALK", 408, 16, 376, 232);
+        Caption("Key on this PC", 424, 48);
         pttKey = GetNumber("pttKey", 0);
         pttName = Get("pttKeyName", "");
-        pttButton = AddButton("", 12, 420, 190, delegate { StartCapture(); });
-        pttButton.MouseDown += (s, e) =>
+        pttButton = Button("", 424, 64, 250, delegate { StartCapture(); });
+        pttButton.OtherButton = (b) =>
         {
             if (!capturing) return;
-            int vk = e.Button == MouseButtons.Middle ? 4 : e.Button == MouseButtons.XButton1 ? 5 : e.Button == MouseButtons.XButton2 ? 6 : 0;
+            int vk = b == MouseButtons.Middle ? 4 : b == MouseButtons.XButton1 ? 5 : b == MouseButtons.XButton2 ? 6 : 0;
             if (vk != 0) SetPttKey(vk);
         };
-        AddButton("None", 208, 420, 64, delegate { SetPttKey(0); });
-        Field(pttMode, 280, 422, 188);
+        Button("None", 682, 64, 86, delegate { SetPttKey(0); });
+        Caption("Mode", 424, 104);
+        Field(pttMode, 424, 120, 344, 28);
         pttMode.DropDownStyle = ComboBoxStyle.DropDownList;
         pttMode.FlatStyle = FlatStyle.Flat;
         pttMode.Items.AddRange(new object[] { "Hold to talk", "Press to start, again to stop" });
         pttMode.SelectedIndex = Get("pttMode", "hold") == "toggle" ? 1 : 0;
-        pttSound.Text = "Play a sound when it starts and stops listening";
-        pttSound.Checked = GetBool("pttSound", true);
-        pttSound.Bounds = new Rectangle(12, 458, 456, 24);
-        Controls.Add(pttSound);
-        Hint("Pick a key Star Citizen doesn't use, like a mouse side button, a numpad key or F13-F24: the key still reaches the game.", 12, 484, 456);
+        pttSound = Switch("Play a sound when it starts and stops listening", GetBool("pttSound", true), 424, 160, 344);
+        Hint("Pick a key Star Citizen doesn't use, like a mouse side button, a numpad key or F13-F24: the key still reaches the game.", 424, 192, 344, 48);
         ShowPttKey();
 
         // Websites the tablet's "Open on PC" buttons open here, one per line: "Name | https://...".
-        Caption("Links the tablet can open on this PC", 528);
-        Field(links, 12, 550, 456);
+        Panel("LINKS", 408, 260, 376, 264);
+        Caption("Websites the tablet can open on this PC", 424, 292);
+        Field(links, 424, 308, 344, 152);
         links.Multiline = true;
         links.ScrollBars = ScrollBars.Vertical;
-        links.Height = 76;
         links.Font = new Font("Consolas", 9.5f);
         links.Text = LinksText();
-        Hint("One per line: Name | https://address. The tablet only sees the names, so it can't open anything else.", 12, 630, 456);
+        Hint("One per line: Name | https://address. The tablet only sees the names, so it can't open anything else.", 424, 468, 344, 48);
 
-        AddButton("Install keybind profile...", 12, 674, 190, delegate
+        Button("Install keybind profile...", 16, 540, 250, delegate
         {
             using (var dialog = new KeybindProfileWindow(keybindProfile, Icon)) dialog.ShowDialog(this);
         });
-        var save = AddButton("Save", 280, 674, 90, delegate { Save(); });
-        var cancel = AddButton("Cancel", 378, 674, 90, delegate { DialogResult = DialogResult.Cancel; });
-        AcceptButton = save;
-        CancelButton = cancel;
-
-        AutoScaleDimensions = new SizeF(96f, 96f);
-        AutoScaleMode = AutoScaleMode.Dpi;
+        Primary("Save", 584, 540, 96, delegate { Save(); });
+        Button("Cancel", 688, 540, 96, delegate { DialogResult = DialogResult.Cancel; });
+        Accept = Save;
+        Cancel = delegate { DialogResult = DialogResult.Cancel; };
         ResumeLayout(false);
-    }
-
-    void Caption(string text, int y)
-    {
-        Controls.Add(new Label { Text = text, ForeColor = DeckWindow.Ink, Font = new Font("Segoe UI", 9.75f, FontStyle.Bold), Bounds = new Rectangle(12, y, 456, 20) });
-    }
-
-    void Hint(string text, int x, int y, int w)
-    {
-        Controls.Add(new Label { Text = text, UseMnemonic = false, ForeColor = DeckWindow.Dim, Font = new Font("Segoe UI", 8.25f), Bounds = new Rectangle(x, y, w, 34) });
-    }
-
-    void Field(Control c, int x, int y, int w)
-    {
-        c.BackColor = DeckWindow.Panel;
-        c.ForeColor = DeckWindow.Ink;
-        c.Bounds = new Rectangle(x, y, w, 26);
-        Controls.Add(c);
-    }
-
-    Button AddButton(string text, int x, int y, int w, EventHandler click)
-    {
-        var b = new Button { Text = text, FlatStyle = FlatStyle.Flat, BackColor = DeckWindow.Panel, ForeColor = DeckWindow.Ink, Cursor = Cursors.Hand, Bounds = new Rectangle(x, y, w, 30) };
-        b.FlatAppearance.BorderColor = DeckWindow.Accent;
-        b.Click += click;
-        Controls.Add(b);
-        return b;
     }
 
     string Get(string key, string fallback)
@@ -2346,9 +2486,9 @@ class SettingsWindow : Form
         }
         Change("token", Get("token", "").Trim().ToLowerInvariant(), newCode, false);
         if (port.Enabled) Change("port", GetNumber("port", 8765).ToString(), ((int)port.Value).ToString(), true);
-        Change("onlyWhenGameFocused", OnOff(GetBool("onlyWhenGameFocused", true)), OnOff(focus.Checked), false);
+        Change("onlyWhenGameFocused", OnOff(GetBool("onlyWhenGameFocused", true)), OnOff(focus.On), false);
         Change("tapMs", GetNumber("tapMs", 60).ToString(), ((int)tap.Value).ToString(), false);
-        Change("voice", OnOff(GetBool("voice", true)), OnOff(voiceOn.Checked), true);
+        Change("voice", OnOff(GetBool("voice", true)), OnOff(voiceOn.On), true);
         Change("voiceLanguage", Get("voiceLanguage", "en-US"), newLanguage, true);
         if (GetNumber("pttKey", 0) != pttKey)
         {
@@ -2356,8 +2496,8 @@ class SettingsWindow : Form
             if (pttKey != 0) Change("pttKeyName", "", pttName == "" ? "Key" : pttName, false);
         }
         Change("pttMode", Get("pttMode", "hold"), pttMode.SelectedIndex == 1 ? "toggle" : "hold", false);
-        Change("pttSound", OnOff(GetBool("pttSound", true)), OnOff(pttSound.Checked), false);
-        Change("shortEmotes", OnOff(GetBool("shortEmotes", false)), OnOff(shortEmotes.Checked), false);
+        Change("pttSound", OnOff(GetBool("pttSound", true)), OnOff(pttSound.On), false);
+        Change("shortEmotes", OnOff(GetBool("shortEmotes", false)), OnOff(shortEmotes.On), false);
         if (links.Text.Trim() != LinksText().Trim())
         {
             string json = LinksJson();
