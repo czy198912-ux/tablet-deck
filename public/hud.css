@@ -103,6 +103,11 @@ body.canvas-mode { overflow: hidden; }
   background: repeating-linear-gradient(90deg, var(--c) 0 6px, transparent 6px 10px); opacity: .8;
 }
 .s-hero, .s-quantum { position: absolute; }
+/* The status line ("HOLD TO ENGAGE") sits above the charge dots, not on top of them. */
+.s-quantum .fx-state { bottom: 19px; }
+/* Buttons with a status line under the label ("RETRACTED") centre label and status
+   together, so they don't crowd each other. */
+.s-std:has(> .fx-state) { padding-bottom: 10px; }
 
 .s-danger {
   font-size: 16px; color: #fff;

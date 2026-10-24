@@ -302,6 +302,9 @@
   function toast(text, ms = 1800) {
     const el = $("toast");
     el.textContent = text;
+    // On canvas layouts, sit just above the pager bars so a message never covers the page names.
+    const pager = document.querySelector("#canvas .hud-pager");
+    el.style.bottom = pager ? `${Math.round(innerHeight - pager.getBoundingClientRect().top + 10)}px` : "";
     el.classList.add("show");
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => el.classList.remove("show"), ms);
@@ -314,7 +317,8 @@
       let msg;
       try { msg = JSON.parse(e.data); } catch { return; }
       if (msg.t === "blocked") { toast("Star Citizen not focused"); buzz([30, 60, 30]); }
-      else if (msg.t === "hello") document.body.classList.toggle("no-voice", !msg.voice);
+      else if (msg.t === "hello") applyVoiceStatus(msg.voiceStatus || { state: msg.voice ? "ready" : "off" });
+      else if (msg.t === "voice-status") applyVoiceStatus(msg);
       else if (msg.t === "heard") toast(`Heard: ${msg.text || msg.label}`);
       else if (msg.t === "unheard") toast("Didn't catch that");
       else if (msg.t === "voice-off") toast(msg.reason);
@@ -433,13 +437,24 @@
 
   // ---------- voice commands list ----------
 
+  // The mic and "?" only show when voice can work: on, and starting or ready on the PC.
+  let voiceStatus = { state: "starting" };
+  function applyVoiceStatus(status) {
+    voiceStatus = status;
+    document.body.classList.toggle("no-voice", status.state === "off" || status.state === "unavailable");
+    if ($("voiceHelp").classList.contains("open")) loadVoiceList();
+  }
+
   // What can be said and which button it presses, from the PC (the same list the PC listens for).
   let voiceData = null;
   function openVoiceHelp() {
     $("voiceHelp").classList.add("open");
     $("voiceSearch").value = "";
     voiceNote("Loading…");
-    if (DEMO) { voiceData = { on: true, commands: phrasesInLayout() }; renderVoiceList(); return; }
+    loadVoiceList();
+  }
+  function loadVoiceList() {
+    if (DEMO) { voiceData = { on: true, state: "ready", commands: phrasesInLayout() }; renderVoiceList(); return; }
     fetch(`/voice.json?t=${encodeURIComponent(token)}`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data) => { voiceData = data; renderVoiceList(); })
@@ -475,7 +490,14 @@
   // One card per button, with its phrases; the search matches phrases and button names.
   function renderVoiceList() {
     if (!voiceData) return;
-    if (!voiceData.on) { voiceNote("Voice commands are turned off on the PC."); return; }
+    // The live status from the PC wins over the one the list was loaded with.
+    const state = DEMO ? "ready" : voiceStatus.state;
+    const reason = voiceStatus.reason || voiceData.reason;
+    if (!voiceData.on || state === "off") { voiceNote("Voice commands are turned off on the PC. Turn them on in the Tablet Deck window's Settings."); return; }
+    if (state === "unavailable") {
+      voiceNote(`Voice commands can't run on this PC${reason ? `: ${reason}` : ""}. The Tablet Deck window shows what to do.`);
+      return;
+    }
     const q = $("voiceSearch").value.trim().toLowerCase();
     const byLabel = new Map();
     for (const [phrase, label] of voiceData.commands) {
@@ -483,7 +505,7 @@
       if (!byLabel.has(label)) byLabel.set(label, []);
       byLabel.get(label).push(phrase);
     }
-    if (!byLabel.size) { voiceNote(q ? "Nothing matches that." : "No voice commands yet. The PC may still be starting them."); return; }
+    if (!byLabel.size) { voiceNote(q ? "Nothing matches that." : "The PC is still starting voice commands. Try again in a moment."); return; }
     const list = $("voiceList");
     list.innerHTML = "";
     for (const [label, phrases] of byLabel) {

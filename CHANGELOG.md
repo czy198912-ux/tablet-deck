@@ -7,6 +7,11 @@ before tagging a release.
 
 ## Unreleased
 
+- The mic and **?** buttons only show when voice commands can actually run on
+  the PC, and the voice list says why when they can't.
+- Messages on the tablet appear above the page names instead of covering them.
+- "Hold to engage" no longer runs into the quantum charge marks, and status
+  lines like "Retracted" have room under their label.
 - The installer now includes `THIRD-PARTY-NOTICES.txt` with the licence of the
   Node.js runtime inside `TabletDeckServer.exe`.
 

@@ -472,12 +472,20 @@ let voiceList = [];    // what can be said: [phrase, button label] pairs
 let voiceFromKey = false; // the last listening came from the PC's push-to-talk key
 let voiceStatus = null;   // the window's "voice ready" status, re-sent when push-to-talk changes
 let voiceOwner = null; // the tablet holding the talk button; it gets the results
+// What tablets are told about voice: "off", "starting", "ready", or "unavailable" with the
+// reason. They hide the mic unless it can work, and the voice list explains why.
+let tabletVoice = { state: config.voice ? "starting" : "off" };
+function setTabletVoice(state, reason) {
+  tabletVoice = reason ? { state, reason } : { state };
+  for (const c of tablets) c.send({ t: "voice-status", ...tabletVoice });
+}
 function startVoice() {
-  if (!config.voice) { ui({ t: "voice", state: "off" }); return; }
+  if (!config.voice) { ui({ t: "voice", state: "off" }); setTabletVoice("off"); return; }
   let exe;
   try { exe = buildNative("voice", "voice commands", ["System.Speech.dll"]); } catch (err) {
     console.error(`Voice commands unavailable: ${err.message}.`);
     ui({ t: "voice", state: "error", text: err.message });
+    setTabletVoice("unavailable", err.message);
     return;
   }
   const { buttons } = loadLayout();
@@ -499,6 +507,7 @@ function startVoice() {
         console.log(`Voice commands ready (${commands.size} phrases, ${line.slice(6)}). Hold the mic button on the tablet${key} and speak.`);
         voiceStatus = { t: "voice", state: "ready", phrases: commands.size, language: line.slice(6) };
         ui({ ...voiceStatus, ptt: config.pttKey ? config.pttKeyName || "on" : "" });
+        setTabletVoice("ready");
       } else if (line === "ptt 1" || line === "ptt 0") {
         // Push-to-talk from a PC key: results go to every tablet, and their mic buttons light up.
         voiceFromKey = true;
@@ -508,6 +517,7 @@ function startVoice() {
       } else if (line.startsWith("err")) {
         console.error(`Voice commands unavailable: ${line.slice(4)}. See "Voice commands" at https://github.com/nodieCode/tablet-deck#voice-commands`);
         ui({ t: "voice", state: "error", text: line.slice(4) });
+        setTabletVoice("unavailable", line.slice(4));
       } else if (line.startsWith("heard ")) {
         const [, id, confidence, ...words] = line.split(" ");
         void onVoice(id, Number(confidence), words.join(" "));
@@ -521,6 +531,7 @@ function startVoice() {
     if (wasReady) voice = null;
     console.error(`Voice listener exited (${code})${wasReady ? "; restarting" : ""}.`);
     ui({ t: "voice", state: wasReady ? "starting" : "error", text: `voice listener exited (${code})` });
+    setTabletVoice(wasReady ? "starting" : "unavailable", `the voice listener exited (${code})`);
     if (wasReady) setTimeout(startVoice, 2000);
   });
   for (const [phrase, id] of commands) proc.stdin.write(`phrase ${id} ${phrase}\n`);
@@ -745,7 +756,7 @@ const server = http.createServer((req, res) => {
   if (url.pathname === "/voice.json") {
     if (url.searchParams.get("t") !== config.token) { res.writeHead(403); res.end("bad token"); return; }
     res.writeHead(200, { "Content-Type": MIME[".json"], "Cache-Control": "no-store" });
-    res.end(JSON.stringify({ on: Boolean(config.voice), ready: Boolean(voice), commands: voiceList }));
+    res.end(JSON.stringify({ on: Boolean(config.voice), ready: Boolean(voice), ...tabletVoice, commands: voiceList }));
     return;
   }
   // Layouts a tablet can pick in its settings sheet: the ones made for its screen (phone
@@ -803,7 +814,7 @@ server.on("upgrade", (req, socket) => {
   ui({ t: "clients", count: ++connectedTablets });
   const client = { send: (obj) => { if (!socket.destroyed) wsSend(socket, JSON.stringify(obj)); } };
   tablets.add(client);
-  client.send({ t: "hello", voice: Boolean(config.voice) });
+  client.send({ t: "hello", voice: Boolean(config.voice), voiceStatus: tabletVoice });
 
   const held = new Map(); // button id -> { sc } currently pressed by this tablet
   let lastSeen = Date.now();
