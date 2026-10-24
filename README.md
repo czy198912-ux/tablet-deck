@@ -150,6 +150,8 @@ download, and all the source code is here.
   address of your Wi-Fi or Ethernet (e.g. `"host": "192.168.1.20"`) and restart
   Tablet Deck. `ipconfig` in a Command Prompt shows which address belongs to
   which adapter.
+- **"Too many wrong codes":** after 5 wrong pairing codes in a minute, Tablet
+  Deck ignores that device for a minute. Wait, then type the code again.
 </details>
 
 <details>
@@ -405,8 +407,10 @@ the game's files or memory.
 
 ## Safety and privacy
 
-- Only devices with the pairing code can press keys. Keep Tablet Deck on your
-  home network; don't expose its port to the internet.
+- Only devices with the pairing code can press keys. After 5 wrong codes in a
+  minute, a device is ignored for a minute, so nothing on the network can keep
+  guessing. Keep Tablet Deck on your home network; don't expose its port to the
+  internet.
 - The tablet talks to the PC over plain `http`, so the connection isn't
   encrypted. On your own home Wi-Fi that's fine, but on shared networks (LAN
   parties, dorms, hotels) others on the same Wi-Fi could see your pairing code

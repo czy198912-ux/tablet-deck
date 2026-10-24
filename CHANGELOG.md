@@ -11,6 +11,8 @@ before tagging a release.
   Hyper-V, VirtualBox, NordLynx, Tailscale and others) are skipped, so the QR
   code uses your Wi-Fi or Ethernet. The new `host` setting chooses the address
   yourself, and running from source lists each address with its adapter.
+- **Wrong pairing codes are limited:** after 5 in a minute, that device is
+  ignored for a minute, and the tablet says to wait.
 - **A new pairing screen:** a clear card with a big code field, a red error
   when the code doesn't match, and a hint to scan the QR code instead. The
   deck's buttons stay hidden until the device is paired. It also no longer

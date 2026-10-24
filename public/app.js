@@ -586,7 +586,8 @@
     };
     input.value = token;
     input.oninput = () => { input.classList.remove("bad"); input.removeAttribute("aria-invalid"); error.hidden = true; };
-    if (wrong) fail("That code didn't match. Check the code in the Tablet Deck window on your PC and try again.");
+    if (wrong === "locked") fail("Too many wrong codes. Wait a minute, then try again.");
+    else if (wrong) fail("That code didn't match. Check the code in the Tablet Deck window on your PC and try again.");
     input.focus();
     $("pair").onsubmit = (e) => {
       e.preventDefault();
@@ -630,6 +631,7 @@
     return fetch(DEMO ? demoFile : `/layout.json?t=${encodeURIComponent(token)}&device=${device}&layout=${encodeURIComponent(chosenLayout)}`)
       .then((r) => {
         if (r.status === 403) return Promise.reject("pair");
+        if (r.status === 429) return Promise.reject("locked");
         return r.ok ? r.json() : Promise.reject(`Layout error (${r.status})`);
       })
       .then((l) => {
@@ -644,6 +646,7 @@
       })
       .catch((err) => {
         if (err === "pair") { showPairing(Boolean(token)); return; }
+        if (err === "locked") { showPairing("locked"); return; }
         grid.innerHTML = `<div id="msg"></div>`;
         $("msg").textContent = String(err);
         setOnline(false, "Error");

@@ -48,7 +48,9 @@ These are by design and documented in the README's
   on the **same Wi-Fi** could see the pairing code and taps. Don't use Tablet
   Deck on shared networks (LAN parties, dorms, hotels).
 - Anyone with your **pairing code** can press keys. Treat it like a password,
-  and change it in **Settings** if it leaks.
+  and change it in **Settings** if it leaks. Wrong codes are limited (5 a
+  minute per device, then that device waits a minute), which slows guessing
+  down but doesn't make a short code safe on a shared network.
 - Someone who already has **access to your PC** can change Tablet Deck's
   settings or files.
 - The installer isn't **code-signed** yet, so Windows shows an "unknown

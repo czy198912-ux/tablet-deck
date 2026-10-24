@@ -659,6 +659,39 @@ const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".
 // ---------- layout editor (public/editor.html) ----------
 
 const fromThisPC = (req) => ["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(req.socket.remoteAddress);
+
+// Wrong pairing codes: after PAIR_TRIES from one device within a minute, that device is
+// refused for a minute, even with the right code, so nothing on the network can keep
+// guessing. The PC itself is exempt (it can read the code from config.json anyway).
+const PAIR_TRIES = 5, PAIR_WINDOW_MS = 60_000, PAIR_LOCK_MS = 60_000;
+const pairFails = new Map(); // remote address -> { count, first, lockedUntil }
+// "ok", "wrong" or "locked".
+function checkPairing(req, code) {
+  if (code === config.token && fromThisPC(req)) return "ok";
+  const ip = req.socket.remoteAddress || "";
+  const now = Date.now();
+  const fails = pairFails.get(ip);
+  if (fails && fails.lockedUntil > now) return "locked";
+  if (code === config.token) { pairFails.delete(ip); return "ok"; }
+  if (fromThisPC(req)) return "wrong";
+  const rec = fails && now - fails.first < PAIR_WINDOW_MS ? fails : { count: 0, first: now, lockedUntil: 0 };
+  rec.count++;
+  if (rec.count >= PAIR_TRIES) {
+    rec.lockedUntil = now + PAIR_LOCK_MS;
+    console.log(`${PAIR_TRIES} wrong pairing codes from ${ip}; ignoring it for a minute.`);
+  }
+  pairFails.set(ip, rec);
+  if (pairFails.size > 1000) for (const [k, v] of pairFails) if (v.lockedUntil < now && now - v.first > PAIR_WINDOW_MS) pairFails.delete(k);
+  return "wrong";
+}
+// For the HTTP routes: answers 403 (wrong code) or 429 (too many) and returns true when refused.
+function refusePairing(req, res, url) {
+  const result = checkPairing(req, url.searchParams.get("t"));
+  if (result === "ok") return false;
+  res.writeHead(result === "locked" ? 429 : 403);
+  res.end(result === "locked" ? "too many wrong pairing codes" : "bad token");
+  return true;
+}
 function sendJson(res, status, obj) {
   res.writeHead(status, { "Content-Type": MIME[".json"], "Cache-Control": "no-store" });
   res.end(JSON.stringify(obj));
@@ -758,7 +791,7 @@ const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://x");
   // Server-sent events for the showcase page's key log; dry runs only.
   if (url.pathname === "/events" && DRY_RUN) {
-    if (url.searchParams.get("t") !== config.token) { res.writeHead(403); res.end("bad token"); return; }
+    if (refusePairing(req, res, url)) return;
     res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-store", Connection: "keep-alive" });
     res.write(`data: ${JSON.stringify({ t: "hello", time: Date.now(), focusCheck: config.onlyWhenGameFocused, focusProbe: Boolean(focusProbe), voice: Boolean(voice) })}\n\n`);
     eventStreams.add(res);
@@ -768,11 +801,11 @@ const server = http.createServer((req, res) => {
   // The voice commands list, for the tablet's "?" next to the mic button.
   // The names of the websites a tablet may open on this PC; the addresses stay here.
   if (url.pathname === "/links.json") {
-    if (url.searchParams.get("t") !== config.token) { res.writeHead(403); res.end("bad token"); return; }
+    if (refusePairing(req, res, url)) return;
     return sendJson(res, 200, { links: (config.links || []).map((l) => l.name) });
   }
   if (url.pathname === "/voice.json") {
-    if (url.searchParams.get("t") !== config.token) { res.writeHead(403); res.end("bad token"); return; }
+    if (refusePairing(req, res, url)) return;
     res.writeHead(200, { "Content-Type": MIME[".json"], "Cache-Control": "no-store" });
     res.end(JSON.stringify({ on: Boolean(config.voice), ready: Boolean(voice), ...tabletVoice, commands: voiceList }));
     return;
@@ -780,7 +813,7 @@ const server = http.createServer((req, res) => {
   // Layouts a tablet can pick in its settings sheet: the ones made for its screen (phone
   // layouts are under 500 px tall), plus tabbed grid layouts, which fit any screen.
   if (url.pathname === "/layouts.json") {
-    if (url.searchParams.get("t") !== config.token) { res.writeHead(403); res.end("bad token"); return; }
+    if (refusePairing(req, res, url)) return;
     const phone = url.searchParams.get("device") === "phone";
     const layouts = [];
     for (const file of layoutFiles()) {
@@ -794,7 +827,7 @@ const server = http.createServer((req, res) => {
     return sendJson(res, 200, { layouts, pcChoice });
   }
   if (url.pathname === "/layout.json") {
-    if (url.searchParams.get("t") !== config.token) { res.writeHead(403); res.end("bad token"); return; }
+    if (refusePairing(req, res, url)) return;
     try {
       const { layout } = loadLayout(url.searchParams.get("device"), url.searchParams.get("layout"));
       res.writeHead(200, { "Content-Type": MIME[".json"], "Cache-Control": "no-store" });
@@ -817,7 +850,9 @@ const server = http.createServer((req, res) => {
 let connectedTablets = 0;
 server.on("upgrade", (req, socket) => {
   const url = new URL(req.url, "http://x");
-  if (url.pathname !== "/ws" || url.searchParams.get("t") !== config.token) {
+  const pairing = url.pathname === "/ws" ? checkPairing(req, url.searchParams.get("t")) : "wrong";
+  if (pairing === "locked") { socket.end("HTTP/1.1 429 Too Many Requests\r\n\r\n"); return; }
+  if (pairing !== "ok") {
     socket.end("HTTP/1.1 403 Forbidden\r\n\r\n"); return;
   }
   let buttons;
