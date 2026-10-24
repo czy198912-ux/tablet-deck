@@ -43,6 +43,9 @@ h2 { font-size: clamp(26px, 3.2vw, 38px); }
 h3 { font-size: 20px; }
 .lead { font-size: 19px; color: #c5d3e2; max-width: 34em; }
 .fine { color: var(--dim); font-size: 14px; }
+.fine.signing { font-size: 13px; }
+.fine.signing a { color: var(--dim); }
+.center-text { text-align: center; }
 
 /* ---------- hero ---------- */
 .hero { display: grid; grid-template-columns: 1fr 1.15fr; gap: clamp(24px, 4vw, 56px); align-items: center; padding: clamp(40px, 7vw, 90px) 0 40px; }

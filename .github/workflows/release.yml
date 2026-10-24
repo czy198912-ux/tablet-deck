@@ -201,6 +201,8 @@ jobs:
 
           If Windows shows "Windows protected your PC" (unknown publisher), click **More info**, then **Run anyway**. See the README for details.
 
+          Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org) (pending: until it's approved, releases are unsigned). See the [code signing policy](https://github.com/nodieCode/tablet-deck/blob/main/CODE_SIGNING.md).
+
           SHA-256: ``$hash``
 
           > Fan project. Not affiliated with or endorsed by Cloud Imperium Games.
