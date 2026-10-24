@@ -140,9 +140,22 @@ Fonts: **Oxanium** for display text, **Exo 2** for everything else, with
 
 The website keeps these as tokens in `site/style.css` (`--bg`, `--panel`,
 `--accent`, `--display`, `--body` …); reuse them there instead of new hex
-values. The Windows app (`native/launcher.cs`) sets the same colours in code,
-with its own status colours for good, warning and error states. When you change
-the house colours, change them in both.
+values. The Windows app (`native/launcher.cs`) sets the same colours in code
+(`Hud`), with its own status colours for good, warning and error states. When
+you change the house colours, change them in both.
+
+The app's main window is drawn in the deck's HUD style (`HudView`): panels with
+a thin border, accent corner brackets, a `// HEADING` and a ruler, over a slowly
+drifting starfield. Windows doesn't ship Oxanium or Exo 2, so its display font
+is **Bahnschrift** (Windows 10 and later), falling back to Segoe UI, with
+Consolas for the address and pairing code. Its readouts show only real data,
+never decoration made to look like data.
+
+The app's other windows (Settings, Voice commands, Install keybind profile) use
+the same panels, buttons and switches (`HudDialog`) over the same stars, standing
+still. Fields you type into or pick from stay real Windows controls, in the
+house colours inside a drawn frame that lights up in the accent colour while it
+has focus.
 
 ## Motion, night mode and layering
 
@@ -152,6 +165,10 @@ the house colours, change them in both.
 - **Every animation respects "reduce motion".** `fx.css`, `hud.css` and
   `intro.css` each turn their animations off under
   `@media (prefers-reduced-motion: reduce)`. A new animation needs the same.
+  The app window follows Windows' "Show animations" setting instead.
+- **The app window never animates behind the game.** Its stars move only while
+  the window is in front; minimized, in the tray or behind Star Citizen, it
+  draws nothing.
 - **Night mode** is a black overlay (`#night`) over the deck. Anything that must
   stay readable at night goes above it.
 - **Layering** (`z-index`), from bottom to top: deck content and its menus (up

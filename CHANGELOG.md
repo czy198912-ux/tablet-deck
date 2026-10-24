@@ -5,6 +5,19 @@ section becomes the notes of its
 [GitHub release](https://github.com/nodieCode/tablet-deck/releases), so add one
 before tagging a release.
 
+## Unreleased
+
+- **The new app window is back:** HUD panels with corner brackets over drifting
+  stars that follow the mouse (click an empty spot to send a pulse), telemetry
+  of tablets, where keys go and the last minute's presses, a dark title bar,
+  and the same look for Settings, Voice commands and Install keybind profile.
+  It no longer creates its window early to read the screen's scale, falls back
+  to Segoe UI if a font or style is missing, and doesn't read the keyboard to
+  tell Tab apart from a click.
+- **If Tablet Deck ever runs into a problem, it says so:** a message with the
+  reason, and the details saved in `crash.log` in the Settings folder, instead
+  of not starting.
+
 ## 1.2.1 (2026-10-24)
 
 - **Back to the 1.1.0 app window.** 1.2.0's new look kept Tablet Deck from
