@@ -5,6 +5,17 @@ section becomes the notes of its
 [GitHub release](https://github.com/nodieCode/tablet-deck/releases), so add one
 before tagging a release.
 
+## Unreleased
+
+- **A new look for the app window:** HUD panels with corner brackets over a
+  field of drifting stars that follows the mouse; click an empty spot to send a
+  pulse through them. The stars only move while the window is in front, and
+  stand still when Windows' "Show animations" is off.
+- **Telemetry** in the app window: tablets connected, where keys go, and the
+  presses of the last minute, including those held back because Star Citizen
+  wasn't in front.
+- The app window has a dark title bar on Windows 10 and 11.
+
 ## 1.1.0 (2026-10-24)
 
 - **The QR code picks the right network:** VPN and virtual adapters (WSL,
