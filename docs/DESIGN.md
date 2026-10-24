@@ -146,7 +146,9 @@ you change the house colours, change them in both.
 
 The app's main window is drawn in the deck's HUD style (`HudView`): panels with
 a thin border, accent corner brackets, a `// HEADING` and a ruler, over a slowly
-drifting starfield. Windows doesn't ship Oxanium or Exo 2, so its display font
+drifting starfield. The stars pass behind the panels, which keep the text on a
+solid layer so it can use ClearType; text drawn over a see-through layer can't,
+and looks soft. Windows doesn't ship Oxanium or Exo 2, so its display font
 is **Bahnschrift** (Windows 10 and later), falling back to Segoe UI, with
 Consolas for the address and pairing code. Its readouts show only real data,
 never decoration made to look like data.

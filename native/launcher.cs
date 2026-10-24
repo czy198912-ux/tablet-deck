@@ -194,12 +194,15 @@ static class Hud
     // Letter-spaced text, the HUD's labels and headings; returns its width.
     public static float Spaced(Graphics g, string text, Font font, Color color, float x, float y, float spacing)
     {
-        float start = x;
+        float start = x, scale;
+        using (var m = g.Transform) scale = m.Elements[0]; // screen pixels per unit
+        float top = (float)Math.Round(y * scale) / scale;
         using (var brush = new SolidBrush(color))
             foreach (char ch in text)
             {
                 string s = ch.ToString();
-                g.DrawString(s, font, brush, x, y, typographic);
+                // Each letter starts on a whole screen pixel; fractional positions smear small text.
+                g.DrawString(s, font, brush, (float)Math.Round(x * scale) / scale, top, typographic);
                 x += g.MeasureString(s, font, PointF.Empty, typographic).Width + spacing;
             }
         return x - start - (text.Length > 0 ? spacing : 0);
@@ -279,7 +282,8 @@ static class Hud
 // The main window's face, drawn by hand: a starfield that drifts behind the panels, shifts
 // with the mouse (near stars more than far ones) and lights up along a ring sent out by a
 // click, plus the window's own buttons, switches, slider and links. The owner draws the
-// panels in DrawContent; that layer is cached and only redrawn after Redraw(). The stars
+// panels in DrawContent onto an opaque layer, so text gets ClearType; that layer is cached
+// and only redrawn after Redraw(), and the stars are drawn over it outside Covers. The stars
 // move only while Running (the window is in front) and Windows' "Show animations" is on,
 // so nothing animates behind Star Citizen.
 class HudView : Control
@@ -308,6 +312,9 @@ class HudView : Control
 
     public readonly List<Item> Items = new List<Item>();
     public Action<Graphics> DrawContent;
+    // Where the moving stars pass behind: panels and text outside them. DrawContent sets
+    // these; the items are covered too.
+    public readonly List<RectangleF> Covers = new List<RectangleF>();
     public float Zoom = 1f; // screen pixels per 96-dpi pixel
 
     readonly List<Star> stars = new List<Star>();
@@ -409,14 +416,18 @@ class HudView : Control
         if (running && motion) Step(dt);
 
         var g = e.Graphics;
-        if (backdrop == null) backdrop = DrawBackdrop();
-        g.DrawImageUnscaled(backdrop, 0, 0);
-        g.ScaleTransform(Zoom, Zoom);
-        g.SmoothingMode = SmoothingMode.AntiAlias;
-        DrawStars(g);
-        g.ResetTransform();
         if (contentDirty || content == null) DrawContentLayer();
         g.DrawImageUnscaled(content, 0, 0);
+        g.ScaleTransform(Zoom, Zoom);
+        g.SmoothingMode = SmoothingMode.AntiAlias;
+        var area = Area;
+        using (var open = new Region(new RectangleF(0, 0, area.Width, area.Height)))
+        {
+            foreach (var r in Covers) open.Exclude(RectangleF.Inflate(r, 1, 1));
+            foreach (var item in Items) if (item.Visible) open.Exclude(RectangleF.Inflate(item.Box, 2, 2));
+            g.Clip = open;
+            DrawStars(g);
+        }
     }
 
     void Step(float dt)
@@ -509,14 +520,16 @@ class HudView : Control
         if (content == null || content.Width != ClientSize.Width || content.Height != ClientSize.Height)
         {
             if (content != null) content.Dispose();
-            content = new Bitmap(ClientSize.Width, ClientSize.Height, PixelFormat.Format32bppPArgb);
+            content = new Bitmap(ClientSize.Width, ClientSize.Height, PixelFormat.Format32bppRgb);
         }
+        if (backdrop == null) backdrop = DrawBackdrop();
+        Covers.Clear();
         using (var g = Graphics.FromImage(content))
         {
-            g.Clear(Color.Transparent);
+            g.DrawImageUnscaled(backdrop, 0, 0); // opaque, so the text below can use ClearType
             g.ScaleTransform(Zoom, Zoom);
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit; // ClearType needs an opaque background
+            g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
             if (DrawContent != null) DrawContent(g);
             foreach (var item in Items) if (item.Visible) DrawItem(g, item);
         }
@@ -836,7 +849,7 @@ class HudDialog : Form
     // A small letter-spaced label above a field.
     protected Note Caption(string text, float x, float y)
     {
-        var note = new Note { Text = text.ToUpperInvariant(), Box = new RectangleF(x, y, 400, 14), Font = Hud.Label(10.5f), Caption = true };
+        var note = new Note { Text = text.ToUpperInvariant(), Box = new RectangleF(x, y, 400, 14), Font = Hud.Label(11.5f), Caption = true };
         notes.Add(note);
         return note;
     }
@@ -918,7 +931,8 @@ class HudDialog : Form
 
     void DrawDialog(Graphics g)
     {
-        foreach (var p in panels) Hud.PanelBox(g, p.Box, p.Title);
+        foreach (var p in panels) { Hud.PanelBox(g, p.Box, p.Title); hud.Covers.Add(p.Box); }
+        foreach (var n in notes) hud.Covers.Add(n.Box);
         foreach (var c in fields)
         {
             if (c is ComboBox) continue; // a flat combo box draws its own frame
@@ -1194,6 +1208,10 @@ class DeckWindow : Form
     void DrawHud(Graphics g)
     {
         var area = hud.Area;
+        // The stars pass behind the panels and the header's text.
+        hud.Covers.AddRange(new[] { connectBox, linkBox, telemetryBox, voiceBox, systemBox, logBox,
+            new RectangleF(20, 10, 360, 48), new RectangleF(area.Width - 240, 12, 220, 44) });
+        if (bannerShown) hud.Covers.Add(bannerBox);
         DrawHeader(g, area.Width);
         if (bannerShown)
         {
@@ -1223,7 +1241,7 @@ class DeckWindow : Form
             g.FillPolygon(brush, new[] { new PointF(38, 25), new PointF(44, 40), new PointF(38, 36), new PointF(32, 40) });
         float tw = Hud.Spaced(g, "TABLET DECK", Hud.Head(24), Hud.Accent, 64, 17, 3f);
         if (version != "") Hud.Spaced(g, "V" + version, Hud.Label(11.5f), Hud.Dim, 64 + tw + 12, 29, 1.2f);
-        Hud.Spaced(g, "STAR CITIZEN CONTROL DECK", Hud.Label(10.5f), Hud.Dim, 65, 45, 2.4f);
+        Hud.Spaced(g, "STAR CITIZEN CONTROL DECK", Hud.Label(11.5f), Hud.Dim, 65, 45, 2.4f);
 
         // Status on the right: a dot and one word, the uptime under it.
         var chipFont = Hud.Head(13);
@@ -1258,8 +1276,8 @@ class DeckWindow : Form
         }
         Hud.Brackets(g, RectangleF.Inflate(qrBox, 6, 6), Hud.Accent, 14);
         string caption = "SCAN WITH YOUR TABLET'S CAMERA";
-        float cw = Hud.SpacedWidth(g, caption, Hud.Label(10.5f), 1.4f);
-        Hud.Spaced(g, caption, Hud.Label(10.5f), Hud.Dim, r.X + (r.Width - cw) / 2, r.Bottom - 22, 1.4f);
+        float cw = Hud.SpacedWidth(g, caption, Hud.Label(11.5f), 1.4f);
+        Hud.Spaced(g, caption, Hud.Label(11.5f), Hud.Dim, r.X + (r.Width - cw) / 2, r.Bottom - 22, 1.4f);
     }
 
     void DrawLink(Graphics g)
@@ -1269,12 +1287,12 @@ class DeckWindow : Form
         Hud.PanelBox(g, r, "LINK");
         if (serverReady)
         {
-            Hud.Spaced(g, "ADDRESS", Hud.Label(10.5f), Hud.Dim, x, r.Y + 32, 1.6f);
+            Hud.Spaced(g, "ADDRESS", Hud.Label(11.5f), Hud.Dim, x, r.Y + 32, 1.6f);
             if (link == "") Hud.Text(g, "No network found. Connect this PC to Wi-Fi or a network.", Hud.Body(13), Hud.Warn, new RectangleF(x, r.Y + 46, w, 20));
             if (others != "") Hud.Text(g, "ALSO  " + others, Hud.Mono(11, false), Hud.Dim, new RectangleF(x, r.Y + 68, w, 16));
         }
         else Hud.Wrapped(g, stateText, Hud.Body(13.5f), stateColor, new RectangleF(x, r.Y + 34, w, 50));
-        Hud.Spaced(g, "PAIRING CODE", Hud.Label(10.5f), Hud.Dim, x, r.Y + 92, 1.6f);
+        Hud.Spaced(g, "PAIRING CODE", Hud.Label(11.5f), Hud.Dim, x, r.Y + 92, 1.6f);
         Hud.Spaced(g, pairingCode, Hud.Mono(28, true), Hud.Ink, x - 1, r.Y + 106, 3f);
     }
 
@@ -1297,8 +1315,8 @@ class DeckWindow : Form
         if (blockedCount > 0)
         {
             string text = blockedCount + " BLOCKED";
-            float bw = Hud.SpacedWidth(g, text, Hud.Label(10), 1.2f);
-            Hud.Spaced(g, text, Hud.Label(10), Hud.Warn, presses.Right - 10 - bw, presses.Y + 8, 1.2f);
+            float bw = Hud.SpacedWidth(g, text, Hud.Label(11), 1.2f);
+            Hud.Spaced(g, text, Hud.Label(11), Hud.Warn, presses.Right - 10 - bw, presses.Y + 8, 1.2f);
         }
         // The last minute in 2-second bars.
         var graph = new RectangleF(presses.X + presses.Width * 0.45f, presses.Y + 24, presses.Width * 0.55f - 12, presses.Height - 34);
@@ -1327,10 +1345,10 @@ class DeckWindow : Form
         using (var fill = new SolidBrush(Hud.Fade(Hud.Back, 140))) g.FillRectangle(fill, r);
         using (var pen = new Pen(Hud.Line, 1f)) g.DrawRectangle(pen, r.X, r.Y, r.Width, r.Height);
         using (var pen = new Pen(Hud.Accent, 2f)) g.DrawLine(pen, r.X, r.Y + 6, r.X, r.Y + 20);
-        Hud.Spaced(g, caption, Hud.Label(10), Hud.Dim, r.X + 10, r.Y + 8, 1.4f);
+        Hud.Spaced(g, caption, Hud.Label(11), Hud.Dim, r.X + 10, r.Y + 8, 1.4f);
         var font = Hud.Head(value.Length > 6 ? 17 : 24);
         Hud.Text(g, value, font, color, new RectangleF(r.X + 10, r.Y + 21, r.Width - 16, 36));
-        Hud.Text(g, note, Hud.Label(9.5f), Hud.Dim, new RectangleF(r.X + 10, r.Bottom - 18, r.Width - 16, 14));
+        Hud.Text(g, note, Hud.Label(10.5f), Hud.Dim, new RectangleF(r.X + 10, r.Bottom - 18, r.Width - 16, 14));
     }
 
     void DrawVoice(Graphics g)
@@ -1340,7 +1358,7 @@ class DeckWindow : Form
         Hud.PanelBox(g, r, "VOICE");
         Hud.Dot(g, voiceColor, x + 4, r.Y + 42);
         Hud.Text(g, voiceText, Hud.Body(13), voiceColor, new RectangleF(x + 16, r.Y + 32, voiceListButton.Box.X - x - 26, 20));
-        Hud.Spaced(g, "STRICTNESS", Hud.Label(10.5f), Hud.Dim, x, r.Y + 68, 1.6f);
+        Hud.Spaced(g, "STRICTNESS", Hud.Label(11.5f), Hud.Dim, x, r.Y + 68, 1.6f);
         Hud.Spaced(g, strictness.Value + "%", Hud.Head(13), strictness.Enabled ? Hud.Ink : Hud.Dim, strictness.Box.Right + 14, r.Y + 67, 1f);
         Hud.Wrapped(g, "Lower accepts more but may mishear. Higher is stricter.", Hud.Body(11), Hud.Dim,
             new RectangleF(strictness.Box.Right + 60, r.Y + 62, r.Right - strictness.Box.Right - 76, 32));

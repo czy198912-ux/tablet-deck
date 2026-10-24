@@ -5,6 +5,12 @@ section becomes the notes of its
 [GitHub release](https://github.com/nodieCode/tablet-deck/releases), so add one
 before tagging a release.
 
+## Unreleased
+
+- **Sharper text in the app window:** text is drawn with ClearType on solid
+  panels, each letter on a whole pixel, and the smallest labels are a size
+  larger. The stars now pass behind the panels instead of showing through them.
+
 ## 1.3.0 (2026-10-24)
 
 - **The new app window is back, and now starts:** HUD panels with corner
