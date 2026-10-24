@@ -5,7 +5,7 @@ section becomes the notes of its
 [GitHub release](https://github.com/nodieCode/tablet-deck/releases), so add one
 before tagging a release.
 
-## Unreleased
+## 1.3.1 (2026-10-24)
 
 - **Sharper text in the app window:** text is drawn with ClearType on solid
   panels, each letter on a whole pixel, and the smallest labels are a size
