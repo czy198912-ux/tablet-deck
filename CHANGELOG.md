@@ -5,7 +5,7 @@ section becomes the notes of its
 [GitHub release](https://github.com/nodieCode/tablet-deck/releases), so add one
 before tagging a release.
 
-## Unreleased
+## 1.1.0 (2026-10-24)
 
 - **The QR code picks the right network:** VPN and virtual adapters (WSL,
   Hyper-V, VirtualBox, NordLynx, Tailscale and others) are skipped, so the QR
