@@ -871,8 +871,16 @@ server.on("upgrade", (req, socket) => {
 
   const held = new Map(); // button id -> { sc } currently pressed by this tablet
   let lastSeen = Date.now();
+  // Releases a hold once its press has finished, and only if it pressed anything: a
+  // combo's keys go down one by one, so a quick release could otherwise land in between
+  // and leave the last key stuck, or let go of a key another button is holding.
+  const releaseHold = async (hold) => {
+    if (!hold.pressing) return;
+    await hold.pressing;
+    await releaseCombo(hold.sc);
+  };
   const releaseAll = async () => {
-    for (const [id, hold] of held) { held.delete(id); await releaseCombo(hold.sc); }
+    for (const [id, hold] of held) { held.delete(id); await releaseHold(hold); }
   };
   // If the tablet sleeps or drops Wi-Fi mid-hold, don't leave keys stuck down.
   const watchdog = setInterval(() => {
@@ -918,14 +926,15 @@ server.on("upgrade", (req, socket) => {
       console.log(`${btn.label} (${btn.keys}) down`);
       applyState(btn);
       report(btn, "down");
-      await pressCombo(btn.scancodes);
+      hold.pressing = pressCombo(btn.scancodes);
+      await hold.pressing;
     } else if (msg.t === "up" && held.has(btn.id)) {
       // Releases always go through, even after the game loses focus, so no key stays stuck.
-      const { sc } = held.get(btn.id);
+      const hold = held.get(btn.id);
       held.delete(btn.id);
       console.log(`${btn.label} up`);
       report(btn, "up");
-      await releaseCombo(sc);
+      await releaseHold(hold);
     } else if (msg.t === "tap") {
       await tapButton(btn, client);
     }
