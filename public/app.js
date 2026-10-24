@@ -119,7 +119,6 @@
     const theme = themeById[id] || THEMES[0];
     document.documentElement.dataset.theme = theme.id;
     document.documentElement.dataset.maker = theme.full; // shown on the intro screen
-    $("themeName").textContent = theme.name;
     for (const m of document.querySelectorAll("#brandMark, .js-emblem")) m.innerHTML = emblemSvg(theme.emblem);
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.content = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
@@ -173,6 +172,9 @@
     }).catch(() => { $("pcLinks").hidden = true; });
   }
   const closePicker = () => $("picker").classList.remove("open");
+  // The same sliders icon as the HUD layouts' settings button, so it reads as the way to
+  // other layouts too, not just a theme switcher.
+  $("settingsIco").innerHTML = window.deckIcon("sliders");
   $("themeBtn").onclick = openPicker;
   $("closePicker").onclick = closePicker;
 

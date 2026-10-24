@@ -16,6 +16,9 @@ before tagging a release.
 - Fixed a held combo button (like Look Behind) that could leave a key stuck
   down when released very quickly, and a quick hold that could let go of a key
   another button was still holding.
+- The tabbed grid layout's settings button now has the sliders icon and says
+  **Settings**, like the HUD's, instead of the theme's name, so it's clear how
+  to get to the other layouts from there.
 - **A new pairing screen:** a clear card with a big code field, a red error
   when the code doesn't match, and a hint to scan the QR code instead. The
   deck's buttons stay hidden until the device is paired. It also no longer
