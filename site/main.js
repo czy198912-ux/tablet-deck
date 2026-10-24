@@ -1,5 +1,5 @@
 // Tablet Deck website: the deck's own icons on the feature cards, and download buttons
-// that point straight at the latest installer with its version and size.
+// that point straight at the latest installer with its version, date and size.
 (() => {
   for (const el of document.querySelectorAll(".js-icon")) {
     if (window.deckIcon) el.innerHTML = window.deckIcon(el.dataset.icon);
@@ -13,7 +13,12 @@
       if (!setup) return;
       const mb = (setup.size / 1048576).toFixed(0);
       for (const a of document.querySelectorAll(".js-download")) a.href = setup.browser_download_url;
-      for (const s of document.querySelectorAll(".js-version")) s.textContent = `Version ${release.tag_name.replace(/^v/, "")} · ${mb} MB · Windows 10 and 11`;
+      // The release date in the visitor's own time zone, spelled out ("24 Oct 2026") so it
+      // can't be misread as day/month or month/day.
+      // On phones the line wraps; "Windows 10 and 11" stays together on the second line.
+      const date = release.published_at
+        ? ` · ${new Date(release.published_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}` : "";
+      for (const s of document.querySelectorAll(".js-version")) s.textContent = `Version ${release.tag_name.replace(/^v/, "")}${date} · ${mb} MB · ${"Windows 10 and 11".replace(/ /g, "\u00a0")}`;
     })
     .catch(() => {});
 })();
