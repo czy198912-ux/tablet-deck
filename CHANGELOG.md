@@ -5,6 +5,12 @@ section becomes the notes of its
 [GitHub release](https://github.com/nodieCode/tablet-deck/releases), so add one
 before tagging a release.
 
+## 1.2.1 (2026-10-24)
+
+- **Back to the 1.1.0 app window.** 1.2.0's new look kept Tablet Deck from
+  starting on some PCs, so this release brings back the previous window while
+  that's fixed. Everything else from 1.2.0 stays.
+
 ## 1.2.0 (2026-10-24)
 
 - **A new look for the app window:** HUD panels with corner brackets over a

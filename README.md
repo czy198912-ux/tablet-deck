@@ -188,20 +188,15 @@ Another program (or another copy of Tablet Deck) uses that port. Open
 
 <img src="docs/app-window.png" alt="The Tablet Deck window: QR code, address, pairing code, connected tablets, voice status and a log of presses" width="420" align="right">
 
-The window shows the QR code, address and pairing code, and live telemetry: how
-many tablets are connected, where keys go, and the presses of the last minute,
-with how many were held back because Star Citizen wasn't in front. Below that
-are the voice status and a log. Stars drift behind the panels while the window
-is in front (they stand still if Windows' "Show animations" is off); click an
-empty spot to send a pulse through them.
+The window shows the QR code, address and pairing code, how many tablets are
+connected, whether voice commands are ready, and a log of button presses.
 
 - **Minimize** it to keep Tablet Deck running in the tray; double-click the tray
   icon to bring it back. **Closing** the window quits.
 - **Settings:** pairing code, port, the "only while Star Citizen is in front"
   check, tap length, voice on/off and language, and **Install keybind profile**.
 - **Edit layout** opens the [layout editor](#layout-editor).
-- **Start with Windows** starts it in the tray when you log in. **Settings
-  folder** opens the folder with `config.json` and your own layouts.
+- **Start with Windows** starts it in the tray when you log in.
 - **Updates:** Tablet Deck checks for a new version when it starts and once a
   day, and shows **What's new** and **Update now**. Nothing installs until you
   click; your settings are kept. [CHANGELOG.md](CHANGELOG.md) lists every
