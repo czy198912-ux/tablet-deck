@@ -87,12 +87,16 @@ jobs:
             choco install innosetup -y --no-progress
           }
 
+      # ---- Code signing ----
+      # Only release runs (RELEASE_TAG set) are signed; build-only runs, such as test builds
+      # from a branch, stay unsigned and never send a signing request.
+      #
       # ---- Code signing, option A: certificate in repo secrets ----
       # Runs only when SIGNING_CERT_PFX_BASE64 is set. scripts/build.js signs TabletDeck.exe
       # and the native helpers with SIGN_CMD, and Inno Setup signs the installer and
       # uninstaller with it ($f is the file to sign).
       - name: Set up signing (certificate)
-        if: env.SIGNING_CERT_PFX_BASE64 != ''
+        if: env.SIGNING_CERT_PFX_BASE64 != '' && env.RELEASE_TAG != ''
         shell: pwsh
         run: |
           $pfx = Join-Path $env:RUNNER_TEMP "signing.pfx"
@@ -111,14 +115,14 @@ jobs:
       # "installer" in SignPath are copies of .signpath/artifact-configurations/*.xml.
       - name: Upload the app files for signing
         id: unsigned-app
-        if: env.SIGNPATH_API_TOKEN != ''
+        if: env.SIGNPATH_API_TOKEN != '' && env.RELEASE_TAG != ''
         uses: actions/upload-artifact@v7
         with:
           name: app-unsigned
           path: build/app
 
       - name: Sign the app files (SignPath)
-        if: env.SIGNPATH_API_TOKEN != ''
+        if: env.SIGNPATH_API_TOKEN != '' && env.RELEASE_TAG != ''
         uses: signpath/github-action-submit-signing-request@v2
         with:
           api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
@@ -128,9 +132,11 @@ jobs:
           artifact-configuration-slug: app
           github-artifact-id: ${{ steps.unsigned-app.outputs.artifact-id }}
           output-artifact-directory: build/app-signed
+          # Each request waits for an approver in SignPath; an hour leaves time to approve from a phone.
+          wait-for-completion-timeout-in-seconds: 3600
 
       - name: Use the signed app files
-        if: env.SIGNPATH_API_TOKEN != ''
+        if: env.SIGNPATH_API_TOKEN != '' && env.RELEASE_TAG != ''
         shell: pwsh
         run: Copy-Item build/app-signed/* build/app -Recurse -Force
 
@@ -139,14 +145,14 @@ jobs:
 
       - name: Upload the installer for signing
         id: unsigned-setup
-        if: env.SIGNPATH_API_TOKEN != ''
+        if: env.SIGNPATH_API_TOKEN != '' && env.RELEASE_TAG != ''
         uses: actions/upload-artifact@v7
         with:
           name: setup-unsigned
           path: dist/*.exe
 
       - name: Sign the installer (SignPath)
-        if: env.SIGNPATH_API_TOKEN != ''
+        if: env.SIGNPATH_API_TOKEN != '' && env.RELEASE_TAG != ''
         uses: signpath/github-action-submit-signing-request@v2
         with:
           api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
@@ -156,10 +162,12 @@ jobs:
           artifact-configuration-slug: installer
           github-artifact-id: ${{ steps.unsigned-setup.outputs.artifact-id }}
           output-artifact-directory: dist-signed
+          # Each request waits for an approver in SignPath; an hour leaves time to approve from a phone.
+          wait-for-completion-timeout-in-seconds: 3600
 
       # Signing changes the installer, so its checksum (which the app's updater checks) is redone.
       - name: Use the signed installer
-        if: env.SIGNPATH_API_TOKEN != ''
+        if: env.SIGNPATH_API_TOKEN != '' && env.RELEASE_TAG != ''
         shell: pwsh
         run: |
           Copy-Item dist-signed/*.exe dist -Force
