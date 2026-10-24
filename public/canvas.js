@@ -108,7 +108,7 @@
         const el = box(make("button", "hud-btn s-top", ico), e);
         el.type = "button";
         el.onclick = e.action === "theme" ? D.openPicker : D.toggleFullscreen;
-        el.setAttribute("aria-label", e.action === "theme" ? "Choose theme" : "Fullscreen");
+        el.setAttribute("aria-label", e.action === "theme" ? "Deck settings" : "Fullscreen");
         return el;
       },
 

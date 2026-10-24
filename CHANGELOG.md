@@ -11,6 +11,9 @@ before tagging a release.
   when the code doesn't match, and a hint to scan the QR code instead. The
   deck's buttons stay hidden until the device is paired. It also no longer
   looks greyed out.
+- **Deck settings:** the sliders sheet is now organised in sections (Layout,
+  Display, Open on PC, Theme), with real on/off switches for night mode and
+  two-finger swipe.
 - The mic and **?** buttons only show when voice commands can actually run on
   the PC, and the voice list says why when they can't.
 - Messages on the tablet appear above the page names instead of covering them.

@@ -226,8 +226,8 @@ there to the same key.
 
 ### Layouts
 
-Tap the sliders button (top right) on the tablet and choose under **Layout**.
-Each tablet and phone remembers its own choice:
+Tap the sliders button (top right) on the tablet to open **Deck settings**, and
+choose under **Layout**. Each tablet and phone remembers its own choice:
 
 | Layout | Opens on |
 |---|---|
@@ -242,14 +242,14 @@ flying first, so Emotes and the rest are always a few arrow taps away. Phones ge
 versions sized for an iPhone 15 Pro in landscape that scale to fit other phones.
 Hold the phone sideways. Layouts you make in the editor show up in the list too.
 
-**Two-finger swipe** (turn it on in the sliders sheet): swipe sideways with two
-fingers over a half to flip it to its next or previous panel, like its arrows. So
-a swipe never presses anything, a press then waits a moment (60 ms) in case a
-second finger follows; with it off, presses are instant.
+**Two-finger swipe** (a switch under **Display** in Deck settings): swipe
+sideways with two fingers over a half to flip it to its next or previous panel,
+like its arrows. So a swipe never presses anything, a press then waits a moment
+(60 ms) in case a second finger follows; with it off, presses are instant.
 
 ### Open websites on the PC
 
-The sliders sheet on the tablet has an **Open on PC** row: tap **UEX**
+**Deck settings** on the tablet has an **Open on PC** section: tap **UEX**
 (trading), **Erkul** (loadouts), **SPViewer** or **SCMDB** (missions, crafting
 and mining) to open it in the PC's browser.
 Change the list in **Settings → Links**, one per line as `Name | https://address`.
@@ -310,8 +310,9 @@ and how sure it was, so you can tune it.
 
 ### Themes
 
-Tap the sliders button (top right) to pick a manufacturer theme. Each tablet
-remembers its own. **Night mode** dims the whole deck for a dark room.
+Tap the sliders button (top right) and pick a manufacturer theme under **Theme**
+in **Deck settings**. Each tablet remembers its own. **Night mode**, under
+**Display**, dims the whole deck for a dark room.
 
 <p align="center">
   <img src="docs/themes.jpg" alt="The deck in all 12 manufacturer themes" width="100%">

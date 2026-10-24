@@ -197,7 +197,7 @@
         pick.innerHTML = "";
         const pcName = (data.layouts.find((l) => l.file === data.pcChoice) || {}).name || "default";
         const add = (value, text) => { const o = document.createElement("option"); o.value = value; o.textContent = text; pick.appendChild(o); };
-        add("", `PC's choice (${pcName})`);
+        add("", `PC's choice: ${pcName}`);
         for (const l of data.layouts) add(l.file, l.custom ? `${l.name} (yours)` : l.name);
         pick.value = data.layouts.some((l) => l.file === chosenLayout) ? chosenLayout : "";
       })
@@ -265,15 +265,15 @@
 
   function applySwipe(on) {
     store.set(swipeKey, on ? "on" : "off");
-    $("swipeBtn").setAttribute("aria-pressed", String(on));
+    $("swipeBtn").setAttribute("aria-checked", String(on));
   }
   $("swipeBtn").onclick = () => applySwipe(!swipeOn());
-  $("swipeBtn").setAttribute("aria-pressed", String(swipeOn()));
+  $("swipeBtn").setAttribute("aria-checked", String(swipeOn()));
 
   // Night mode dims the whole deck for playing in a dark room; each device remembers it.
   function applyNight(on) {
     document.documentElement.toggleAttribute("data-night", on);
-    $("nightBtn").setAttribute("aria-pressed", String(on));
+    $("nightBtn").setAttribute("aria-checked", String(on));
     store.set("night", on ? "1" : "");
   }
   $("nightBtn").onclick = () => applyNight(!document.documentElement.hasAttribute("data-night"));

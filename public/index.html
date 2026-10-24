@@ -59,11 +59,34 @@
 <div id="night" aria-hidden="true"></div>
 <div id="toast" role="status" aria-live="polite"></div>
 
-<div id="picker" role="dialog" aria-label="Choose a manufacturer theme">
-  <div class="bar"><span>Choose manufacturer</span>
-    <div class="bar-btns"><label class="layout-pick">Layout <select id="layoutPick" aria-label="Layout"></select></label><button id="swipeBtn" type="button" aria-pressed="false" title="Swipe sideways with two fingers over a half to flip its panels">2-finger swipe</button><button id="nightBtn" type="button" aria-pressed="false">Night mode</button><button id="closePicker" type="button">Close</button></div></div>
-  <div id="pcLinks" class="pc-links" hidden><span>Open on PC</span><div id="pcLinkBtns"></div></div>
-  <div id="cards" class="cards"></div>
+<div id="picker" role="dialog" aria-modal="true" aria-labelledby="pickerTitle">
+  <div class="bar"><span id="pickerTitle">Deck settings</span>
+    <div class="bar-btns"><button id="closePicker" type="button">Close</button></div></div>
+  <div class="sheet-body">
+    <div class="sheet-top">
+      <section class="sheet-section">
+        <h3><b>//</b> Layout</h3>
+        <select id="layoutPick" aria-label="Layout"></select>
+        <p class="sheet-note">Each tablet and phone keeps its own choice.</p>
+      </section>
+      <section class="sheet-section">
+        <h3><b>//</b> Display</h3>
+        <button id="nightBtn" class="sheet-switch" type="button" role="switch" aria-checked="false">
+          <span class="sw-text"><b>Night mode</b><span>Dims the deck for a dark room.</span></span><span class="sw-knob" aria-hidden="true"></span></button>
+        <button id="swipeBtn" class="sheet-switch" type="button" role="switch" aria-checked="false">
+          <span class="sw-text"><b>Two-finger swipe</b><span>Swipe sideways over a half to flip its panels. Presses then wait a moment.</span></span><span class="sw-knob" aria-hidden="true"></span></button>
+      </section>
+      <section id="pcLinks" class="sheet-section pc-links" hidden>
+        <h3><b>//</b> Open on PC</h3>
+        <div id="pcLinkBtns"></div>
+        <p class="sheet-note">Opens the site in your PC's browser.</p>
+      </section>
+    </div>
+    <section class="sheet-section">
+      <h3><b>//</b> Theme</h3>
+      <div id="cards" class="cards"></div>
+    </section>
+  </div>
 </div>
 
 <div id="voiceHelp" role="dialog" aria-label="Voice commands">
