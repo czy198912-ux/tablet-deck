@@ -142,6 +142,14 @@ download, and all the source code is here.
   Internet → your network). The firewall rule only covers private networks.
 - Type the address exactly as the Tablet Deck window shows it, including the
   port (`:8765`).
+- **The QR code opens nothing:** with a VPN, WSL or a virtual machine, your PC
+  has more than one address, and the QR code may use one the tablet can't
+  reach. Tablet Deck skips VPN and virtual adapters it recognises, and running
+  from source lists each address with its adapter's name. To choose it
+  yourself, open the **Settings folder**, set `"host"` in `config.json` to the
+  address of your Wi-Fi or Ethernet (e.g. `"host": "192.168.1.20"`) and restart
+  Tablet Deck. `ipconfig` in a Command Prompt shows which address belongs to
+  which adapter.
 </details>
 
 <details>
@@ -356,6 +364,7 @@ Uninstalling keeps them unless you choose to delete them.
 | `autoUpdate` | check GitHub for new versions | `true` |
 | `pttKey`, `pttKeyName`, `pttMode`, `pttSound` | push-to-talk key on the PC (Windows key code, `0` = none), its name, `hold` or `toggle`, and the sound | none, `hold`, `true` |
 | `links` | websites the tablet can open on the PC: `[{ "name": "UEX", "url": "https://..." }]`, https only, up to 12 | UEX, Erkul, SPViewer, SCMDB |
+| `host` | the address tablets should use (the QR code), when the automatic choice picks a VPN or virtual adapter; empty for automatic | automatic |
 
 File paths can be absolute, or relative: `layouts/my.json` is looked up in the
 settings folder first, then among the built-in files.

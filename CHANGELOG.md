@@ -7,6 +7,10 @@ before tagging a release.
 
 ## Unreleased
 
+- **The QR code picks the right network:** VPN and virtual adapters (WSL,
+  Hyper-V, VirtualBox, NordLynx, Tailscale and others) are skipped, so the QR
+  code uses your Wi-Fi or Ethernet. The new `host` setting chooses the address
+  yourself, and running from source lists each address with its adapter.
 - **A new pairing screen:** a clear card with a big code field, a red error
   when the code doesn't match, and a hint to scan the QR code instead. The
   deck's buttons stay hidden until the device is paired. It also no longer

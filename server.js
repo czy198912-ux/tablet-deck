@@ -145,6 +145,9 @@ const SETTINGS = {
   pttKeyName: (v) => (/^[\w +-]{1,30}$/.test(v) ? v : undefined),
   pttMode: (v) => (v === "hold" || v === "toggle" ? v : undefined),
   pttSound: onOff,
+  // The address tablets should use (the QR code), when the automatic choice is wrong;
+  // empty for automatic.
+  host: (v) => (v === "" || /^(\d{1,3}\.){3}\d{1,3}$/.test(v) || /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/i.test(v) ? v : undefined),
   // JSON list of { name, url }: at most 12, https only.
   links: (v) => {
     let list;
@@ -911,14 +914,32 @@ server.on("error", (err) => {
   if (err.code !== "EADDRINUSE") throw err;
   fatal(`Port ${config.port} is already in use. Is Tablet Deck already running? Otherwise change "port" in ${CONFIG_PATH}.`);
 });
-// This PC's network addresses, and the one a tablet most likely shares.
+// Adapters a tablet can't be on: VPNs, virtual machines, WSL and Docker. Matched on the
+// name Windows gives the adapter ("vEthernet (WSL)", "NordLynx", "Tailscale", ...).
+const VIRTUAL_ADAPTER = new RegExp([
+  "vEthernet", "WSL", "Hyper-V", "VirtualBox", "VMware", "VMnet", "Docker", "Loopback", "Bluetooth",
+  "Tailscale", "ZeroTier", "Hamachi", "NordLynx", "Nord", "Proton", "WireGuard", "OpenVPN", "TAP-", "Wintun",
+  "Mullvad", "ExpressVPN", "Surfshark", "PIA", "CyberGhost", "Windscribe", "Cisco", "AnyConnect",
+  "Fortinet", "FortiClient", "GlobalProtect", "PANGP", "Juniper", "Pulse", "SonicWall", "Radmin", "VPN",
+].join("|"), "i");
+
+// This PC's network addresses, best guess first, and the one a tablet most likely shares
+// (the QR code): the "host" setting if set, else a private address on a real adapter.
 function addresses() {
-  const ips = Object.values(os.networkInterfaces()).flat()
-    .filter((i) => i && i.family === "IPv4" && !i.internal && !i.address.startsWith("169.254"))
-    .map((i) => i.address);
-  // Home networks are usually 192.168.x.x or 10.x.x.x; VPN and virtual adapters come later.
-  const lan = ips.find((ip) => ip.startsWith("192.168.")) || ips.find((ip) => ip.startsWith("10.")) || ips[0];
-  return { ips, lan };
+  const all = [];
+  for (const [name, infos] of Object.entries(os.networkInterfaces())) {
+    for (const i of infos || []) {
+      if (i.family === "IPv4" && !i.internal && !i.address.startsWith("169.254")) {
+        all.push({ name, ip: i.address, virtual: VIRTUAL_ADAPTER.test(name) });
+      }
+    }
+  }
+  // Home networks are usually 192.168.x.x, then 10.x.x.x or 172.16-31.x.x.
+  const rank = (a) => (a.virtual ? 10 : 0) + (a.ip.startsWith("192.168.") ? 0 : a.ip.startsWith("10.") ? 1
+    : /^172\.(1[6-9]|2\d|3[01])\./.test(a.ip) ? 2 : 3);
+  const sorted = all.sort((a, b) => rank(a) - rank(b));
+  const lan = config.host || (sorted[0] && sorted[0].ip);
+  return { all: sorted, ips: sorted.map((a) => a.ip), lan };
 }
 
 // Everything the app window shows and its settings dialog edits. Sent again after a
@@ -938,18 +959,23 @@ function sendReady() {
 }
 
 server.listen(config.port, "0.0.0.0", () => {
-  const { ips, lan } = addresses();
+  const { all, ips, lan } = addresses();
   console.log(`\nTablet Deck${VERSION ? ` ${VERSION}` : ""} running${DRY_RUN ? " (DRY RUN: no keys are sent)" : ""}.`);
   if (UI) { sendReady(); return; }
   if (INSTALLED) console.log(`Settings: ${CONFIG_PATH}`);
   console.log("Open this on your tablet (same Wi-Fi/network):");
-  for (const ip of ips) console.log(`   http://${ip}:${config.port}/?t=${config.token}`);
+  if (config.host && !ips.includes(config.host)) console.log(`   http://${config.host}:${config.port}/?t=${config.token}   (the "host" setting)`);
+  for (const a of all) {
+    const note = a.virtual ? "   (VPN or virtual adapter: tablets usually can't reach this)" : "";
+    console.log(`   ${a.name}: http://${a.ip}:${config.port}/?t=${config.token}${note}`);
+  }
   if (lan) {
-    console.log(`\nOr scan this with the tablet's camera (${lan}):\n`);
+    console.log(`\nOr scan this with the tablet's camera (${lan}${config.host ? `, from the "host" setting` : ""}):`);
+    console.log(`If the tablet can't open it, set "host" in ${CONFIG_PATH} to the address of your Wi-Fi or Ethernet.\n`);
     console.log(qr.toTerminal(`http://${lan}:${config.port}/?t=${config.token}`, { color: process.stdout.isTTY }));
   }
   console.log(`\nPairing code: ${config.token}`);
-  console.log(`(You can also open http://${ips[0] || "<this PC's IP>"}:${config.port} and type the code.)`);
+  console.log(`(You can also open http://${lan || "<this PC's IP>"}:${config.port} and type the code.)`);
   console.log(`\nLayout editor (on this PC): http://localhost:${config.port}/editor.html?t=${config.token}`);
   console.log(config.onlyWhenGameFocused
     ? "\nKeys are only sent while Star Citizen is the window in front.\n"
