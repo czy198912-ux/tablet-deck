@@ -82,10 +82,10 @@ key.
 <td valign="top">
 
 ### ✏️ Layout editor and starter layouts
-Drag buttons around and change their keys, labels, icons and animations. Or
-pick a starter layout for **Combat**, **Mining & Salvage** or **Hauling &
-Exploration**, or one for the **Prospector** or **Vulture**, separately on
-each tablet.
+Drag buttons around and change their keys, labels, icons and animations, and
+share layouts as files. Or pick a starter layout for **Combat**, **Mining &
+Salvage** or **Hauling & Exploration**, or one for the **Prospector** or
+**Vulture**, separately on each tablet.
 
 </td>
 <td valign="top">
@@ -321,6 +321,14 @@ deck exactly as the tablet does, but clicking a button selects it:
 **Save** stores your own copy (e.g. `my-hud`); the built-in layouts never
 change. With **Use on tablets** ticked, connected tablets switch to it and
 reload by themselves. The editor only works on the PC running Tablet Deck.
+
+**Share your layout:** **Export** saves the open layout as a `.json` file to
+send to friends. **Import…** opens such a file in the editor, not saved yet, so
+you can check its buttons and keys first; **Save** then adds it to your layouts
+with the same checks as your own edits. A layout presses whatever keys its
+buttons say, so only import files from people you trust. Made one others might
+like? Share it with a
+[layout idea](https://github.com/nodieCode/tablet-deck/issues/new?template=layout_idea.yml).
 
 ### Voice commands
 

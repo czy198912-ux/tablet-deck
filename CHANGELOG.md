@@ -7,6 +7,9 @@ before tagging a release.
 
 ## Unreleased
 
+- **Share layouts:** the layout editor can **Export** a layout as a file and
+  **Import** one from a friend. An import opens unsaved, so you can check its
+  buttons and keys before saving it with the usual checks.
 - **Ship layouts for the Prospector and the Vulture:** each starts with a panel
   of that ship's controls, made from the deck's own buttons, on tablets and
   phones.
