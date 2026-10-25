@@ -99,7 +99,8 @@
   const DEMO = new URLSearchParams(location.search).has("demo") || window.DECK_DEMO === true;
   const DEMO_LAYOUTS = [
     [device === "phone" ? "layouts/hud-phone.json" : "layouts/hud.json", "Tablet Deck HUD"],
-    ...[["combat", "Combat"], ["mining-salvage", "Mining & Salvage"], ["hauling-exploration", "Hauling & Exploration"]]
+    ...[["combat", "Combat"], ["mining-salvage", "Mining & Salvage"], ["hauling-exploration", "Hauling & Exploration"],
+      ["prospector", "Prospector"], ["vulture", "Vulture"]]
       .map(([id, name]) => [`layouts/${id}${device === "phone" ? "-phone" : ""}.json`, name]),
     ["layouts/star-citizen.json", "Star Citizen (tabbed grid)"],
   ];

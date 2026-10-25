@@ -84,7 +84,8 @@ key.
 ### ✏️ Layout editor and starter layouts
 Drag buttons around and change their keys, labels, icons and animations. Or
 pick a starter layout for **Combat**, **Mining & Salvage** or **Hauling &
-Exploration**, separately on each tablet.
+Exploration**, or one for the **Prospector** or **Vulture**, separately on
+each tablet.
 
 </td>
 <td valign="top">
@@ -261,10 +262,14 @@ choose under **Layout**. Each tablet and phone remembers its own choice:
 | **Combat** | Power/Landing, Shields, Targeting and Flight Assist first; Combat, QT/Systems, Operator Modes and Crew first |
 | **Mining & Salvage** | Mining and Salvage first; Operator Modes, QT/Systems, Crew and On Foot first |
 | **Hauling & Exploration** | Power/Landing, Flight Assist and Targeting first; QT/Systems, Crew, On Foot and Emotes first |
+| **Prospector** | A Prospector panel first (laser, modules, flight ready, gear, lights, quantum), then Mining; Operator Modes first |
+| **Vulture** | A Vulture panel first (salvage, flight ready, gear, VTOL, quantum, doors), then Salvage; Operator Modes first |
 | **Star Citizen** | A simpler tabbed grid of buttons |
 
-The starter layouts have every panel too; they just put the ones for that kind of
-flying first, so Emotes and the rest are always a few arrow taps away. Phones get
+The starter and ship layouts have every panel too; they just put the ones for that
+kind of flying first, so Emotes and the rest are always a few arrow taps away. The
+ship panels reuse the deck's own buttons, so their keys and voice commands are the
+same as everywhere else (phones split a ship panel over two pages). Phones get
 versions sized for an iPhone 15 Pro in landscape that scale to fit other phones.
 Hold the phone sideways. Layouts you make in the editor show up in the list too.
 

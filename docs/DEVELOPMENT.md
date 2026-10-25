@@ -124,8 +124,10 @@ Key names: `a`-`z`, `0`-`9`, `f1`-`f24`, `np_0`-`np_9`, `np_period`, `np_add`,
 
 ### Generated layouts
 
-The phone layout and the starter layouts are generated from `layouts/hud.json`,
-so keys and animations match. After editing it:
+The phone layout and the starter and ship layouts are generated from
+`layouts/hud.json`, so keys and animations match. Ship layouts copy the HUD's
+buttons into their own panel under new ids (`pr-…`, `vu-…`); to add a ship, add
+it to `SHIPS` in `tools/make-starter-layouts.js`. After editing it:
 
 ```
 node tools/make-phone-layout.js

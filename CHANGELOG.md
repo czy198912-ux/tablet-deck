@@ -5,6 +5,12 @@ section becomes the notes of its
 [GitHub release](https://github.com/nodieCode/tablet-deck/releases), so add one
 before tagging a release.
 
+## Unreleased
+
+- **Ship layouts for the Prospector and the Vulture:** each starts with a panel
+  of that ship's controls, made from the deck's own buttons, on tablets and
+  phones.
+
 ## 1.3.1 (2026-10-24)
 
 - **Sharper text in the app window:** text is drawn with ClearType on solid

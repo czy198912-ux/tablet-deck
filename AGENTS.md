@@ -69,7 +69,7 @@ Never edit these by hand; change the source and rerun the tool:
 | generated | from | rerun |
 |---|---|---|
 | `layouts/hud-phone.json` | `layouts/hud.json`, `tools/make-phone-layout.js` | `node tools/make-phone-layout.js` |
-| starter layouts (`combat*.json`, `mining-salvage*.json`, `hauling-exploration*.json`) | `hud.json`, `hud-phone.json`, `tools/make-starter-layouts.js` | `node tools/make-starter-layouts.js` (after the phone layout) |
+| starter and ship layouts (`combat*.json`, `mining-salvage*.json`, `hauling-exploration*.json`, `prospector*.json`, `vulture*.json`) | `hud.json`, `hud-phone.json`, `tools/make-starter-layouts.js` | `node tools/make-starter-layouts.js` (after the phone layout) |
 | `keybinds/TabletDeck-StarCitizen.xml` | every button's `scAction` and keys | `node tools/make-profile.js` |
 
 A new `scAction` must be added to `ACTIONMAPS` in `tools/make-profile.js`, or
