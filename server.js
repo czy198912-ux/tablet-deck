@@ -12,7 +12,7 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 const crypto = require("crypto");
-const { spawn, spawnSync, execFileSync } = require("child_process");
+const { spawn, spawnSync, execFile, execFileSync } = require("child_process");
 const qr = require("./qr");
 
 // node:sea is missing before Node 20; that's never the installed app.
@@ -1003,9 +1003,39 @@ function sendReady() {
     autoUpdate: config.autoUpdate !== false, tapMs: config.tapMs, voice: Boolean(config.voice),
     voiceLanguage: config.voiceLanguage, portFromCommandLine: Boolean(PORT_OVERRIDE),
   });
+  checkNetwork();
+}
+
+// Windows only lets tablets in on networks it treats as Private (the firewall rule covers
+// private networks only), and it often calls a home network Public. Asks Windows which
+// kind the tablets' network is, so the window and console can say how to fix it. Checks
+// again every 20 s while it's Public, so the warning goes once the player changes it.
+// Local only: PowerShell reads Windows' own setting.
+let networkTimer = null, networkWarned = false;
+function checkNetwork() {
+  clearTimeout(networkTimer);
+  if (process.platform !== "win32") return;
+  const { all, lan } = addresses();
+  const adapter = (all.find((a) => a.ip === lan) || {}).name;
+  if (!adapter) return;
+  const script = "Get-NetConnectionProfile | ForEach-Object { $_.InterfaceAlias + '|' + $_.NetworkCategory }";
+  execFile("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", script], { windowsHide: true, timeout: 15000 }, (err, stdout) => {
+    if (err) return; // can't tell: say nothing
+    const profiles = new Map(String(stdout).split(/\r?\n/).map((l) => l.trim().split("|")).filter((p) => p.length === 2));
+    const category = profiles.get(adapter);
+    if (!category) return;
+    ui({ t: "network", adapter, category });
+    if (category === "Public") {
+      if (!UI && !networkWarned) console.warn(`\nWindows treats "${adapter}" as a Public network, so tablets can't connect. In Windows: Settings > Network & Internet > ${adapter} > set it to Private.\n`);
+      networkWarned = true;
+      networkTimer = setTimeout(checkNetwork, 20000);
+      networkTimer.unref();
+    }
+  });
 }
 
 server.listen(config.port, "0.0.0.0", () => {
+  if (!UI) checkNetwork(); // with the window, sendReady checks
   const { all, ips, lan } = addresses();
   console.log(`\nTablet Deck${VERSION ? ` ${VERSION}` : ""} running${DRY_RUN ? " (DRY RUN: no keys are sent)" : ""}.`);
   if (UI) { sendReady(); return; }

@@ -10,6 +10,11 @@ before tagging a release.
 - **Button lights can be turned off** under Display in Deck settings. The deck
   can't read the game, so lit buttons only follow your taps; with this off,
   buttons just press their keys, without ON/OFF.
+- **The window tells you when Windows treats your network as Public**, the most
+  common reason a tablet can't connect, with a link to Windows' network
+  settings. The warning goes away by itself once it's Private.
+- **Feedback & ideas** links in the window's System panel, its tray menu and at
+  the bottom of Deck settings, to GitHub's issue forms.
 - The app window no longer shows a dotted focus ring around Settings when it
   opens; it only appears when you move around with Tab.
 

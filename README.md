@@ -141,6 +141,9 @@ download, and all the source code is here.
 - Make sure the tablet is on the same Wi-Fi or network as the PC.
 - Check that Windows treats your network as **Private** (Settings → Network &
   Internet → your network). The firewall rule only covers private networks.
+  Tablet Deck checks this itself: when the network is Public, the window says so
+  under the address, with a **Set it to Private** link to Windows' network
+  settings.
 - Type the address exactly as the Tablet Deck window shows it, including the
   port (`:8765`).
 - **The QR code opens nothing:** with a VPN, WSL or a virtual machine, your PC
@@ -457,6 +460,9 @@ the game's files or memory.
 - No accounts, ads or tracking. The only internet traffic is the update check
   (GitHub; you can turn it off) and the theme fonts the tablet loads from Google
   Fonts. See [CODE_SIGNING.md](CODE_SIGNING.md#privacy).
+- Ideas, problems or a layout to share? **Feedback & ideas** in the window's
+  System panel, at the bottom of Deck settings on the tablet, or the
+  [issue forms](https://github.com/nodieCode/tablet-deck/issues/new/choose).
 - Found a security problem? Please report it privately; see
   [SECURITY.md](SECURITY.md).
 - [Code signing policy](CODE_SIGNING.md): who builds and signs releases, and how.

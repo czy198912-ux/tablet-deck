@@ -273,6 +273,8 @@ html[data-no-lights] [data-state-group] > .fx-state { display: none; }
 }
 #picker h3 b { color: #4fb3ff; margin-right: 2px; }
 #picker .sheet-note { margin: 0; color: #8aa0b8; font: 13px/1.4 "Exo 2", system-ui, sans-serif; }
+#picker .sheet-foot { margin: 22px 0 0; text-align: center; color: #8aa0b8; font: 13px/1.4 "Exo 2", system-ui, sans-serif; }
+#picker .sheet-foot a { color: #4fb3ff; }
 #layoutPick {
   width: 100%; min-height: 44px; padding: 10px 12px; border-radius: 8px; font: 600 15px "Exo 2", system-ui, sans-serif;
   background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.25); color: #e8eef5;

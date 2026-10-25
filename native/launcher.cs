@@ -1008,7 +1008,12 @@ class DeckWindow : Form
     RectangleF connectBox, linkBox, telemetryBox, voiceBox, systemBox, logBox, bannerBox;
 
     readonly HudView.Item addressLink, copyButton, settingsButton, editButton, restartButton;
-    readonly HudView.Item voiceListButton, strictness, startWithWindows, autoUpdate, folderLink, checkLink;
+    readonly HudView.Item voiceListButton, strictness, startWithWindows, autoUpdate, folderLink, checkLink, feedbackLink;
+    readonly HudView.Item networkLink;
+    // The adapter Windows treats as a Public network (tablets can't connect), or "".
+    string publicNetwork = "";
+    bool publicNetworkNoticed;
+    const string FeedbackPage = "https://github.com/nodieCode/tablet-deck/issues/new/choose";
     readonly HudView.Item bannerWhatsNew, bannerUpdate, bannerLater;
     string editorUrl = ""; // the layout editor on this PC, set when the server is ready
     bool serverReady; // the server has said "ready" and takes settings on stdin
@@ -1104,6 +1109,12 @@ class DeckWindow : Form
         folderLink = hud.Add(HudView.Kind.Link, "Settings folder", delegate { OpenSettingsFolder(); });
         folderLink.Tip = "Opens the folder with config.json and your own layouts";
         checkLink = hud.Add(HudView.Kind.Link, "Check for updates now", delegate { CheckForUpdates(true); });
+        feedbackLink = hud.Add(HudView.Kind.Link, "Feedback & ideas", delegate { Process.Start(FeedbackPage); });
+        feedbackLink.Tip = "Report a problem or suggest an idea on GitHub";
+        // Opens Windows' network settings, where the network can be set to Private.
+        networkLink = hud.Add(HudView.Kind.Link, "Set it to Private ›", delegate { Process.Start("ms-settings:network-status"); });
+        networkLink.Visible = false;
+        networkLink.Tip = "Pick your network there and set its network profile to Private";
 
         // The update banner, above the panels when there's news.
         bannerWhatsNew = hud.Add(HudView.Kind.Button, "What's new", delegate { if (whatsNewUrl != "") Process.Start(whatsNewUrl); });
@@ -1152,6 +1163,7 @@ class DeckWindow : Form
         menu.Items.Add("Copy link", null, delegate { CopyLink(); });
         menu.Items.Add("Edit layout", null, delegate { OpenEditor(); });
         menu.Items.Add("Check for updates now", null, delegate { CheckForUpdates(true); });
+        menu.Items.Add("Feedback & ideas", null, delegate { Process.Start(FeedbackPage); });
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Quit", null, delegate { Close(); });
         tray.ContextMenuStrip = menu;
@@ -1191,9 +1203,9 @@ class DeckWindow : Form
         connectBox = new RectangleF(20, top, 280, 300);
         linkBox = new RectangleF(316, top, w - 336, 172);
         telemetryBox = new RectangleF(316, top + 184, w - 336, 116);
-        voiceBox = new RectangleF(20, top + 312, w - 356, 124);
-        systemBox = new RectangleF(w - 320, top + 312, 300, 124);
-        logBox = new RectangleF(20, top + 448, w - 40, Math.Max(70, area.Height - top - 448 - 16));
+        voiceBox = new RectangleF(20, top + 312, w - 356, 140);
+        systemBox = new RectangleF(w - 320, top + 312, 300, 140);
+        logBox = new RectangleF(20, top + 464, w - 40, Math.Max(70, area.Height - top - 464 - 16));
 
         float x = linkBox.X + 16, right = linkBox.Right - 16, row = linkBox.Bottom - 42;
         addressLink.Box = new RectangleF(x, linkBox.Y + 46, right - x, 20);
@@ -1205,8 +1217,10 @@ class DeckWindow : Form
         strictness.Box = new RectangleF(voiceBox.X + 104, voiceBox.Y + 72, 190, 14);
         startWithWindows.Box = new RectangleF(systemBox.X + 16, systemBox.Y + 32, systemBox.Width - 32, 22);
         autoUpdate.Box = new RectangleF(systemBox.X + 16, systemBox.Y + 60, systemBox.Width - 32, 22);
-        folderLink.Box = new RectangleF(systemBox.X + 16, systemBox.Y + 94, 120, 18);
-        checkLink.Box = new RectangleF(systemBox.X + 146, systemBox.Y + 94, systemBox.Width - 162, 18);
+        folderLink.Box = new RectangleF(systemBox.X + 16, systemBox.Y + 92, 120, 18);
+        checkLink.Box = new RectangleF(systemBox.X + 146, systemBox.Y + 92, systemBox.Width - 162, 18);
+        feedbackLink.Box = new RectangleF(systemBox.X + 16, systemBox.Y + 112, 140, 18);
+        networkLink.Box = new RectangleF(linkBox.Right - 16 - 150, linkBox.Y + 67, 150, 18);
 
         float bx = bannerBox.Right - 8;
         foreach (var b in new[] { bannerLater, bannerUpdate, bannerWhatsNew })
@@ -1304,7 +1318,10 @@ class DeckWindow : Form
         {
             Hud.Spaced(g, "ADDRESS", Hud.Label(11.5f), Hud.Dim, x, r.Y + 32, 1.6f);
             if (link == "") Hud.Text(g, "No network found. Connect this PC to Wi-Fi or a network.", Hud.Body(13), Hud.Warn, new RectangleF(x, r.Y + 46, w, 20));
-            if (others != "") Hud.Text(g, "ALSO  " + others, Hud.Mono(11, false), Hud.Dim, new RectangleF(x, r.Y + 68, w, 16));
+            if (publicNetwork != "")
+                Hud.Text(g, "Windows treats \"" + publicNetwork + "\" as Public: tablets can't connect.",
+                    Hud.Body(12), Hud.Warn, new RectangleF(x, r.Y + 67, networkLink.Box.X - x - 8, 18));
+            else if (others != "") Hud.Text(g, "ALSO  " + others, Hud.Mono(11, false), Hud.Dim, new RectangleF(x, r.Y + 68, w, 16));
         }
         else Hud.Wrapped(g, stateText, Hud.Body(13.5f), stateColor, new RectangleF(x, r.Y + 34, w, 50));
         Hud.Spaced(g, "PAIRING CODE", Hud.Label(11.5f), Hud.Dim, x, r.Y + 92, 1.6f);
@@ -1613,6 +1630,16 @@ class DeckWindow : Form
                 {
                     voiceText = "Unavailable: " + Str(ev, "text");
                     voiceColor = Hud.Warn;
+                }
+                break;
+            case "network":
+                publicNetwork = Str(ev, "category") == "Public" ? Str(ev, "adapter") : "";
+                networkLink.Visible = publicNetwork != "";
+                if (publicNetwork != "" && !publicNetworkNoticed)
+                {
+                    publicNetworkNoticed = true;
+                    AppendLog("Windows treats \"" + publicNetwork + "\" as a Public network, so tablets can't connect. In Windows: Settings > Network & Internet > " + publicNetwork + " > set it to Private.", Hud.Warn);
+                    if (!Visible) Notify("Tablets can't connect", "Windows treats \"" + publicNetwork + "\" as a Public network. Open Tablet Deck to fix it.");
                 }
                 break;
             case "fatal":
