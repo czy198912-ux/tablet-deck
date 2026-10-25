@@ -6,6 +6,13 @@ Steps for signing Tablet Deck's releases with free code signing from
 (see [Code signing](DEVELOPMENT.md#code-signing)). SignPath's forms and menus
 change from time to time, so follow their wording where it differs from this.
 
+> **Status:** the first application (October 2026) was declined because the
+> project wasn't widely known yet. SignPath Foundation looks for outside signs
+> of trust: GitHub stars, forks and contributors, articles, independent posts
+> or videos (Reddit, YouTube, forums) and sustained activity. Collect links to
+> those and apply again once there are some; a paid SignPath subscription works
+> with the same setup in the meantime.
+
 - [1. Before applying](#1-before-applying)
 - [2. Applying](#2-applying)
 - [3. After approval](#3-after-approval)

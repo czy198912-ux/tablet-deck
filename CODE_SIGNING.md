@@ -1,11 +1,14 @@
 # Code signing policy
 
-Free code signing provided by [SignPath.io](https://about.signpath.io),
-certificate by [SignPath Foundation](https://signpath.org).
+Tablet Deck plans to sign its releases with free code signing from
+[SignPath.io](https://about.signpath.io) and a certificate by
+[SignPath Foundation](https://signpath.org).
 
-> Status: not signed yet. Until SignPath Foundation approves the project,
+> Status: not signed yet. SignPath Foundation signs projects once they're
+> widely known, and Tablet Deck will apply again when it is. Until then,
 > releases are unsigned and Windows shows an "unknown publisher" warning (see
-> Troubleshooting in the README).
+> Troubleshooting in the README). Each release lists its installer's SHA-256
+> checksum.
 
 ## What is signed
 
