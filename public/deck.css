@@ -204,6 +204,42 @@ body.pairing.offline main { opacity: 1; filter: none; }
 #night { position: fixed; inset: 0; z-index: 9; pointer-events: none; background: #000; opacity: 0; transition: opacity .3s ease; }
 [data-night] #night { opacity: .5; }
 
+/* ---------- large text and high contrast ---------- */
+/* Both are switches in Deck settings (Display), kept per device like night mode. They sit on
+   <html> and win over the theme and HUD styles by specificity, whatever the theme. */
+/* The top bar, the small system tiles and mode switches keep their size: they're icons or
+   one short word in a small box. */
+html[data-large] .hud-btn:not(.s-top):not(.s-tile):not(.s-switch) { font-size: 18px; font-weight: 700; }
+html[data-large] .s-wide { font-size: 19px; }
+html[data-large] .hud-grid.compact .hud-btn { font-size: 15px; font-weight: 700; }
+/* Phone layouts (compact) have the least room. */
+html[data-large] .compact .hud-btn:not(.s-top):not(.s-tile):not(.s-switch) { font-size: 16px; }
+html[data-large] .compact .hud-grid .hud-btn { font-size: 13.5px; font-weight: 700; }
+html[data-large] .fx-state { font-size: 11px; }
+html[data-large] .s-tile > .fx-state { font-size: 9px; }
+html[data-large] .key > .fx-state { font-size: 12px; }
+html[data-large] .hud-header { font-size: 13px; }
+html[data-large] .hud-pager .title span { font-size: 19px; }
+html[data-large] .label { font-size: 21px; font-weight: 700; }
+html[data-large] .keycap { font-size: 13px; }
+
+/* Black, white and strong colours; no glows, textures or see-through faces. The theme's
+   layout (corners, case) stays, but its fonts give way to plain, easy-to-read ones. */
+html[data-contrast][data-theme] {
+  --bg: #000; --bg-art: none; --panel: #000; --panel-hi: #262626;
+  --line: #bdbdbd; --line-hi: #fff;
+  --text: #fff; --dim: #e0e0e0;
+  --accent: #ffd60a; --green: #3dff8b; --amber: #ffb000; --red: #ff5c5c; --blue: #5cc8ff;
+  --font-display: "Exo 2", system-ui, sans-serif; --font-body: "Exo 2", system-ui, sans-serif;
+  --label-weight: 700; --label-track: .04em;
+  --key-bg: #000; --key-top: none; --key-top-h: 0; --key-shadow: none; --key-edge: 4px;
+  --icon-glow: none; --label-shadow: none; --state-shadow: none;
+  color-scheme: dark;
+}
+html[data-contrast] #canvas { --hud-line: #bdbdbd; --hud-face: #000; --hud-face-hi: #000; background: #000; }
+html[data-contrast] .hud-btn, html[data-contrast] .key { border-width: 2px; }
+html[data-contrast] body { background: #000; }
+
 /* ---------- theme picker and voice commands list (full-screen sheets) ---------- */
 #picker, #voiceHelp {
   position: fixed; inset: 0; z-index: 10; display: none; flex-direction: column;

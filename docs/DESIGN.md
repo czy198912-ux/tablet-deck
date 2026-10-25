@@ -191,5 +191,11 @@ has focus.
   at least 44 points in both directions where there's room.
 - **Messages** (toasts, the theme picker, "Star Citizen not focused") must stay
   readable with night mode on.
+- **Large text and high contrast** (switches in Deck settings, `data-large` and
+  `data-contrast` on `<html>`, styles at the end of `deck.css`) must keep
+  working: check new button styles with both on, at tablet and phone size.
+  High contrast overrides the theme tokens, so a new style that only uses the
+  tokens follows it by itself; one with its own colours or glows needs an
+  override there.
 - Buttons without a text label, like the icon-only top bar, need an
   `aria-label`.

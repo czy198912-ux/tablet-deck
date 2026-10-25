@@ -283,6 +283,17 @@
   $("resetStatesBtn").onclick = resetStates;
   applyNight(store.get("night") === "1");
 
+  // Large text and high contrast, for reading the deck at a glance; each device remembers them.
+  for (const [btn, attr] of [["largeBtn", "data-large"], ["contrastBtn", "data-contrast"]]) {
+    const apply = (on) => {
+      document.documentElement.toggleAttribute(attr, on);
+      $(btn).setAttribute("aria-checked", String(on));
+      store.set(attr, on ? "1" : "");
+    };
+    $(btn).onclick = () => apply(!document.documentElement.hasAttribute(attr));
+    apply(store.get(attr) === "1");
+  }
+
   // ---------- connection ----------
 
   // Status shows in the header (grid layouts) and in canvas chrome, so update every copy.

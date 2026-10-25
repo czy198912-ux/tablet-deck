@@ -363,8 +363,12 @@ and how sure it was, so you can tune it.
 ### Themes
 
 Tap the sliders button (top right) and pick a manufacturer theme under **Theme**
-in **Deck settings**. Each tablet remembers its own. **Night mode**, under
-**Display**, dims the whole deck for a dark room.
+in **Deck settings**. Each tablet remembers its own. Under **Display**:
+
+- **Night mode** dims the whole deck for a dark room.
+- **Large text** makes labels bigger and bolder, easier to read at a glance.
+- **High contrast** turns any theme black and white with strong colours, plain
+  fonts and no glows.
 
 <p align="center">
   <img src="docs/themes.jpg" alt="The deck in all 12 manufacturer themes" width="100%">

@@ -13,6 +13,8 @@ before tagging a release.
 - **Ship layouts for the Prospector and the Vulture:** each starts with a panel
   of that ship's controls, made from the deck's own buttons, on tablets and
   phones.
+- **Large text** and **High contrast** switches under Display in Deck settings,
+  for reading the deck at a glance. High contrast works over any theme.
 
 ## 1.3.1 (2026-10-24)
 
