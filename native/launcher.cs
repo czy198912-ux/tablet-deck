@@ -750,12 +750,27 @@ class HudView : Control
         else if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space) Activate(focused);
     }
 
-    // Tabbed into from another control (directed): start at the first item, or the last
-    // with Shift. Focus that comes with the window opening or a click shows no focus ring.
+    // When Tab was last pressed anywhere in the app. Windows also moves focus "by Tab" when a
+    // window opens, so only a real Tab press shows the focus ring.
+    static DateTime lastTab = DateTime.MinValue;
+
+    class TabWatch : IMessageFilter
+    {
+        public bool PreFilterMessage(ref Message m)
+        {
+            if (m.Msg == 0x0100 && (int)m.WParam == 0x09) lastTab = DateTime.Now; // WM_KEYDOWN, VK_TAB
+            return false;
+        }
+    }
+
+    static HudView() { Application.AddMessageFilter(new TabWatch()); }
+
+    // Tabbed into from another control: start at the first item, or the last with Shift.
+    // Focus that comes with the window opening or a click shows no focus ring.
     protected override void Select(bool directed, bool forward)
     {
         var usable = Items.FindAll(i => i.Visible && i.Enabled);
-        if (directed && usable.Count > 0)
+        if (directed && usable.Count > 0 && (DateTime.Now - lastTab).TotalMilliseconds < 500)
         {
             focused = forward ? usable[0] : usable[usable.Count - 1];
             showFocus = true;

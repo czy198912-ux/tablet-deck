@@ -5,6 +5,11 @@ section becomes the notes of its
 [GitHub release](https://github.com/nodieCode/tablet-deck/releases), so add one
 before tagging a release.
 
+## Unreleased
+
+- The app window no longer shows a dotted focus ring around Settings when it
+  opens; it only appears when you move around with Tab.
+
 ## 1.4.0 (2026-10-25)
 
 - **Share layouts:** the layout editor can **Export** a layout as a file and
