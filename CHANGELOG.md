@@ -5,7 +5,7 @@ section becomes the notes of its
 [GitHub release](https://github.com/nodieCode/tablet-deck/releases), so add one
 before tagging a release.
 
-## Unreleased
+## 1.5.0 (2026-10-25)
 
 - **Button lights can be turned off** under Display in Deck settings. The deck
   can't read the game, so lit buttons only follow your taps; with this off,
