@@ -198,7 +198,7 @@ going again; your settings are kept.
 
 ### The app window
 
-<img src="docs/app-window.png" alt="The Tablet Deck window: QR code, address, pairing code, connected tablets, voice status and a log of presses" width="420" align="right">
+<img src="docs/app-window.png" alt="The Tablet Deck window: HUD panels with the QR code, address and pairing code, telemetry of tablets, where keys go and presses, voice status, settings and a log" width="460" align="right">
 
 The window shows the QR code, address and pairing code, and live telemetry: how
 many tablets are connected, where keys go, and the presses of the last minute,
