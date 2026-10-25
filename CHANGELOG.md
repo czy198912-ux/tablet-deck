@@ -5,7 +5,7 @@ section becomes the notes of its
 [GitHub release](https://github.com/nodieCode/tablet-deck/releases), so add one
 before tagging a release.
 
-## Unreleased
+## 1.4.0 (2026-10-25)
 
 - **Share layouts:** the layout editor can **Export** a layout as a file and
   **Import** one from a friend. An import opens unsaved, so you can check its
