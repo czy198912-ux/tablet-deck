@@ -7,6 +7,9 @@ before tagging a release.
 
 ## Unreleased
 
+- **Button lights can be turned off** under Display in Deck settings. The deck
+  can't read the game, so lit buttons only follow your taps; with this off,
+  buttons just press their keys, without ON/OFF.
 - The app window no longer shows a dotted focus ring around Settings when it
   opens; it only appears when you move around with Tab.
 

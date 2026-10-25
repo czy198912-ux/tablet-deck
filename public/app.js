@@ -294,6 +294,17 @@
     apply(store.get(attr) === "1");
   }
 
+  // Button lights: on unless turned off on this device. Kept as "data-no-lights" so the
+  // default (no attribute) is lit.
+  function applyLights(on, refresh) {
+    document.documentElement.toggleAttribute("data-no-lights", !on);
+    $("lightsBtn").setAttribute("aria-checked", String(on));
+    store.set("lights", on ? "" : "off");
+    if (refresh) showStates(); // not at start: the buttons and their states come later
+  }
+  $("lightsBtn").onclick = () => applyLights(!lightsOn(), true);
+  applyLights(store.get("lights") !== "off", false);
+
   // ---------- connection ----------
 
   // Status shows in the header (grid layouts) and in canvas chrome, so update every copy.
@@ -391,9 +402,11 @@
   // On/off state per group (doors open, gear down), kept by the PC so every tablet and
   // voice command agree. Buttons with a "state" light up while their group is on.
   let states = {};
+  // With Button lights off (Deck settings), everything shows as off and stays that way.
+  const lightsOn = () => !document.documentElement.hasAttribute("data-no-lights");
   function showStates(group) {
     for (const el of document.querySelectorAll("[data-state-group]")) {
-      if (group === undefined || el.dataset.stateGroup === group) el._showState(Boolean(states[el.dataset.stateGroup]), group !== undefined);
+      if (group === undefined || el.dataset.stateGroup === group) el._showState(lightsOn() && Boolean(states[el.dataset.stateGroup]), group !== undefined && lightsOn());
     }
   }
   // Demo mode has no PC, so presses change the state here, the way server.js does.
@@ -412,7 +425,7 @@
     if (btn.state && typeof btn.state.group === "string") {
       el.dataset.stateGroup = btn.state.group;
       el._showState = fx.show;
-      fx.show(Boolean(states[btn.state.group]), false);
+      fx.show(lightsOn() && Boolean(states[btn.state.group]), false);
     }
     let pointer = null;
     let waiting = null; // a press held back in case a second finger starts a swipe

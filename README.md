@@ -369,6 +369,9 @@ in **Deck settings**. Each tablet remembers its own. Under **Display**:
 - **Large text** makes labels bigger and bolder, easier to read at a glance.
 - **High contrast** turns any theme black and white with strong colours, plain
   fonts and no glows.
+- **Button lights** can be turned off. The deck can't read the game, so lit
+  buttons only follow your taps; if you also use your keyboard or HOTAS, they can
+  drift out of sync. **Reset button lights** clears them while they're on.
 
 <p align="center">
   <img src="docs/themes.jpg" alt="The deck in all 12 manufacturer themes" width="100%">
