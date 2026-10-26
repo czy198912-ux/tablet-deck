@@ -5,7 +5,7 @@ section becomes the notes of its
 [GitHub release](https://github.com/nodieCode/tablet-deck/releases), so add one
 before tagging a release.
 
-## Unreleased
+## 1.6.0 (2026-10-26)
 
 - **Español, Français and Deutsch:** the deck and the app window can show
   their text in Spanish, French or German. Each tablet and phone picks its
