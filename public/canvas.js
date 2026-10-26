@@ -3,6 +3,8 @@
 // panel elements are relative to their region.
 (() => {
   const NS = "deck-canvas";
+  // Shown text goes through the deck's language (i18n.js); English when it isn't loaded.
+  const tr = (s) => (window.DeckI18n ? window.DeckI18n.t(s) : s);
 
   let current = null; // the deck drawn last; a new one replaces it (switching layouts)
 
@@ -15,9 +17,8 @@
     // Small canvases (phone layouts) get tighter menus; wide ones ask phones to turn sideways.
     canvas.classList.toggle("compact", H < 500);
     stage.classList.toggle("landscape-only", W > H * 1.5);
-    if (!stage.querySelector(".hud-rotate")) {
-      stage.insertAdjacentHTML("beforeend", `<div class="hud-rotate"><span class="hud-ico">${D.deckIcon("swap")}</span>Turn your phone sideways</div>`);
-    }
+    stage.querySelector(".hud-rotate")?.remove(); // its text follows the language
+    stage.insertAdjacentHTML("beforeend", `<div class="hud-rotate"><span class="hud-ico">${D.deckIcon("swap")}</span>${tr("Turn your phone sideways")}</div>`);
 
     // Separate stores per canvas size, so phone and tablet keep their own page positions.
     const key = `${NS}-${W}x${H}`;
@@ -62,7 +63,7 @@
       if (html !== undefined) el.innerHTML = html;
       return el;
     };
-    const text = (el, sel, value) => { el.querySelector(sel).textContent = value; return el; };
+    const text = (el, sel, value) => { el.querySelector(sel).textContent = tr(value); return el; };
     // Each switch group starts on the first value its switch lists.
     const groupDefaults = {};
     (function scan(node) {
@@ -91,8 +92,8 @@
         el.innerHTML = `${icon}<span class="hud-lbl"></span>`;
         text(el, ".hud-lbl", def.label);
       }
-      el.setAttribute("aria-label", def.label);
-      el.title = `${def.label} — ${def.keys}`;
+      el.setAttribute("aria-label", tr(def.label));
+      el.title = `${tr(def.label)} — ${def.keys}`;
       D.bindButton(el, def);
       return el;
     }
@@ -108,7 +109,7 @@
         const el = box(make("button", "hud-btn s-top", ico), e);
         el.type = "button";
         el.onclick = e.action === "theme" ? D.openPicker : D.toggleFullscreen;
-        el.setAttribute("aria-label", e.action === "theme" ? "Deck settings" : "Fullscreen");
+        el.setAttribute("aria-label", tr(e.action === "theme" ? "Deck settings" : "Fullscreen"));
         return el;
       },
 
@@ -118,7 +119,7 @@
         const el = box(make("button", "hud-btn s-top js-talk", `<span class="hud-ico">${D.deckIcon("mic")}</span>${e.label ? `<span class="hud-lbl"></span>` : ""}`), e);
         if (e.label) text(el, ".hud-lbl", e.label);
         el.type = "button";
-        el.setAttribute("aria-label", "Hold to talk");
+        el.setAttribute("aria-label", tr("Hold to talk"));
         D.bindTalk(el);
         return el;
       },
@@ -127,7 +128,7 @@
       voicehelp(e) {
         const el = box(make("button", "hud-btn s-top js-voice", `<span class="hud-ico">${D.deckIcon("help")}</span>`), e);
         el.type = "button";
-        el.setAttribute("aria-label", "Voice commands list");
+        el.setAttribute("aria-label", tr("Voice commands list"));
         el.onclick = D.openVoiceHelp;
         return el;
       },
@@ -142,7 +143,7 @@
       "state-header"(e) {
         const values = Object.keys(e.labels);
         const cur = groupValue(e.group, values);
-        const el = box(make("div", "hud-header state", `<div><b>//</b><span class="a"></span> <em>_ :ENABLED</em></div><div class="b"></div>`), e);
+        const el = box(make("div", "hud-header state", `<div><b>//</b><span class="a"></span> <em>_ :${tr("ENABLED")}</em></div><div class="b"></div>`), e);
         text(el, ".a", e.labels[cur]);
         text(el, ".b", values.filter((v) => v !== cur).map((v) => e.labels[v]).join(" · "));
         return el;
@@ -280,9 +281,9 @@
       el.appendChild(body);
 
       const pager = make("div", "hud-pager",
-        `<button type="button" class="hud-btn s-pg prev" aria-label="Previous panel">${D.deckIcon("chev-left")}</button>
+        `<button type="button" class="hud-btn s-pg prev" aria-label="${tr("Previous panel")}">${D.deckIcon("chev-left")}</button>
          <div class="title"><span></span><div class="dots"></div></div>
-         <button type="button" class="hud-btn s-pg next" aria-label="Next panel">${D.deckIcon("chev-right")}</button>`);
+         <button type="button" class="hud-btn s-pg next" aria-label="${tr("Next panel")}">${D.deckIcon("chev-right")}</button>`);
       text(pager, ".title span", panel.title);
       pager.querySelector(".dots").innerHTML = ids.map((_, i) => `<i class="${i === idx ? "on" : ""}"></i>`).join("");
       const go = (d) => page(region.id, d);

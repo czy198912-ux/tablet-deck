@@ -110,6 +110,8 @@
   if (safe.length === 4 && safe.every((n) => n >= 0)) {
     ["top", "right", "bottom", "left"].forEach((side, i) => document.documentElement.style.setProperty(`--safe-${side}`, `${safe[i]}px`));
   }
+  // Shown text in the deck's language (i18n.js); layouts, keys and voice phrases stay English.
+  const tr = window.DeckI18n.t;
   let layout = null;
   let ws = null;
   let pageIndex = Number(store.get("page") || 0);
@@ -139,11 +141,11 @@
         <div class="top"><span class="emblem">${emblemSvg(t.emblem)}</span>
           <div><div class="name"></div><div class="tag"></div></div></div>
         <div class="key sample" data-color="">
-          <span class="glyph">${window.deckIcon("quantum-mode")}</span><span class="label">Quantum Mode</span>
+          <span class="glyph">${window.deckIcon("quantum-mode")}</span><span class="label">${tr("Quantum Mode")}</span>
         </div>
         <div class="swatches"><i style="background:var(--accent)"></i><i style="background:var(--green)"></i><i style="background:var(--amber)"></i><i style="background:var(--red)"></i><i style="background:var(--blue)"></i></div>`;
       card.querySelector(".name").textContent = t.name;
-      card.querySelector(".tag").textContent = `${t.full} · ${t.tag}`;
+      card.querySelector(".tag").textContent = `${t.full} · ${tr(t.tag)}`;
       card.onclick = () => { applyTheme(t.id); closePicker(); };
       cards.appendChild(card);
     }
@@ -163,7 +165,7 @@
         b.type = "button";
         b.textContent = name;
         b.onclick = () => {
-          if (DEMO) { toast(`With the app, this opens ${name} on your PC`, 2600); return; }
+          if (DEMO) { toast(tr("With the app, this opens {0} on your PC", name), 2600); return; }
           buzz();
           send({ t: "open", index });
         };
@@ -189,7 +191,7 @@
     if (DEMO) {
       const pick = $("layoutPick");
       pick.innerHTML = "";
-      for (const [file, name] of DEMO_LAYOUTS) { const o = document.createElement("option"); o.value = file; o.textContent = name; pick.appendChild(o); }
+      for (const [file, name] of DEMO_LAYOUTS) { const o = document.createElement("option"); o.value = file; o.textContent = tr(name); pick.appendChild(o); }
       pick.value = DEMO_LAYOUTS.some(([f]) => f === chosenLayout) ? chosenLayout : DEMO_LAYOUTS[0][0];
       return;
     }
@@ -200,8 +202,8 @@
         pick.innerHTML = "";
         const pcName = (data.layouts.find((l) => l.file === data.pcChoice) || {}).name || "default";
         const add = (value, text) => { const o = document.createElement("option"); o.value = value; o.textContent = text; pick.appendChild(o); };
-        add("", `PC's choice: ${pcName}`);
-        for (const l of data.layouts) add(l.file, l.custom ? `${l.name} (yours)` : l.name);
+        add("", tr("PC's choice: {0}", tr(pcName)));
+        for (const l of data.layouts) add(l.file, l.custom ? tr("{0} (yours)", l.name) : tr(l.name));
         pick.value = data.layouts.some((l) => l.file === chosenLayout) ? chosenLayout : "";
       })
       .catch(() => {});
@@ -209,6 +211,29 @@
   $("layoutPick").onchange = (e) => {
     closePicker();
     useLayout(e.target.value);
+  };
+
+  // ---------- language ----------
+
+  // Kept per device, like the layout. Switching redraws everything in place, without the
+  // reload that would replay the intro.
+  const langPick = $("langPick");
+  for (const [code, name] of window.DeckI18n.languages) {
+    const o = document.createElement("option");
+    o.value = code;
+    o.textContent = name;
+    langPick.appendChild(o);
+  }
+  langPick.value = window.DeckI18n.lang;
+  langPick.onchange = () => {
+    window.DeckI18n.set(langPick.value);
+    window.DeckI18n.apply();
+    buildPicker();
+    applyTheme(document.documentElement.dataset.theme);
+    fillLayoutPick();
+    refreshStatus();
+    if (document.body.classList.contains("pairing")) showPairing(false);
+    else if (layout) showLayout(layout);
   };
 
   // ---------- two-finger swipe between panels ----------
@@ -316,7 +341,7 @@
   function refreshStatus() {
     document.body.classList.toggle("offline", !online.on);
     for (const d of document.querySelectorAll("#dot, .js-dot")) d.classList.toggle("on", online.on);
-    for (const t of document.querySelectorAll("#statusText, .js-status")) t.textContent = online.text;
+    for (const t of document.querySelectorAll("#statusText, .js-status")) t.textContent = tr(online.text);
   }
 
   function send(obj) {
@@ -327,7 +352,7 @@
   let toastTimer = null;
   function toast(text, ms = 1800) {
     const el = $("toast");
-    el.textContent = text;
+    el.textContent = tr(text);
     // On canvas layouts, sit just above the pager bars so a message never covers the page names.
     const pager = document.querySelector("#canvas .hud-pager");
     el.style.bottom = pager ? `${Math.round(innerHeight - pager.getBoundingClientRect().top + 10)}px` : "";
@@ -347,13 +372,13 @@
       else if (msg.t === "state") { states[msg.group] = msg.on; showStates(msg.group); }
       else if (msg.t === "states") { states = msg.states || {}; showStates(); }
       else if (msg.t === "voice-status") applyVoiceStatus(msg);
-      else if (msg.t === "heard") toast(`Heard: ${msg.text || msg.label}`);
+      else if (msg.t === "heard") toast(tr("Heard: {0}", msg.text || tr(msg.label)));
       else if (msg.t === "unheard") toast("Didn't catch that");
       else if (msg.t === "voice-off") toast(msg.reason);
       // Push-to-talk held on the PC: the mic buttons light up as if held here.
       else if (msg.t === "listening") for (const el of document.querySelectorAll(".js-talk")) el.classList.toggle("listening", msg.on);
       else if (msg.t === "reload") load().then(reconnect); // the layout was changed in the editor
-      else if (msg.t === "opened") toast(msg.dryRun ? `${msg.name}: test mode, not opened` : `Opened ${msg.name} on the PC`);
+      else if (msg.t === "opened") toast(tr(msg.dryRun ? "{0}: test mode, not opened" : "Opened {0} on the PC", msg.name));
     };
     ws.onclose = () => { setOnline(false, "Reconnecting…"); setTimeout(connect, 1000); };
     ws.onerror = () => ws.close();
@@ -367,7 +392,7 @@
     layout.pages.forEach((p, i) => {
       const b = document.createElement("button");
       b.type = "button";
-      b.textContent = p.name;
+      b.textContent = tr(p.name);
       b.className = i === pageIndex ? "active" : "";
       b.onclick = () => { pageIndex = i; store.set("page", i); renderTabs(); renderPage(); };
       tabs.appendChild(b);
@@ -387,9 +412,9 @@
       el.innerHTML = `<span class="glyph">${window.deckIcon(btn.icon || btn.id)}</span>
         <span class="label"></span>
         <span class="foot"><span class="mode"></span><span class="keycap"></span></span>`;
-      el.querySelector(".label").textContent = btn.label;
+      el.querySelector(".label").textContent = tr(btn.label);
       el.querySelector(".keycap").textContent = keyLabel(btn.keys);
-      el.querySelector(".mode").textContent = modeLabel[btn.mode] || "";
+      el.querySelector(".mode").textContent = tr(modeLabel[btn.mode] || "");
       bindButton(el, btn);
       grid.appendChild(el);
     }
@@ -541,7 +566,7 @@
   function voiceNote(text) {
     const list = $("voiceList");
     list.innerHTML = `<p class="vh-note"></p>`;
-    list.querySelector("p").textContent = text;
+    list.querySelector("p").textContent = tr(text);
   }
 
   // One card per button, with its phrases; the search matches phrases and button names.
@@ -552,13 +577,13 @@
     const reason = voiceStatus.reason || voiceData.reason;
     if (!voiceData.on || state === "off") { voiceNote("Voice commands are turned off on the PC. Turn them on in the Tablet Deck window's Settings."); return; }
     if (state === "unavailable") {
-      voiceNote(`Voice commands can't run on this PC${reason ? `: ${reason}` : ""}. The Tablet Deck window shows what to do.`);
+      voiceNote(tr("Voice commands can't run on this PC{0}. The Tablet Deck window shows what to do.", reason ? `: ${reason}` : ""));
       return;
     }
     const q = $("voiceSearch").value.trim().toLowerCase();
     const byLabel = new Map();
     for (const [phrase, label] of voiceData.commands) {
-      if (q && !phrase.includes(q) && !label.toLowerCase().includes(q)) continue;
+      if (q && !phrase.includes(q) && !label.toLowerCase().includes(q) && !tr(label).toLowerCase().includes(q)) continue;
       if (!byLabel.has(label)) byLabel.set(label, []);
       byLabel.get(label).push(phrase);
     }
@@ -569,7 +594,7 @@
       const card = document.createElement("div");
       card.className = "vh-card";
       card.innerHTML = `<div class="vh-label"></div><div class="vh-phrases"></div>`;
-      card.querySelector(".vh-label").textContent = label;
+      card.querySelector(".vh-label").textContent = tr(label);
       for (const phrase of phrases) {
         const chip = document.createElement("span");
         chip.textContent = phrase;
@@ -593,19 +618,19 @@
     grid.innerHTML = `
       <form id="pair" novalidate>
         <div class="pair-emblem"></div>
-        <h2><b>//</b> Pair this device</h2>
-        <p class="pair-help">Open <strong>Tablet Deck</strong> on your gaming PC and type the pairing code its window shows.</p>
-        <label for="code">Pairing code</label>
+        <h2><b>//</b> ${tr("Pair this device")}</h2>
+        <p class="pair-help">${tr("Open {0} on your gaming PC and type the pairing code its window shows.", "<strong>Tablet Deck</strong>")}</p>
+        <label for="code">${tr("Pairing code")}</label>
         <input id="code" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="32"
-          placeholder="e.g. 1a2b3c4d" aria-describedby="pairError">
+          placeholder="${tr("e.g. 1a2b3c4d")}" aria-describedby="pairError">
         <p id="pairError" class="pair-error" role="alert" hidden></p>
-        <button type="submit">Connect</button>
-        <p class="pair-hint">Quicker: scan the QR code in the Tablet Deck window with this device's camera.</p>
+        <button type="submit">${tr("Connect")}</button>
+        <p class="pair-hint">${tr("Quicker: scan the QR code in the Tablet Deck window with this device's camera.")}</p>
       </form>`;
     grid.querySelector(".pair-emblem").innerHTML = emblemSvg((themeById[document.documentElement.dataset.theme] || THEMES[0]).emblem);
     const input = $("code"), error = $("pairError"), button = grid.querySelector("#pair button");
     const fail = (text) => {
-      error.textContent = text;
+      error.textContent = tr(text);
       error.hidden = false;
       input.classList.add("bad");
       input.setAttribute("aria-invalid", "true");
@@ -621,7 +646,7 @@
       token = input.value.trim().toLowerCase();
       if (!token) { fail("Type the pairing code first."); return; }
       button.disabled = true;
-      button.textContent = "Connecting…";
+      button.textContent = tr("Connecting…");
       load();
     };
   }
@@ -632,8 +657,8 @@
   let deckCanvas = null;
   function showLayout(l) {
     layout = l;
-    $("title").textContent = layout.name;
-    document.title = layout.name;
+    $("title").textContent = tr(layout.name);
+    document.title = tr(layout.name);
     if (layout.canvas) {
       document.body.classList.add("canvas-mode");
       deckCanvas = window.renderCanvas(layout, {
@@ -659,7 +684,7 @@
       .then((r) => {
         if (r.status === 403) return Promise.reject("pair");
         if (r.status === 429) return Promise.reject("locked");
-        return r.ok ? r.json() : Promise.reject(`Layout error (${r.status})`);
+        return r.ok ? r.json() : Promise.reject(tr("Layout error ({0})", r.status));
       })
       .then((l) => {
         const first = !layout;
@@ -703,6 +728,7 @@
   }
   $("fs").onclick = toggleFullscreen;
 
+  window.DeckI18n.apply();
   buildPicker();
   applyTheme(store.get("theme") || "rsi");
   if (DEMO || token) load(); else showPairing(false);

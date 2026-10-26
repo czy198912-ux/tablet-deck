@@ -15,7 +15,7 @@
   };
   const retrigger = (t, cls) => { t.classList.remove(cls); void t.offsetWidth; t.classList.add(cls); };
   const flash = (t) => once(t._fx, el("span", "fx-flash"));
-  const setState = (t, s) => { if (t._state) t._state.textContent = s; };
+  const setState = (t, s) => { if (t._state) t._state.textContent = window.DeckI18n ? window.DeckI18n.t(s) : s; };
   // Lit look for stateful buttons whose animation has no state of its own (VTOL, ESP,
   // door locks): the "on" border and glow, and ON/OFF (or the state's own "on" word).
   // Buttons that only switch off ("set": false) never stay lit.

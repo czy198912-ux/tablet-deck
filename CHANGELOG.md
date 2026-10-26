@@ -5,6 +5,17 @@ section becomes the notes of its
 [GitHub release](https://github.com/nodieCode/tablet-deck/releases), so add one
 before tagging a release.
 
+## Unreleased
+
+- **Español, Français and Deutsch:** the deck and the app window can show
+  their text in Spanish, French or German. Each tablet and phone picks its
+  language under Layout in Deck settings, starting from the device's own
+  language; the window follows Windows, or the new Language choice in
+  Settings. Button labels, panels and status words are translated; keys, voice
+  phrases (still English) and your own layouts' labels stay as they are. The
+  translations were made with AI, so corrections from native speakers are
+  welcome on GitHub.
+
 ## 1.5.0 (2026-10-25)
 
 - **Button lights can be turned off** under Display in Deck settings. The deck

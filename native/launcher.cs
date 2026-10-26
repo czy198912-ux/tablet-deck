@@ -101,6 +101,257 @@ static class Program
     }
 }
 
+// The window's languages. Text is written in English and translated where it's shown;
+// what the server sends (log lines, voice errors) stays English. The choice is kept in the
+// registry; "Automatic" follows Windows' display language. The translations were made with
+// AI; corrections from native speakers are welcome.
+static class Lang
+{
+    const string Key = @"Software\Tablet Deck";
+    // [code, name] in the order the Settings window lists them; "" is Automatic.
+    public static readonly string[][] Choices = {
+        new[] { "", "Automatic" }, new[] { "en", "English" }, new[] { "es", "Español" }, new[] { "fr", "Français" }, new[] { "de", "Deutsch" },
+    };
+    static readonly string[] Columns = { "es", "fr", "de" };
+    static int column = -1; // in the tables' rows; -1 is English
+
+    // The saved choice: "", "en", "es", "fr" or "de".
+    public static string Saved
+    {
+        get
+        {
+            try
+            {
+                using (var key = Registry.CurrentUser.OpenSubKey(Key))
+                    return key == null ? "" : (key.GetValue("Language") as string ?? "");
+            }
+            catch (Exception) { return ""; }
+        }
+    }
+
+    static Lang() { Use(Saved); }
+
+    public static void Use(string code)
+    {
+        if (code == "") code = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+        column = Array.IndexOf(Columns, code);
+    }
+
+    public static void Save(string code)
+    {
+        try { using (var key = Registry.CurrentUser.CreateSubKey(Key)) key.SetValue("Language", code); }
+        catch (Exception) { }
+        Use(code);
+    }
+
+    public static string T(string text)
+    {
+        string[] row;
+        return column >= 0 && text != null && table.TryGetValue(text, out row) ? row[column] : text;
+    }
+
+    // T with "{0}", "{1}" filled in.
+    public static string F(string text, params object[] args)
+    {
+        return string.Format(T(text), args);
+    }
+
+    // English -> [Español, Français, Deutsch].
+    static readonly Dictionary<string, string[]> table = new Dictionary<string, string[]>
+    {
+        // ---- the main window ----
+        { "STAR CITIZEN CONTROL DECK", new[] { "PANEL DE CONTROL PARA STAR CITIZEN", "DECK DE COMMANDE POUR STAR CITIZEN", "STEUERDECK FÜR STAR CITIZEN" } },
+        { "STARTING", new[] { "INICIANDO", "DÉMARRAGE", "STARTET" } },
+        { "ONLINE", new[] { "EN LÍNEA", "EN LIGNE", "ONLINE" } },
+        { "TEST MODE", new[] { "MODO PRUEBA", "MODE TEST", "TESTMODUS" } },
+        { "STOPPED", new[] { "DETENIDO", "ARRÊTÉ", "GESTOPPT" } },
+        { "UPTIME", new[] { "ACTIVO", "DURÉE", "LAUFZEIT" } },
+        { "CONNECT", new[] { "CONECTAR", "CONNEXION", "VERBINDEN" } },
+        { "LINK", new[] { "ENLACE", "LIEN", "LINK" } },
+        { "TELEMETRY", new[] { "TELEMETRÍA", "TÉLÉMÉTRIE", "TELEMETRIE" } },
+        { "VOICE", new[] { "VOZ", "VOIX", "STIMME" } },
+        { "SYSTEM", new[] { "SISTEMA", "SYSTÈME", "SYSTEM" } },
+        { "LOG", new[] { "REGISTRO", "JOURNAL", "PROTOKOLL" } },
+        { "NO NETWORK FOUND", new[] { "NO SE ENCONTRÓ RED", "AUCUN RÉSEAU TROUVÉ", "KEIN NETZWERK GEFUNDEN" } },
+        { "OFFLINE", new[] { "SIN CONEXIÓN", "HORS LIGNE", "OFFLINE" } },
+        { "WAITING FOR THE SERVER", new[] { "ESPERANDO AL SERVIDOR", "EN ATTENTE DU SERVEUR", "WARTE AUF DEN SERVER" } },
+        { "SCAN WITH YOUR TABLET'S CAMERA", new[] { "ESCANEA CON TU TABLET", "SCANNEZ AVEC VOTRE TABLETTE", "MIT DER TABLET-KAMERA SCANNEN" } },
+        { "ADDRESS", new[] { "DIRECCIÓN", "ADRESSE", "ADRESSE" } },
+        { "No network found. Connect this PC to Wi-Fi or a network.", new[] { "No se encontró ninguna red. Conecta este PC a una wifi o a una red.", "Aucun réseau trouvé. Connectez ce PC au Wi-Fi ou à un réseau.", "Kein Netzwerk gefunden. Verbinde diesen PC mit WLAN oder einem Netzwerk." } },
+        { "Windows treats \"{0}\" as Public: tablets can't connect.", new[] { "Windows trata \"{0}\" como pública: las tablets no pueden conectarse.", "Windows considère \"{0}\" comme public : les tablettes ne peuvent pas se connecter.", "Windows behandelt \"{0}\" als öffentlich: Tablets können sich nicht verbinden." } },
+        { "ALSO", new[] { "TAMBIÉN", "AUSSI", "AUCH" } },
+        { "PAIRING CODE", new[] { "CÓDIGO DE EMPAREJAMIENTO", "CODE D'APPAIRAGE", "KOPPLUNGSCODE" } },
+        { "TABLETS", new[] { "TABLETS", "TABLETTES", "TABLETS" } },
+        { "CONNECTED", new[] { "CONECTADAS", "CONNECTÉES", "VERBUNDEN" } },
+        { "KEYS GO TO", new[] { "TECLAS A", "TOUCHES VERS", "TASTEN AN" } },
+        { "LOG ONLY", new[] { "SOLO REGISTRO", "JOURNAL SEUL", "NUR PROTOKOLL" } },
+        { "ANY WINDOW", new[] { "CUALQUIER VENTANA", "TOUTE FENÊTRE", "JEDES FENSTER" } },
+        { "TEST MODE: NO KEYS SENT", new[] { "MODO PRUEBA: SIN TECLAS", "MODE TEST : AUCUNE TOUCHE", "TESTMODUS: KEINE TASTEN" } },
+        { "ONLY WHILE IT'S IN FRONT", new[] { "SOLO EN PRIMER PLANO", "SI AU PREMIER PLAN", "NUR IM VORDERGRUND" } },
+        { "FOCUS CHECK IS OFF", new[] { "SIN CONTROL DE FOCO", "CONTRÔLE DU FOCUS COUPÉ", "FOKUSPRÜFUNG AUS" } },
+        { "PRESSES", new[] { "PULSACIONES", "APPUIS", "TASTENDRÜCKE" } },
+        { "LAST: {0}", new[] { "ÚLTIMA: {0}", "DERNIER : {0}", "ZULETZT: {0}" } },
+        { "NONE YET", new[] { "NINGUNA AÚN", "AUCUN POUR L'INSTANT", "NOCH KEINE" } },
+        { "{0} BLOCKED", new[] { "{0} BLOQUEADAS", "{0} BLOQUÉS", "{0} BLOCKIERT" } },
+        { "STRICTNESS", new[] { "EXIGENCIA", "EXIGENCE", "STRENGE" } },
+        { "Lower accepts more but may mishear. Higher is stricter.", new[] { "Bajo: acepta más, pero se equivoca más. Alto: más estricto.", "Bas : accepte plus, se trompe plus. Haut : plus strict.", "Niedrig: nimmt mehr an, irrt sich eher. Hoch: strenger." } },
+        { "Starting...", new[] { "Iniciando...", "Démarrage...", "Startet..." } },
+        { "Starting the server...", new[] { "Iniciando el servidor...", "Démarrage du serveur...", "Server wird gestartet..." } },
+        { "Running", new[] { "En marcha", "En marche", "Läuft" } },
+        { "Running in test mode (dry run): no keys are sent", new[] { "En modo de prueba (dry run): no se envían teclas", "En mode test (dry run) : aucune touche n'est envoyée", "Läuft im Testmodus (Dry Run): Es werden keine Tasten gesendet" } },
+        { "Stopped: {0}", new[] { "Detenido: {0}", "Arrêté : {0}", "Gestoppt: {0}" } },
+        { "{0} is missing. Reinstall Tablet Deck.", new[] { "Falta {0}. Reinstala Tablet Deck.", "{0} est introuvable. Réinstallez Tablet Deck.", "{0} fehlt. Installiere Tablet Deck neu." } },
+        { "Couldn't start the server: {0}", new[] { "No se pudo iniciar el servidor: {0}", "Impossible de démarrer le serveur : {0}", "Der Server konnte nicht starten: {0}" } },
+        { "The server stopped (exit code {0}). See the log below.", new[] { "El servidor se detuvo (código {0}). Mira el registro de abajo.", "Le serveur s'est arrêté (code {0}). Voir le journal ci-dessous.", "Der Server wurde beendet (Code {0}). Siehe das Protokoll unten." } },
+        { "Off", new[] { "Desactivado", "Désactivé", "Aus" } },
+        { "Ready: {0} phrases, {1}", new[] { "Listo: {0} frases, {1}", "Prêt : {0} phrases, {1}", "Bereit: {0} Sätze, {1}" } },
+        { ", push-to-talk: {0}", new[] { ", pulsar para hablar: {0}", ", appuyer pour parler : {0}", ", Push-to-Talk: {0}" } },
+        { "Turned off in settings", new[] { "Desactivado en los ajustes", "Désactivé dans les réglages", "In den Einstellungen ausgeschaltet" } },
+        { "Restarting...", new[] { "Reiniciando...", "Redémarrage...", "Startet neu..." } },
+        { "Unavailable: {0}", new[] { "No disponible: {0}", "Indisponible : {0}", "Nicht verfügbar: {0}" } },
+        { "Last heard: \"{0}\", {1}% sure. Pressed {2}.", new[] { "Último oído: \"{0}\", {1} % seguro. Pulsado: {2}.", "Dernière écoute : \"{0}\", sûr à {1} %. Appuyé : {2}.", "Zuletzt gehört: \"{0}\", {1} % sicher. Gedrückt: {2}." } },
+        { "Last heard: \"{0}\", {1}% sure. Below {2}%, so it was ignored.", new[] { "Último oído: \"{0}\", {1} % seguro. Por debajo del {2} %, así que se ignoró.", "Dernière écoute : \"{0}\", sûr à {1} %. Sous {2} %, donc ignoré.", "Zuletzt gehört: \"{0}\", {1} % sicher. Unter {2} %, daher ignoriert." } },
+        { "Last heard: something that isn't one of the commands.", new[] { "Último oído: algo que no es uno de los comandos.", "Dernière écoute : quelque chose qui n'est pas une commande.", "Zuletzt gehört: etwas, das kein Befehl ist." } },
+        { "Tablet Deck (stopped)", new[] { "Tablet Deck (detenido)", "Tablet Deck (arrêté)", "Tablet Deck (gestoppt)" } },
+        { " (test mode)", new[] { " (modo prueba)", " (mode test)", " (Testmodus)" } },
+        { "Windows treats \"{0}\" as a Public network, so tablets can't connect. In Windows: Settings > Network & Internet > {0} > set it to Private.", new[] { "Windows trata \"{0}\" como red pública, así que las tablets no pueden conectarse. En Windows: Configuración > Red e Internet > {0} > ponla como privada.", "Windows considère \"{0}\" comme un réseau public, donc les tablettes ne peuvent pas se connecter. Dans Windows : Paramètres > Réseau et Internet > {0} > réglez-le sur Privé.", "Windows behandelt \"{0}\" als öffentliches Netzwerk, daher können Tablets sich nicht verbinden. In Windows: Einstellungen > Netzwerk und Internet > {0} > auf Privat stellen." } },
+        { "Tablets can't connect", new[] { "Las tablets no pueden conectarse", "Les tablettes ne peuvent pas se connecter", "Tablets können sich nicht verbinden" } },
+        { "Windows treats \"{0}\" as a Public network. Open Tablet Deck to fix it.", new[] { "Windows trata \"{0}\" como red pública. Abre Tablet Deck para arreglarlo.", "Windows considère \"{0}\" comme un réseau public. Ouvrez Tablet Deck pour corriger cela.", "Windows behandelt \"{0}\" als öffentliches Netzwerk. Öffne Tablet Deck, um das zu beheben." } },
+        { "Restarting the server for the new settings...", new[] { "Reiniciando el servidor con los nuevos ajustes...", "Redémarrage du serveur avec les nouveaux réglages...", "Server startet mit den neuen Einstellungen neu..." } },
+        { "Couldn't save the settings: {0}", new[] { "No se pudieron guardar los ajustes: {0}", "Impossible d'enregistrer les réglages : {0}", "Die Einstellungen konnten nicht gespeichert werden: {0}" } },
+        { "Tablet Deck isn't running", new[] { "Tablet Deck no está en marcha", "Tablet Deck n'est pas lancé", "Tablet Deck läuft nicht" } },
+        { "Start it first; the layout editor is part of the server.", new[] { "Inícialo primero; el editor de diseños forma parte del servidor.", "Lancez-le d'abord ; l'éditeur de disposition fait partie du serveur.", "Starte es zuerst; der Layout-Editor gehört zum Server." } },
+        { "Tablet Deck is still running", new[] { "Tablet Deck sigue en marcha", "Tablet Deck tourne toujours", "Tablet Deck läuft weiter" } },
+        { "Double-click the tray icon to open it, or right-click it to quit.", new[] { "Haz doble clic en el icono de la bandeja para abrirlo, o clic derecho para salir.", "Double-cliquez sur l'icône de la zone de notification pour l'ouvrir, ou faites un clic droit pour quitter.", "Doppelklicke auf das Symbol im Infobereich, um es zu öffnen, oder klicke rechts, um es zu beenden." } },
+
+        // ---- the main window's buttons, switches and links ----
+        { "Copy link", new[] { "Copiar enlace", "Copier le lien", "Link kopieren" } },
+        { "Copied!", new[] { "¡Copiado!", "Copié !", "Kopiert!" } },
+        { "Settings", new[] { "Ajustes", "Réglages", "Einstellungen" } },
+        { "Edit layout", new[] { "Editar diseño", "Éditer le deck", "Layout bearbeiten" } },
+        { "Restart", new[] { "Reiniciar", "Redémarrer", "Neu starten" } },
+        { "Commands", new[] { "Comandos", "Commandes", "Befehle" } },
+        { "Start with Windows (in the tray)", new[] { "Iniciar con Windows (en la bandeja)", "Lancer avec Windows (réduit)", "Mit Windows starten (im Infobereich)" } },
+        { "Check for updates automatically", new[] { "Buscar actualizaciones a diario", "Chercher les mises à jour", "Automatisch nach Updates suchen" } },
+        { "Settings folder", new[] { "Carpeta de ajustes", "Dossier des réglages", "Einstellungsordner" } },
+        { "Check for updates now", new[] { "Buscar actualizaciones ahora", "Rechercher les mises à jour", "Jetzt nach Updates suchen" } },
+        { "Feedback & ideas", new[] { "Comentarios e ideas", "Avis et idées", "Feedback & Ideen" } },
+        { "Set it to Private ›", new[] { "Ponla como privada ›", "La passer en privé ›", "Auf Privat stellen ›" } },
+        { "What's new", new[] { "Novedades", "Nouveautés", "Neuigkeiten" } },
+        { "Update now", new[] { "Actualizar ahora", "Mettre à jour", "Jetzt aktualisieren" } },
+        { "Later", new[] { "Más tarde", "Plus tard", "Später" } },
+        { "Close", new[] { "Cerrar", "Fermer", "Schließen" } },
+        { "Show Tablet Deck", new[] { "Mostrar Tablet Deck", "Afficher Tablet Deck", "Tablet Deck anzeigen" } },
+        { "Quit", new[] { "Salir", "Quitter", "Beenden" } },
+        { "Opens the deck in this PC's browser", new[] { "Abre el deck en el navegador de este PC", "Ouvre le deck dans le navigateur de ce PC", "Öffnet das Deck im Browser dieses PCs" } },
+        { "Copies the address with the pairing code, to send to a tablet", new[] { "Copia la dirección con el código de emparejamiento, para enviarla a una tablet", "Copie l'adresse avec le code d'appairage, à envoyer à une tablette", "Kopiert die Adresse mit dem Kopplungscode, um sie an ein Tablet zu schicken" } },
+        { "Pairing code, port, focus check, tap length, voice language and the Star Citizen keybind profile", new[] { "Código de emparejamiento, puerto, control de foco, duración del toque, idioma de voz y el perfil de teclas de Star Citizen", "Code d'appairage, port, contrôle du focus, durée d'appui, langue vocale et profil de touches Star Citizen", "Kopplungscode, Port, Fokusprüfung, Tippdauer, Sprachbefehl-Sprache und das Star-Citizen-Tastenprofil" } },
+        { "Opens the layout editor in your browser: move buttons, change their keys, labels and icons", new[] { "Abre el editor de diseños en tu navegador: mueve botones y cambia sus teclas, nombres e iconos", "Ouvre l'éditeur de disposition dans votre navigateur : déplacez les boutons, changez leurs touches, libellés et icônes", "Öffnet den Layout-Editor im Browser: Tasten verschieben, ihre Tasten, Beschriftungen und Symbole ändern" } },
+        { "Everything you can say, and the button each one presses", new[] { "Todo lo que puedes decir y el botón que pulsa cada frase", "Tout ce que vous pouvez dire, et le bouton que chaque phrase active", "Alles, was du sagen kannst, und welche Taste jeder Befehl drückt" } },
+        { "Looks for a new version on GitHub when Tablet Deck starts and once a day. Updates only install when you click Update now.", new[] { "Busca una versión nueva en GitHub al iniciar Tablet Deck y una vez al día. Solo se instala cuando pulsas Actualizar ahora.", "Cherche une nouvelle version sur GitHub au démarrage de Tablet Deck et une fois par jour. Rien ne s'installe sans un clic sur Mettre à jour.", "Sucht beim Start von Tablet Deck und einmal am Tag auf GitHub nach einer neuen Version. Installiert wird nur, wenn du auf Jetzt aktualisieren klickst." } },
+        { "Opens the folder with config.json and your own layouts", new[] { "Abre la carpeta con config.json y tus propios diseños", "Ouvre le dossier contenant config.json et vos propres dispositions", "Öffnet den Ordner mit config.json und deinen eigenen Layouts" } },
+        { "Report a problem or suggest an idea on GitHub", new[] { "Informa de un problema o propón una idea en GitHub", "Signalez un problème ou proposez une idée sur GitHub", "Melde ein Problem oder schlag eine Idee auf GitHub vor" } },
+        { "Pick your network there and set its network profile to Private", new[] { "Elige ahí tu red y pon su perfil de red como privado", "Choisissez votre réseau et réglez son profil réseau sur Privé", "Wähle dort dein Netzwerk und stelle sein Netzwerkprofil auf Privat" } },
+
+        // ---- updates ----
+        { "Couldn't check for updates", new[] { "No se pudo buscar actualizaciones", "Impossible de rechercher les mises à jour", "Konnte nicht nach Updates suchen" } },
+        { "GitHub didn't answer.", new[] { "GitHub no respondió.", "GitHub n'a pas répondu.", "GitHub hat nicht geantwortet." } },
+        { "Tablet Deck is up to date", new[] { "Tablet Deck está actualizado", "Tablet Deck est à jour", "Tablet Deck ist aktuell" } },
+        { "You have version {0}, the latest.", new[] { "Tienes la versión {0}, la más reciente.", "Vous avez la version {0}, la plus récente.", "Du hast Version {0}, die neueste." } },
+        { "Update not ready yet", new[] { "La actualización aún no está lista", "Mise à jour pas encore prête", "Update noch nicht bereit" } },
+        { "Version {0} is out, but its installer isn't attached yet. Try again in a few minutes.", new[] { "La versión {0} ya salió, pero su instalador aún no está adjunto. Inténtalo en unos minutos.", "La version {0} est sortie, mais son installateur n'est pas encore joint. Réessayez dans quelques minutes.", "Version {0} ist erschienen, aber der Installer ist noch nicht angehängt. Versuch es in ein paar Minuten erneut." } },
+        { "Tablet Deck {0} is available (you have {1}).", new[] { "Tablet Deck {0} está disponible (tienes la {1}).", "Tablet Deck {0} est disponible (vous avez la {1}).", "Tablet Deck {0} ist verfügbar (du hast {1})." } },
+        { "Tablet Deck {0} is available", new[] { "Tablet Deck {0} está disponible", "Tablet Deck {0} est disponible", "Tablet Deck {0} ist verfügbar" } },
+        { "Open Tablet Deck and click Update now.", new[] { "Abre Tablet Deck y pulsa Actualizar ahora.", "Ouvrez Tablet Deck et cliquez sur Mettre à jour.", "Öffne Tablet Deck und klicke auf Jetzt aktualisieren." } },
+        { "Downloading Tablet Deck {0}...", new[] { "Descargando Tablet Deck {0}...", "Téléchargement de Tablet Deck {0}...", "Tablet Deck {0} wird heruntergeladen..." } },
+        { "Checking the download...", new[] { "Comprobando la descarga...", "Vérification du téléchargement...", "Download wird geprüft..." } },
+        { "Installing Tablet Deck {0}. Allow the Windows prompt to continue.", new[] { "Instalando Tablet Deck {0}. Acepta el aviso de Windows para continuar.", "Installation de Tablet Deck {0}. Autorisez la demande de Windows pour continuer.", "Tablet Deck {0} wird installiert. Bestätige die Windows-Abfrage, um fortzufahren." } },
+        { "the download failed ({0})", new[] { "la descarga falló ({0})", "le téléchargement a échoué ({0})", "der Download ist fehlgeschlagen ({0})" } },
+        { "the download didn't match its checksum, so it wasn't installed", new[] { "la descarga no coincidía con su suma de comprobación, así que no se instaló", "le téléchargement ne correspondait pas à sa somme de contrôle, il n'a donc pas été installé", "der Download passte nicht zu seiner Prüfsumme und wurde daher nicht installiert" } },
+        { "couldn't check the download ({0})", new[] { "no se pudo comprobar la descarga ({0})", "impossible de vérifier le téléchargement ({0})", "der Download konnte nicht geprüft werden ({0})" } },
+        { "the Windows permission prompt was cancelled", new[] { "se canceló el aviso de permisos de Windows", "la demande d'autorisation de Windows a été annulée", "die Windows-Berechtigungsabfrage wurde abgebrochen" } },
+        { "the installer finished without updating", new[] { "el instalador terminó sin actualizar", "l'installateur s'est terminé sans mettre à jour", "der Installer wurde ohne Update beendet" } },
+        { "the installer stopped (code {0}). Was the Windows prompt cancelled?", new[] { "el instalador se detuvo (código {0}). ¿Se canceló el aviso de Windows?", "l'installateur s'est arrêté (code {0}). La demande de Windows a-t-elle été annulée ?", "der Installer wurde beendet (Code {0}). Wurde die Windows-Abfrage abgebrochen?" } },
+        { "Update failed: {0}", new[] { "La actualización falló: {0}", "Échec de la mise à jour : {0}", "Update fehlgeschlagen: {0}" } },
+        { "Updated to Tablet Deck {0}.", new[] { "Actualizado a Tablet Deck {0}.", "Mis à jour vers Tablet Deck {0}.", "Auf Tablet Deck {0} aktualisiert." } },
+
+        // ---- Voice commands window ----
+        { "Voice commands", new[] { "Comandos de voz", "Commandes vocales", "Sprachbefehle" } },
+        { "Voice commands (not running)", new[] { "Comandos de voz (no activos)", "Commandes vocales (inactives)", "Sprachbefehle (nicht aktiv)" } },
+        { "Voice commands ({0})", new[] { "Comandos de voz ({0})", "Commandes vocales ({0})", "Sprachbefehle ({0})" } },
+        { "Voice commands ({0} of {1})", new[] { "Comandos de voz ({0} de {1})", "Commandes vocales ({0} sur {1})", "Sprachbefehle ({0} von {1})" } },
+        { "COMMANDS", new[] { "COMANDOS", "COMMANDES", "BEFEHLE" } },
+        { "Hold the mic button on the tablet and say one of these. Most Star Citizen controls are toggles, so \"engines on\" and \"engines off\" press the same key.", new[] { "Mantén el micro en la tablet y di uno (en inglés). Casi todos los controles alternan: \"engines on\" y \"engines off\" pulsan la misma tecla.", "Maintenez le micro sur la tablette et dites-en un (en anglais). La plupart basculent : \"engines on\" et \"engines off\" appuient sur la même touche.", "Halte das Mikro auf dem Tablet und sag einen davon (Englisch). Die meisten Befehle schalten um: \"engines on\" und \"engines off\" drücken dieselbe Taste." } },
+        { "Search, e.g. shields or quantum", new[] { "Buscar, p. ej. shields o quantum", "Rechercher, par ex. shields ou quantum", "Suchen, z. B. shields oder quantum" } },
+        { "Say", new[] { "Di", "Dites", "Sag" } },
+        { "Presses", new[] { "Pulsa", "Appuie sur", "Drückt" } },
+
+        // ---- Install keybind profile window ----
+        { "Install keybind profile", new[] { "Instalar perfil de teclas", "Installer le profil de touches", "Tastenprofil installieren" } },
+        { "STAR CITIZEN COPIES", new[] { "COPIAS DE STAR CITIZEN", "COPIES DE STAR CITIZEN", "STAR-CITIZEN-KOPIEN" } },
+        { "Copies the Tablet Deck Keyboard profile into Star Citizen, so buttons for actions with no default key work. Tick the copies of the game to install it into.", new[] { "Copia el perfil Tablet Deck Keyboard en Star Citizen, para que funcionen los botones de acciones sin tecla por defecto. Marca las copias del juego donde instalarlo.", "Copie le profil Tablet Deck Keyboard dans Star Citizen, pour que les boutons des actions sans touche par défaut fonctionnent. Cochez les copies du jeu où l'installer.", "Kopiert das Profil Tablet Deck Keyboard in Star Citizen, damit Tasten für Aktionen ohne Standardbelegung funktionieren. Hake die Spielkopien an, in die es soll." } },
+        { "Choose game folder...", new[] { "Elegir carpeta del juego...", "Choisir le dossier du jeu...", "Spielordner wählen..." } },
+        { "STATUS", new[] { "ESTADO", "ÉTAT", "STATUS" } },
+        { "Install", new[] { "Instalar", "Installer", "Installieren" } },
+        { "The profile file is missing ({0}). Reinstall Tablet Deck.", new[] { "Falta el archivo del perfil ({0}). Reinstala Tablet Deck.", "Le fichier du profil est introuvable ({0}). Réinstallez Tablet Deck.", "Die Profildatei fehlt ({0}). Installiere Tablet Deck neu." } },
+        { "Star Citizen wasn't found in the usual places. Click \"Choose game folder...\" and pick the StarCitizen folder (the one with LIVE in it).", new[] { "No se encontró Star Citizen en los sitios habituales. Pulsa \"Elegir carpeta del juego...\" y elige la carpeta StarCitizen (la que contiene LIVE).", "Star Citizen est introuvable aux emplacements habituels. Cliquez sur \"Choisir le dossier du jeu...\" et choisissez le dossier StarCitizen (celui qui contient LIVE).", "Star Citizen wurde an den üblichen Orten nicht gefunden. Klicke auf \"Spielordner wählen...\" und wähle den Ordner StarCitizen (der mit LIVE darin)." } },
+        { "Found {0} copy of the game. Missing one? Click \"Choose game folder...\".", new[] { "Se encontró {0} copia del juego. ¿Falta alguna? Pulsa \"Elegir carpeta del juego...\".", "{0} copie du jeu trouvée. Il en manque une ? Cliquez sur \"Choisir le dossier du jeu...\".", "{0} Spielkopie gefunden. Fehlt eine? Klicke auf \"Spielordner wählen...\"." } },
+        { "Found {0} copies of the game. Missing one? Click \"Choose game folder...\".", new[] { "Se encontraron {0} copias del juego. ¿Falta alguna? Pulsa \"Elegir carpeta del juego...\".", "{0} copies du jeu trouvées. Il en manque une ? Cliquez sur \"Choisir le dossier du jeu...\".", "{0} Spielkopien gefunden. Fehlt eine? Klicke auf \"Spielordner wählen...\"." } },
+        { "not installed", new[] { "no instalado", "non installé", "nicht installiert" } },
+        { "already up to date", new[] { "ya actualizado", "déjà à jour", "bereits aktuell" } },
+        { "older copy, will be replaced", new[] { "copia antigua, se reemplazará", "ancienne copie, sera remplacée", "ältere Kopie, wird ersetzt" } },
+        { "Pick the StarCitizen folder (the one with LIVE in it).", new[] { "Elige la carpeta StarCitizen (la que contiene LIVE).", "Choisissez le dossier StarCitizen (celui qui contient LIVE).", "Wähle den Ordner StarCitizen (der mit LIVE darin)." } },
+        { "That folder doesn't look like Star Citizen. Pick the StarCitizen folder, the one with LIVE in it.", new[] { "Esa carpeta no parece de Star Citizen. Elige la carpeta StarCitizen, la que contiene LIVE.", "Ce dossier ne ressemble pas à Star Citizen. Choisissez le dossier StarCitizen, celui qui contient LIVE.", "Dieser Ordner sieht nicht nach Star Citizen aus. Wähle den Ordner StarCitizen, den mit LIVE darin." } },
+        { "Added. Tick the copies of the game to install the profile into, then click Install.", new[] { "Añadido. Marca las copias del juego donde instalar el perfil y pulsa Instalar.", "Ajouté. Cochez les copies du jeu où installer le profil, puis cliquez sur Installer.", "Hinzugefügt. Hake die Spielkopien an, in die das Profil soll, und klicke auf Installieren." } },
+        { "Nothing ticked. Tick the copies of the game to install the profile into.", new[] { "No hay nada marcado. Marca las copias del juego donde instalar el perfil.", "Rien n'est coché. Cochez les copies du jeu où installer le profil.", "Nichts angehakt. Hake die Spielkopien an, in die das Profil soll." } },
+        { "Installed into {0}. ", new[] { "Instalado en {0}. ", "Installé dans {0}. ", "Installiert in {0}. " } },
+        { "Now, in Star Citizen: Options > Keybindings > Control Profiles, load \"Tablet Deck Keyboard\". ", new[] { "Ahora, en Star Citizen: Opciones > Asignación de teclas > Perfiles de control, carga \"Tablet Deck Keyboard\". ", "Ensuite, dans Star Citizen : Options > Raccourcis > Profils de contrôle, chargez \"Tablet Deck Keyboard\". ", "Jetzt in Star Citizen: Optionen > Tastenbelegung > Steuerungsprofile, \"Tablet Deck Keyboard\" laden. " } },
+        { "This replaces your current custom binds, so note any you want to keep and set them again afterwards.", new[] { "Esto sustituye tus asignaciones personalizadas actuales, así que apunta las que quieras conservar y vuelve a ponerlas después.", "Cela remplace vos raccourcis personnalisés actuels : notez ceux que vous voulez garder et refaites-les ensuite.", "Das ersetzt deine aktuellen eigenen Belegungen. Notiere dir, was du behalten willst, und stelle es danach wieder ein." } },
+        { "Couldn't copy into {0}. Try running Tablet Deck as administrator, or copy {1} by hand.", new[] { "No se pudo copiar en {0}. Prueba a ejecutar Tablet Deck como administrador o copia {1} a mano.", "Impossible de copier dans {0}. Essayez de lancer Tablet Deck en administrateur, ou copiez {1} à la main.", "Kopieren nach {0} fehlgeschlagen. Starte Tablet Deck als Administrator oder kopiere {1} von Hand." } },
+
+        // ---- Settings window ----
+        { "Tablet Deck settings", new[] { "Ajustes de Tablet Deck", "Réglages de Tablet Deck", "Tablet-Deck-Einstellungen" } },
+        { "PAIRING", new[] { "EMPAREJAMIENTO", "APPAIRAGE", "KOPPLUNG" } },
+        { "Pairing code", new[] { "Código de emparejamiento", "Code d'appairage", "Kopplungscode" } },
+        { "New random code", new[] { "Nuevo código", "Nouveau code", "Neuer Code" } },
+        { "Letters and numbers. Tablets already paired keep working until they reload; new ones need the new code.", new[] { "Letras y números. Las tablets ya emparejadas funcionan hasta recargar; las nuevas usan el código nuevo.", "Lettres et chiffres. Les tablettes appairées marchent jusqu'à leur rechargement, les nouvelles ont besoin du code.", "Buchstaben und Ziffern. Gekoppelte Tablets laufen bis zum Neuladen weiter; neue brauchen den neuen Code." } },
+        { "Port", new[] { "Puerto", "Port", "Port" } },
+        { "Set with --port when Tablet Deck was started, so it can't be changed here.", new[] { "Fijado con --port al iniciar Tablet Deck; no se puede cambiar aquí.", "Défini avec --port au lancement ; non modifiable ici.", "Beim Start mit --port gesetzt, daher hier nicht änderbar." } },
+        { "Changing it restarts the server. Tablets then need the new address or QR code.", new[] { "Reinicia el servidor. Las tablets necesitarán la nueva dirección o el QR.", "Redémarre le serveur. Les tablettes devront reprendre l'adresse ou le QR.", "Startet den Server neu. Tablets brauchen dann neue Adresse oder QR-Code." } },
+        { "KEYS", new[] { "TECLAS", "TOUCHES", "TASTEN" } },
+        { "Only press keys while Star Citizen is in front", new[] { "Pulsar teclas solo con Star Citizen en primer plano", "Seulement si Star Citizen est devant", "Tasten nur drücken, wenn Star Citizen vorne ist" } },
+        { "Keys never reach another window, like a browser or chat, by accident.", new[] { "Las teclas nunca llegan por error a otra ventana, como un navegador o un chat.", "Les touches n'atteignent jamais par erreur une autre fenêtre, comme un navigateur ou un chat.", "Tasten landen nie versehentlich in einem anderen Fenster, etwa einem Browser oder Chat." } },
+        { "Tap length", new[] { "Duración del toque", "Durée d'appui", "Tippdauer" } },
+        { "milliseconds a tap holds the key. Raise it if the game misses taps.", new[] { "milisegundos que un toque mantiene la tecla. Súbelo si el juego pierde toques.", "millisecondes de maintien par appui. À augmenter si le jeu rate des appuis.", "Millisekunden, die ein Tippen die Taste hält. Erhöhen, wenn das Spiel Tipps verpasst." } },
+        { "Voice language", new[] { "Idioma de voz", "Langue vocale", "Sprache für Befehle" } },
+        { "Needs that English speech recognizer installed in Windows (Settings > Time & Language > Speech).", new[] { "Necesita ese reconocedor de voz en inglés instalado en Windows (Configuración > Hora e idioma > Voz).", "Nécessite la reconnaissance vocale anglaise de Windows (Paramètres > Heure et langue > Voix).", "Braucht die englische Spracherkennung von Windows (Einstellungen > Zeit und Sprache > Sprache)." } },
+        { "Emotes also answer to one word, like \"wave\"", new[] { "Gestos también con una palabra, como \"wave\"", "Emotes aussi avec un seul mot, comme \"wave\"", "Emotes reagieren auch auf ein Wort, etwa \"wave\"" } },
+        { "Without this, emotes need \"emote\" first (\"emote wave\"), so a stray word doesn't set one off.", new[] { "Sin esto, los gestos necesitan \"emote\" delante (\"emote wave\"), para que una palabra suelta no active uno.", "Sans cela, les emotes demandent \"emote\" d'abord (\"emote wave\"), pour qu'un mot isolé n'en déclenche pas.", "Ohne das brauchen Emotes zuerst \"emote\" (\"emote wave\"), damit ein einzelnes Wort keins auslöst." } },
+        { "PUSH-TO-TALK", new[] { "PULSAR PARA HABLAR", "APPUYER POUR PARLER", "PUSH-TO-TALK" } },
+        { "Key on this PC", new[] { "Tecla en este PC", "Touche sur ce PC", "Taste an diesem PC" } },
+        { "None", new[] { "Ninguna", "Aucune", "Keine" } },
+        { "None: click to set", new[] { "Ninguna: clic para elegir", "Aucune : cliquez pour choisir", "Keine: zum Festlegen klicken" } },
+        { "Press a key or button...", new[] { "Pulsa una tecla o botón...", "Appuyez sur une touche ou un bouton...", "Drück eine Taste oder einen Knopf..." } },
+        { "Mode", new[] { "Modo", "Mode", "Modus" } },
+        { "Hold to talk", new[] { "Mantener para hablar", "Maintenir pour parler", "Halten zum Sprechen" } },
+        { "Press to start, again to stop", new[] { "Pulsar para empezar y otra vez para parar", "Appuyer pour démarrer, encore pour arrêter", "Drücken zum Starten, nochmal zum Beenden" } },
+        { "Play a sound when it starts and stops listening", new[] { "Sonido al empezar y dejar de escuchar", "Un son quand l'écoute démarre et s'arrête", "Ton beim Start und Ende des Zuhörens" } },
+        { "Pick a key Star Citizen doesn't use, like a mouse side button, a numpad key or F13-F24: the key still reaches the game.", new[] { "Elige una tecla que Star Citizen no use, como un botón lateral del ratón, una tecla del teclado numérico o F13-F24: la tecla sigue llegando al juego.", "Choisissez une touche que Star Citizen n'utilise pas, comme un bouton latéral de souris, une touche du pavé numérique ou F13-F24 : la touche arrive quand même au jeu.", "Wähle eine Taste, die Star Citizen nicht nutzt, etwa eine Maus-Seitentaste, eine Ziffernblocktaste oder F13-F24: Die Taste kommt trotzdem im Spiel an." } },
+        { "LINKS", new[] { "ENLACES", "LIENS", "LINKS" } },
+        { "Websites the tablet can open on this PC", new[] { "Webs que la tablet puede abrir en este PC", "Sites que la tablette peut ouvrir", "Websites für das Tablet" } },
+        { "One per line: Name | https://address. The tablet only sees the names, so it can't open anything else.", new[] { "Una por línea: Nombre | https://dirección. La tablet solo ve los nombres, así que no puede abrir nada más.", "Un par ligne : Nom | https://adresse. La tablette ne voit que les noms, elle ne peut donc rien ouvrir d'autre.", "Eine pro Zeile: Name | https://adresse. Das Tablet sieht nur die Namen und kann daher nichts anderes öffnen." } },
+        { "Install keybind profile...", new[] { "Instalar perfil de teclas...", "Installer le profil de touches...", "Tastenprofil installieren..." } },
+        { "Language", new[] { "Idioma", "Langue", "Sprache" } },
+        { "Automatic", new[] { "Automático", "Automatique", "Automatisch" } },
+        { "Save", new[] { "Guardar", "Enregistrer", "Speichern" } },
+        { "Cancel", new[] { "Cancelar", "Annuler", "Abbrechen" } },
+        { "This link isn't right:\n\n{0}\n\nWrite each one as: Name | https://address (names up to 24 characters).", new[] { "Este enlace no es correcto:\n\n{0}\n\nEscribe cada uno así: Nombre | https://dirección (nombres de hasta 24 caracteres).", "Ce lien n'est pas correct :\n\n{0}\n\nÉcrivez chacun ainsi : Nom | https://adresse (noms de 24 caractères maximum).", "Dieser Link stimmt nicht:\n\n{0}\n\nSchreib jeden so: Name | https://adresse (Namen bis 24 Zeichen)." } },
+        { "Up to 12 links, please.", new[] { "Como máximo 12 enlaces, por favor.", "12 liens au maximum, s'il vous plaît.", "Höchstens 12 Links, bitte." } },
+        { "The pairing code can only have letters and numbers (up to 32).", new[] { "El código de emparejamiento solo puede tener letras y números (hasta 32).", "Le code d'appairage ne peut contenir que des lettres et des chiffres (32 au maximum).", "Der Kopplungscode darf nur Buchstaben und Ziffern haben (bis zu 32)." } },
+        { "The voice language should look like en-US.", new[] { "El idioma de voz debe tener la forma en-US.", "La langue vocale doit ressembler à en-US.", "Die Sprache für Befehle sollte wie en-US aussehen." } },
+    };
+}
+
 // The house colours and fonts (docs/DESIGN.md) and the HUD's drawing pieces: thin-lined
 // panels with corner brackets and "// HEADING" titles, letter-spaced labels, rulers.
 // Sizes are in 96-dpi pixels; HudView scales everything for the screen.
@@ -273,7 +524,7 @@ static class Hud
         using (var fill = new SolidBrush(Fade(Panel, 168))) g.FillRectangle(fill, r);
         using (var border = new Pen(Line, 1f)) g.DrawRectangle(border, r.X, r.Y, r.Width, r.Height);
         Brackets(g, r, Fade(Accent, 200), 9);
-        float w = Spaced(g, "// " + title, Head(11), Accent, r.X + 14, r.Y + 9, 1.6f);
+        float w = Spaced(g, "// " + Lang.T(title), Head(11), Accent, r.X + 14, r.Y + 9, 1.6f);
         using (var pen = new Pen(Fade(Line, 255), 1f)) g.DrawLine(pen, r.X + 22 + w, r.Y + 16, r.Right - 70, r.Y + 16);
         Ruler(g, r.Right - 62, r.Y + 11, 48, Fade(Accent, 110));
     }
@@ -354,7 +605,7 @@ class HudView : Control
         tipDelay.Tick += delegate
         {
             tipDelay.Stop();
-            if (hover != null && hover.Tip != "") tips.Show(hover.Tip, this, (int)(mouse.X * Zoom) + 14, (int)(mouse.Y * Zoom) + 22, 6000);
+            if (hover != null && hover.Tip != "") tips.Show(Lang.T(hover.Tip), this, (int)(mouse.X * Zoom) + 14, (int)(mouse.Y * Zoom) + 22, 6000);
         };
     }
 
@@ -559,8 +810,14 @@ class HudView : Control
                         g.DrawLine(pen, r.Right - 7, r.Bottom - 1, r.Right, r.Bottom - 1);
                     }
                 var font = Hud.Head(11.5f);
-                string text = item.Text.ToUpperInvariant();
+                string text = Lang.T(item.Text).ToUpperInvariant();
                 float w = Hud.SpacedWidth(g, text, font, 1.3f);
+                // A longer translation gets a smaller font rather than spilling out of the button.
+                for (float px = 11f; w > r.Width - 12 && px >= 9f; px -= 0.5f)
+                {
+                    font = Hud.Head(px);
+                    w = Hud.SpacedWidth(g, text, font, 1.3f);
+                }
                 Hud.Spaced(g, text, font, item.Enabled ? Hud.Ink : Hud.Fade(Hud.Dim, 140),
                     r.X + (r.Width - w) / 2, r.Y + (r.Height - font.Height) / 2 + 1, 1.3f);
                 break;
@@ -570,7 +827,7 @@ class HudView : Control
                 using (var pen = new Pen(item.On || hot ? Hud.Accent : Hud.Line, 1f)) g.DrawRectangle(pen, track.X, track.Y, track.Width, track.Height);
                 using (var brush = new SolidBrush(item.On ? Hud.Accent : Hud.Dim))
                     g.FillRectangle(brush, item.On ? track.Right - 13 : track.X + 3, track.Y + 3, 10, 10);
-                Hud.Text(g, item.Text, Hud.Body(13), hot ? Hud.Ink : Hud.Fade(Hud.Ink, 225), new RectangleF(r.X + 44, r.Y, r.Width - 44, r.Height));
+                Hud.Text(g, Lang.T(item.Text), Hud.Body(13), hot ? Hud.Ink : Hud.Fade(Hud.Ink, 225), new RectangleF(r.X + 44, r.Y, r.Width - 44, r.Height));
                 break;
             case Kind.Slider:
                 float mid = r.Y + r.Height / 2, t = item.Max > item.Min ? (item.Value - item.Min) / (float)(item.Max - item.Min) : 0;
@@ -583,9 +840,10 @@ class HudView : Control
                 break;
             case Kind.Link:
                 var linkFont = item.Mono ? Hud.Mono(14, false) : Hud.Body(12.5f);
-                float lw = Hud.Width(g, item.Text, linkFont);
+                string label = Lang.T(item.Text);
+                float lw = Hud.Width(g, label, linkFont);
                 r.Width = Math.Min(lw + 2, item.Box.Width);
-                Hud.Text(g, item.Text, linkFont, hot ? Hud.Ink : Hud.Accent, item.Box);
+                Hud.Text(g, label, linkFont, hot ? Hud.Ink : Hud.Accent, item.Box);
                 if (hot) using (var pen = new Pen(Hud.Ink, 1f)) g.DrawLine(pen, r.X, r.Bottom - 2, r.Right, r.Bottom - 2);
                 break;
         }
@@ -817,7 +1075,7 @@ class HudDialog : Form
     protected HudDialog(string title, Icon icon, int width, int height)
     {
         SuspendLayout();
-        Text = title;
+        Text = Lang.T(title);
         Icon = icon;
         ShowInTaskbar = false;
         BackColor = Hud.Back;
@@ -864,7 +1122,7 @@ class HudDialog : Form
     // A small letter-spaced label above a field.
     protected Note Caption(string text, float x, float y)
     {
-        var note = new Note { Text = text.ToUpperInvariant(), Box = new RectangleF(x, y, 400, 14), Font = Hud.Label(11.5f), Caption = true };
+        var note = new Note { Text = Lang.T(text).ToUpperInvariant(), Box = new RectangleF(x, y, 400, 14), Font = Hud.Label(11.5f), Caption = true };
         notes.Add(note);
         return note;
     }
@@ -872,7 +1130,7 @@ class HudDialog : Form
     // Wrapping text: help under a field, or a status message.
     protected Note Hint(string text, float x, float y, float w, float h)
     {
-        var note = new Note { Text = text, Box = new RectangleF(x, y, w, h), Font = Hud.Body(11.5f) };
+        var note = new Note { Text = Lang.T(text), Box = new RectangleF(x, y, w, h), Font = Hud.Body(11.5f) };
         notes.Add(note);
         return note;
     }
@@ -993,12 +1251,15 @@ class DeckWindow : Form
     // What the panels show; DrawHud draws them from these.
     readonly HudView hud = new HudView();
     string[] qrRows = new string[0];
-    string chip = "STARTING", stateText = "Starting...", others = "", pairingCode = "-", version = "";
+    // Status lines are kept as functions, so they show in the current language even after
+    // it changes.
+    string chip = "STARTING", others = "", pairingCode = "-", version = "";
+    Func<string> stateText = () => Lang.T("Starting...");
     Color stateColor = Hud.Dim;
     bool dryRun, focusCheck = true;
     int tabletCount;
     DateTime runningSince = DateTime.MinValue;
-    string voiceText = "Starting...", lastHeard = "";
+    Func<string> voiceText = () => Lang.T("Starting..."), lastHeard = () => "";
     Color voiceColor = Hud.Dim, lastHeardColor = Hud.Dim;
     // Presses from the tablets and voice, for the telemetry panel.
     readonly Queue<DateTime> recentPresses = new Queue<DateTime>();
@@ -1038,7 +1299,8 @@ class DeckWindow : Form
     bool checking;
     readonly System.Windows.Forms.Timer dailyCheck = new System.Windows.Forms.Timer();
     bool bannerShown;
-    string bannerText = "";
+    Func<string> bannerText = () => "";
+    Func<string> trayText = () => "Tablet Deck";
     string whatsNewUrl = "";
     string updateVersion = "", updateSetupUrl = "", updateShaUrl = "", dismissedVersion = "";
     Process installer;
@@ -1155,18 +1417,10 @@ class DeckWindow : Form
         dailyCheck.Start();
 
         tray.Icon = Icon;
-        tray.Text = "Tablet Deck";
+        tray.Text = trayText();
         tray.Visible = true;
         tray.DoubleClick += delegate { ShowFromTray(); };
-        var menu = new ContextMenuStrip();
-        menu.Items.Add("Show Tablet Deck", null, delegate { ShowFromTray(); });
-        menu.Items.Add("Copy link", null, delegate { CopyLink(); });
-        menu.Items.Add("Edit layout", null, delegate { OpenEditor(); });
-        menu.Items.Add("Check for updates now", null, delegate { CheckForUpdates(true); });
-        menu.Items.Add("Feedback & ideas", null, delegate { Process.Start(FeedbackPage); });
-        menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("Quit", null, delegate { Close(); });
-        tray.ContextMenuStrip = menu;
+        BuildTrayMenu();
 
         copiedTimer.Interval = 1500;
         copiedTimer.Tick += delegate { copiedTimer.Stop(); copyButton.Text = "Copy link"; hud.Redraw(); };
@@ -1217,9 +1471,9 @@ class DeckWindow : Form
         strictness.Box = new RectangleF(voiceBox.X + 104, voiceBox.Y + 72, 190, 14);
         startWithWindows.Box = new RectangleF(systemBox.X + 16, systemBox.Y + 32, systemBox.Width - 32, 22);
         autoUpdate.Box = new RectangleF(systemBox.X + 16, systemBox.Y + 60, systemBox.Width - 32, 22);
-        folderLink.Box = new RectangleF(systemBox.X + 16, systemBox.Y + 92, 120, 18);
-        checkLink.Box = new RectangleF(systemBox.X + 146, systemBox.Y + 92, systemBox.Width - 162, 18);
-        feedbackLink.Box = new RectangleF(systemBox.X + 16, systemBox.Y + 112, 140, 18);
+        folderLink.Box = new RectangleF(systemBox.X + 16, systemBox.Y + 92, 128, 18);
+        feedbackLink.Box = new RectangleF(systemBox.X + 152, systemBox.Y + 92, systemBox.Width - 168, 18);
+        checkLink.Box = new RectangleF(systemBox.X + 16, systemBox.Y + 112, systemBox.Width - 32, 18);
         networkLink.Box = new RectangleF(linkBox.Right - 16 - 150, linkBox.Y + 67, 150, 18);
 
         float bx = bannerBox.Right - 8;
@@ -1248,7 +1502,7 @@ class DeckWindow : Form
             using (var pen = new Pen(Hud.Accent, 1f)) g.DrawRectangle(pen, bannerBox.X, bannerBox.Y, bannerBox.Width, bannerBox.Height);
             float buttonsLeft = bannerBox.Right;
             foreach (var b in new[] { bannerWhatsNew, bannerUpdate, bannerLater }) if (b.Visible) buttonsLeft = Math.Min(buttonsLeft, b.Box.X);
-            Hud.Text(g, bannerText, Hud.Body(13.5f), Hud.Ink, new RectangleF(bannerBox.X + 14, bannerBox.Y, buttonsLeft - bannerBox.X - 24, bannerBox.Height));
+            Hud.Text(g, bannerText(), Hud.Body(13.5f), Hud.Ink, new RectangleF(bannerBox.X + 14, bannerBox.Y, buttonsLeft - bannerBox.X - 24, bannerBox.Height));
         }
         DrawConnect(g);
         DrawLink(g);
@@ -1270,17 +1524,18 @@ class DeckWindow : Form
             g.FillPolygon(brush, new[] { new PointF(38, 25), new PointF(44, 40), new PointF(38, 36), new PointF(32, 40) });
         float tw = Hud.Spaced(g, "TABLET DECK", Hud.Head(24), Hud.Accent, 64, 17, 3f);
         if (version != "") Hud.Spaced(g, "V" + version, Hud.Label(11.5f), Hud.Dim, 64 + tw + 12, 29, 1.2f);
-        Hud.Spaced(g, "STAR CITIZEN CONTROL DECK", Hud.Label(11.5f), Hud.Dim, 65, 45, 2.4f);
+        Hud.Spaced(g, Lang.T("STAR CITIZEN CONTROL DECK"), Hud.Label(11.5f), Hud.Dim, 65, 45, 2.4f);
 
         // Status on the right: a dot and one word, the uptime under it.
         var chipFont = Hud.Head(13);
-        float cw = Hud.SpacedWidth(g, chip, chipFont, 2f);
-        Hud.Spaced(g, chip, chipFont, stateColor, width - 22 - cw, 20, 2f);
+        string word = Lang.T(chip);
+        float cw = Hud.SpacedWidth(g, word, chipFont, 2f);
+        Hud.Spaced(g, word, chipFont, stateColor, width - 22 - cw, 20, 2f);
         Hud.Dot(g, stateColor, width - 34 - cw, 28);
         if (runningSince != DateTime.MinValue)
         {
             var up = DateTime.Now - runningSince;
-            string text = "UPTIME " + ((int)up.TotalHours).ToString("00") + ":" + up.Minutes.ToString("00") + ":" + up.Seconds.ToString("00");
+            string text = Lang.T("UPTIME") + " " + ((int)up.TotalHours).ToString("00") + ":" + up.Minutes.ToString("00") + ":" + up.Seconds.ToString("00");
             float uw = Hud.SpacedWidth(g, text, Hud.Mono(11, false), 1f);
             Hud.Spaced(g, text, Hud.Mono(11, false), Hud.Dim, width - 22 - uw, 42, 1f);
         }
@@ -1299,12 +1554,12 @@ class DeckWindow : Form
         else
         {
             using (var pen = new Pen(Hud.Line, 1f) { DashStyle = DashStyle.Dash }) g.DrawRectangle(pen, qrBox.X, qrBox.Y, qrBox.Width, qrBox.Height);
-            string text = serverReady ? "NO NETWORK FOUND" : chip == "STOPPED" ? "OFFLINE" : "WAITING FOR THE SERVER";
+            string text = Lang.T(serverReady ? "NO NETWORK FOUND" : chip == "STOPPED" ? "OFFLINE" : "WAITING FOR THE SERVER");
             float w = Hud.SpacedWidth(g, text, Hud.Label(11), 1.6f);
             Hud.Spaced(g, text, Hud.Label(11), Hud.Dim, qrBox.X + (qrBox.Width - w) / 2, qrBox.Y + qrBox.Height / 2 - 6, 1.6f);
         }
         Hud.Brackets(g, RectangleF.Inflate(qrBox, 6, 6), Hud.Accent, 14);
-        string caption = "SCAN WITH YOUR TABLET'S CAMERA";
+        string caption = Lang.T("SCAN WITH YOUR TABLET'S CAMERA");
         float cw = Hud.SpacedWidth(g, caption, Hud.Label(11.5f), 1.4f);
         Hud.Spaced(g, caption, Hud.Label(11.5f), Hud.Dim, r.X + (r.Width - cw) / 2, r.Bottom - 22, 1.4f);
     }
@@ -1316,15 +1571,15 @@ class DeckWindow : Form
         Hud.PanelBox(g, r, "LINK");
         if (serverReady)
         {
-            Hud.Spaced(g, "ADDRESS", Hud.Label(11.5f), Hud.Dim, x, r.Y + 32, 1.6f);
-            if (link == "") Hud.Text(g, "No network found. Connect this PC to Wi-Fi or a network.", Hud.Body(13), Hud.Warn, new RectangleF(x, r.Y + 46, w, 20));
+            Hud.Spaced(g, Lang.T("ADDRESS"), Hud.Label(11.5f), Hud.Dim, x, r.Y + 32, 1.6f);
+            if (link == "") Hud.Text(g, Lang.T("No network found. Connect this PC to Wi-Fi or a network."), Hud.Body(13), Hud.Warn, new RectangleF(x, r.Y + 46, w, 20));
             if (publicNetwork != "")
-                Hud.Text(g, "Windows treats \"" + publicNetwork + "\" as Public: tablets can't connect.",
+                Hud.Text(g, Lang.F("Windows treats \"{0}\" as Public: tablets can't connect.", publicNetwork),
                     Hud.Body(12), Hud.Warn, new RectangleF(x, r.Y + 67, networkLink.Box.X - x - 8, 18));
-            else if (others != "") Hud.Text(g, "ALSO  " + others, Hud.Mono(11, false), Hud.Dim, new RectangleF(x, r.Y + 68, w, 16));
+            else if (others != "") Hud.Text(g, Lang.T("ALSO") + "  " + others, Hud.Mono(11, false), Hud.Dim, new RectangleF(x, r.Y + 68, w, 16));
         }
-        else Hud.Wrapped(g, stateText, Hud.Body(13.5f), stateColor, new RectangleF(x, r.Y + 34, w, 50));
-        Hud.Spaced(g, "PAIRING CODE", Hud.Label(11.5f), Hud.Dim, x, r.Y + 92, 1.6f);
+        else Hud.Wrapped(g, stateText(), Hud.Body(13.5f), stateColor, new RectangleF(x, r.Y + 34, w, 50));
+        Hud.Spaced(g, Lang.T("PAIRING CODE"), Hud.Label(11.5f), Hud.Dim, x, r.Y + 92, 1.6f);
         Hud.Spaced(g, pairingCode, Hud.Mono(28, true), Hud.Ink, x - 1, r.Y + 106, 3f);
     }
 
@@ -1343,10 +1598,10 @@ class DeckWindow : Form
         string why = !serverReady ? "" : dryRun ? "TEST MODE: NO KEYS SENT" : focusCheck ? "ONLY WHILE IT'S IN FRONT" : "FOCUS CHECK IS OFF";
         Tile(g, keys, "KEYS GO TO", target, !serverReady ? Hud.Dim : dryRun || !focusCheck ? Hud.Warn : Hud.Ink, why);
 
-        Tile(g, presses, "PRESSES", pressCount.ToString(), Hud.Ink, lastPress != "" ? "LAST: " + lastPress.ToUpperInvariant() : "NONE YET");
+        Tile(g, presses, "PRESSES", pressCount.ToString(), Hud.Ink, lastPress != "" ? Lang.F("LAST: {0}", lastPress.ToUpperInvariant()) : "NONE YET");
         if (blockedCount > 0)
         {
-            string text = blockedCount + " BLOCKED";
+            string text = Lang.F("{0} BLOCKED", blockedCount);
             float bw = Hud.SpacedWidth(g, text, Hud.Label(11), 1.2f);
             Hud.Spaced(g, text, Hud.Label(11), Hud.Warn, presses.Right - 10 - bw, presses.Y + 8, 1.2f);
         }
@@ -1377,10 +1632,11 @@ class DeckWindow : Form
         using (var fill = new SolidBrush(Hud.Fade(Hud.Back, 140))) g.FillRectangle(fill, r);
         using (var pen = new Pen(Hud.Line, 1f)) g.DrawRectangle(pen, r.X, r.Y, r.Width, r.Height);
         using (var pen = new Pen(Hud.Accent, 2f)) g.DrawLine(pen, r.X, r.Y + 6, r.X, r.Y + 20);
-        Hud.Spaced(g, caption, Hud.Label(11), Hud.Dim, r.X + 10, r.Y + 8, 1.4f);
+        Hud.Spaced(g, Lang.T(caption), Hud.Label(11), Hud.Dim, r.X + 10, r.Y + 8, 1.4f);
+        value = Lang.T(value);
         var font = Hud.Head(value.Length > 6 ? 17 : 24);
         Hud.Text(g, value, font, color, new RectangleF(r.X + 10, r.Y + 21, r.Width - 16, 36));
-        Hud.Text(g, note, Hud.Label(10.5f), Hud.Dim, new RectangleF(r.X + 10, r.Bottom - 18, r.Width - 16, 14));
+        Hud.Text(g, Lang.T(note), Hud.Label(10.5f), Hud.Dim, new RectangleF(r.X + 10, r.Bottom - 18, r.Width - 16, 14));
     }
 
     void DrawVoice(Graphics g)
@@ -1389,12 +1645,12 @@ class DeckWindow : Form
         float x = r.X + 16;
         Hud.PanelBox(g, r, "VOICE");
         Hud.Dot(g, voiceColor, x + 4, r.Y + 42);
-        Hud.Text(g, voiceText, Hud.Body(13), voiceColor, new RectangleF(x + 16, r.Y + 32, voiceListButton.Box.X - x - 26, 20));
-        Hud.Spaced(g, "STRICTNESS", Hud.Label(11.5f), Hud.Dim, x, r.Y + 68, 1.6f);
+        Hud.Text(g, voiceText(), Hud.Body(13), voiceColor, new RectangleF(x + 16, r.Y + 32, voiceListButton.Box.X - x - 26, 20));
+        Hud.Spaced(g, Lang.T("STRICTNESS"), Hud.Label(11.5f), Hud.Dim, x, r.Y + 68, 1.6f);
         Hud.Spaced(g, strictness.Value + "%", Hud.Head(13), strictness.Enabled ? Hud.Ink : Hud.Dim, strictness.Box.Right + 14, r.Y + 67, 1f);
-        Hud.Wrapped(g, "Lower accepts more but may mishear. Higher is stricter.", Hud.Body(11), Hud.Dim,
+        Hud.Wrapped(g, Lang.T("Lower accepts more but may mishear. Higher is stricter."), Hud.Body(11), Hud.Dim,
             new RectangleF(strictness.Box.Right + 60, r.Y + 62, r.Right - strictness.Box.Right - 76, 32));
-        Hud.Text(g, lastHeard, Hud.Body(12.5f), lastHeardColor, new RectangleF(x, r.Bottom - 28, r.Width - 32, 18));
+        Hud.Text(g, lastHeard(), Hud.Body(12.5f), lastHeardColor, new RectangleF(x, r.Bottom - 28, r.Width - 32, 18));
     }
 
     // ---------- server ----------
@@ -1410,19 +1666,19 @@ class DeckWindow : Form
         others = "";
         pairingCode = "-";
         qrRows = new string[0];
-        lastHeard = "";
+        lastHeard = () => "";
         strictness.Enabled = false;
         voiceCommands.Clear();
         voiceListButton.Enabled = false;
         if (commandsWindow != null) commandsWindow.Fill();
-        SetState("STARTING", "Starting the server...", Hud.Dim);
-        voiceText = "Starting...";
+        SetState("STARTING", () => Lang.T("Starting the server..."), Hud.Dim);
+        voiceText = () => Lang.T("Starting...");
         voiceColor = Hud.Dim;
         tabletCount = 0;
         string exe = Path.Combine(appDir, "TabletDeckServer.exe");
         if (!File.Exists(exe))
         {
-            Stopped(exe + " is missing. Reinstall Tablet Deck.");
+            Stopped(() => Lang.F("{0} is missing. Reinstall Tablet Deck.", exe));
             return;
         }
         var psi = new ProcessStartInfo(exe, serverArgs)
@@ -1446,7 +1702,7 @@ class DeckWindow : Form
         }
         catch (Exception ex)
         {
-            Stopped("Couldn't start the server: " + ex.Message);
+            Stopped(() => Lang.F("Couldn't start the server: {0}", ex.Message));
             return;
         }
         server = proc;
@@ -1494,11 +1750,13 @@ class DeckWindow : Form
     {
         if (quitting || proc != server) return;
         server = null;
-        Stopped(fatalText != "" ? fatalText : "The server stopped (exit code " + proc.ExitCode + "). See the log below.");
+        string fatal = fatalText;
+        int code = proc.ExitCode;
+        Stopped(() => fatal != "" ? fatal : Lang.F("The server stopped (exit code {0}). See the log below.", code));
         ShowFromTray();
     }
 
-    void Stopped(string why)
+    void Stopped(Func<string> why)
     {
         serverReady = false;
         // The address means nothing now; the reason takes its place.
@@ -1508,13 +1766,13 @@ class DeckWindow : Form
         others = "";
         qrRows = new string[0];
         runningSince = DateTime.MinValue;
-        SetState("STOPPED", "Stopped: " + why, Hud.Bad);
+        SetState("STOPPED", () => Lang.F("Stopped: {0}", why()), Hud.Bad);
         restartButton.Visible = true;
         editButton.Visible = false;
         tabletCount = 0;
-        voiceText = "Off";
+        voiceText = () => Lang.T("Off");
         voiceColor = Hud.Dim;
-        tray.Text = "Tablet Deck (stopped)";
+        ShowTrayText(() => Lang.T("Tablet Deck (stopped)"));
     }
 
     void OnLine(string line, bool error)
@@ -1556,8 +1814,11 @@ class DeckWindow : Form
                 focusCheck = Bool(ev, "focusCheck");
                 // A new pairing code or port restarts nothing, so the uptime keeps counting.
                 if (runningSince == DateTime.MinValue) runningSince = DateTime.Now;
-                SetState(dryRun ? "TEST MODE" : "ONLINE", dryRun ? "Running in test mode (dry run): no keys are sent" : "Running", dryRun ? Hud.Warn : Hud.Good);
-                tray.Text = "Tablet Deck " + version + (dryRun ? " (test mode)" : "");
+                string running = dryRun ? "Running in test mode (dry run): no keys are sent" : "Running";
+                SetState(dryRun ? "TEST MODE" : "ONLINE", () => Lang.T(running), dryRun ? Hud.Warn : Hud.Good);
+                string trayVersion = version;
+                bool trayTest = dryRun;
+                ShowTrayText(() => "Tablet Deck " + trayVersion + (trayTest ? Lang.T(" (test mode)") : ""));
                 ShowStrictness(Num(ev, "voiceConfidence"));
                 autoUpdate.On = Bool(ev, "autoUpdate");
                 if (!checkedAtStart && autoUpdate.On) CheckForUpdates(false);
@@ -1577,21 +1838,21 @@ class DeckWindow : Form
                 if (commandsWindow != null) commandsWindow.Fill();
                 break;
             case "heard":
-                string result = Str(ev, "result");
-                int sure = (int)Math.Round(Num(ev, "confidence") * 100);
+                string result = Str(ev, "result"), heard = Str(ev, "text"), pressed = Str(ev, "label");
+                int sure = (int)Math.Round(Num(ev, "confidence") * 100), below = strictness.Value;
                 if (result == "accepted")
                 {
-                    lastHeard = "Last heard: \"" + Str(ev, "text") + "\", " + sure + "% sure. Pressed " + Str(ev, "label") + ".";
+                    lastHeard = () => Lang.F("Last heard: \"{0}\", {1}% sure. Pressed {2}.", heard, sure, pressed);
                     lastHeardColor = Hud.Good;
                 }
                 else if (result == "ignored")
                 {
-                    lastHeard = "Last heard: \"" + Str(ev, "text") + "\", " + sure + "% sure. Below " + strictness.Value + "%, so it was ignored.";
+                    lastHeard = () => Lang.F("Last heard: \"{0}\", {1}% sure. Below {2}%, so it was ignored.", heard, sure, below);
                     lastHeardColor = Hud.Warn;
                 }
                 else
                 {
-                    lastHeard = "Last heard: something that isn't one of the commands.";
+                    lastHeard = () => Lang.T("Last heard: something that isn't one of the commands.");
                     lastHeardColor = Hud.Dim;
                 }
                 break;
@@ -1609,26 +1870,25 @@ class DeckWindow : Form
                 }
                 break;
             case "voice":
-                string s = Str(ev, "state");
+                string s = Str(ev, "state"), phrases = Str(ev, "phrases"), language = Str(ev, "language"), ptt = Str(ev, "ptt"), why = Str(ev, "text");
                 if (s == "ready")
                 {
-                    voiceText = "Ready: " + Str(ev, "phrases") + " phrases, " + Str(ev, "language")
-                        + (Str(ev, "ptt") != "" ? ", push-to-talk: " + Str(ev, "ptt") : "");
+                    voiceText = () => Lang.F("Ready: {0} phrases, {1}", phrases, language) + (ptt != "" ? Lang.F(", push-to-talk: {0}", ptt) : "");
                     voiceColor = Hud.Good;
                 }
                 else if (s == "off")
                 {
-                    voiceText = "Turned off in settings";
+                    voiceText = () => Lang.T("Turned off in settings");
                     voiceColor = Hud.Dim;
                 }
                 else if (s == "starting")
                 {
-                    voiceText = "Restarting...";
+                    voiceText = () => Lang.T("Restarting...");
                     voiceColor = Hud.Dim;
                 }
                 else
                 {
-                    voiceText = "Unavailable: " + Str(ev, "text");
+                    voiceText = () => Lang.F("Unavailable: {0}", why);
                     voiceColor = Hud.Warn;
                 }
                 break;
@@ -1638,8 +1898,8 @@ class DeckWindow : Form
                 if (publicNetwork != "" && !publicNetworkNoticed)
                 {
                     publicNetworkNoticed = true;
-                    AppendLog("Windows treats \"" + publicNetwork + "\" as a Public network, so tablets can't connect. In Windows: Settings > Network & Internet > " + publicNetwork + " > set it to Private.", Hud.Warn);
-                    if (!Visible) Notify("Tablets can't connect", "Windows treats \"" + publicNetwork + "\" as a Public network. Open Tablet Deck to fix it.");
+                    AppendLog(Lang.F("Windows treats \"{0}\" as a Public network, so tablets can't connect. In Windows: Settings > Network & Internet > {0} > set it to Private.", publicNetwork), Hud.Warn);
+                    if (!Visible) Notify(Lang.T("Tablets can't connect"), Lang.F("Windows treats \"{0}\" as a Public network. Open Tablet Deck to fix it.", publicNetwork));
                 }
                 break;
             case "fatal":
@@ -1697,7 +1957,7 @@ class DeckWindow : Form
     }
 
     // The header's one-word status, and the sentence shown while the server isn't running.
-    void SetState(string word, string text, Color color)
+    void SetState(string word, Func<string> text, Color color)
     {
         chip = word;
         stateText = text;
@@ -1726,7 +1986,7 @@ class DeckWindow : Form
 
     // Shows the banner above the log. Buttons: "update" (What's new, Update now, Later),
     // "news" (What's new, Close), "busy" (none) or "info" (Close).
-    void ShowBanner(string text, string buttons)
+    void ShowBanner(Func<string> text, string buttons)
     {
         bannerText = text;
         bannerWhatsNew.Visible = buttons == "update" || buttons == "news";
@@ -1738,7 +1998,7 @@ class DeckWindow : Form
         Arrange();
     }
 
-    void SetBannerText(string text)
+    void SetBannerText(Func<string> text)
     {
         bannerText = text;
         hud.Redraw();
@@ -1796,14 +2056,14 @@ class DeckWindow : Form
     {
         if (release == null)
         {
-            if (userAsked) Notify("Couldn't check for updates", error ?? "GitHub didn't answer.");
+            if (userAsked) Notify(Lang.T("Couldn't check for updates"), error ?? Lang.T("GitHub didn't answer."));
             return;
         }
         string latest = Str(release, "tag_name").TrimStart('v', 'V');
         Version remote = ParseVersion(latest), local = ParseVersion(CurrentVersion);
         if (remote == null || local == null || remote <= local)
         {
-            if (userAsked) Notify("Tablet Deck is up to date", "You have version " + CurrentVersion + ", the latest.");
+            if (userAsked) Notify(Lang.T("Tablet Deck is up to date"), Lang.F("You have version {0}, the latest.", CurrentVersion));
             return;
         }
         // The installer and its checksum, attached to the release by .github/workflows/release.yml.
@@ -1820,7 +2080,7 @@ class DeckWindow : Form
         }
         if (setupUrl == "" || shaUrl == "")
         {
-            if (userAsked) Notify("Update not ready yet", "Version " + latest + " is out, but its installer isn't attached yet. Try again in a few minutes.");
+            if (userAsked) Notify(Lang.T("Update not ready yet"), Lang.F("Version {0} is out, but its installer isn't attached yet. Try again in a few minutes.", latest));
             return;
         }
         if (!userAsked && latest == dismissedVersion) return;
@@ -1828,8 +2088,8 @@ class DeckWindow : Form
         updateSetupUrl = setupUrl;
         updateShaUrl = shaUrl;
         whatsNewUrl = Str(release, "html_url") != "" ? Str(release, "html_url") : ReleasesPage;
-        ShowBanner("Tablet Deck " + latest + " is available (you have " + CurrentVersion + ").", "update");
-        if (!Visible) Notify("Tablet Deck " + latest + " is available", "Open Tablet Deck and click Update now.");
+        ShowBanner(() => Lang.F("Tablet Deck {0} is available (you have {1}).", latest, CurrentVersion), "update");
+        if (!Visible) Notify(Lang.F("Tablet Deck {0} is available", latest), Lang.T("Open Tablet Deck and click Update now."));
     }
 
     void Notify(string title, string text)
@@ -1837,21 +2097,57 @@ class DeckWindow : Form
         tray.ShowBalloonTip(5000, title, text, ToolTipIcon.Info);
     }
 
+    void ShowTrayText(Func<string> text)
+    {
+        trayText = text;
+        tray.Text = text();
+    }
+
+    void BuildTrayMenu()
+    {
+        var old = tray.ContextMenuStrip;
+        var menu = new ContextMenuStrip();
+        menu.Items.Add(Lang.T("Show Tablet Deck"), null, delegate { ShowFromTray(); });
+        menu.Items.Add(Lang.T("Copy link"), null, delegate { CopyLink(); });
+        menu.Items.Add(Lang.T("Edit layout"), null, delegate { OpenEditor(); });
+        menu.Items.Add(Lang.T("Check for updates now"), null, delegate { CheckForUpdates(true); });
+        menu.Items.Add(Lang.T("Feedback & ideas"), null, delegate { Process.Start(FeedbackPage); });
+        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add(Lang.T("Quit"), null, delegate { Close(); });
+        tray.ContextMenuStrip = menu;
+        if (old != null) old.Dispose();
+    }
+
+    // After the language changes in Settings. The panels translate as they're drawn; the
+    // tray menu and the voice commands window are built with their text, so build them again.
+    void ApplyLanguage()
+    {
+        BuildTrayMenu();
+        tray.Text = trayText();
+        if (commandsWindow != null) commandsWindow.Close();
+        hud.Redraw();
+    }
+
     // Downloads the installer for updateVersion, then VerifyAndInstall.
     void InstallUpdate()
     {
         if (updateSetupUrl == "") return;
-        ShowBanner("Downloading Tablet Deck " + updateVersion + "...", "busy");
+        string downloading = updateVersion;
+        ShowBanner(() => Lang.F("Downloading Tablet Deck {0}...", downloading), "busy");
         string dir = UpdateFolder;
         string file = Path.Combine(dir, "TabletDeck-Setup-" + updateVersion + ".exe");
         try { Directory.CreateDirectory(dir); }
-        catch (Exception ex) { UpdateFailed(ex.Message); return; }
+        catch (Exception ex) { UpdateFailed(() => ex.Message); return; }
         var web = NewWebClient();
-        web.DownloadProgressChanged += (s, e) => SetBannerText("Downloading Tablet Deck " + updateVersion + "... " + e.ProgressPercentage + "%");
+        web.DownloadProgressChanged += (s, e) =>
+        {
+            int percent = e.ProgressPercentage;
+            SetBannerText(() => Lang.F("Downloading Tablet Deck {0}...", downloading) + " " + percent + "%");
+        };
         web.DownloadFileCompleted += (s, e) =>
         {
             web.Dispose();
-            if (e.Error != null) UpdateFailed("the download failed (" + e.Error.Message + ")");
+            if (e.Error != null) { string error = e.Error.Message; UpdateFailed(() => Lang.F("the download failed ({0})", error)); }
             else VerifyAndInstall(file);
         };
         web.DownloadFileAsync(new Uri(updateSetupUrl), file);
@@ -1862,7 +2158,7 @@ class DeckWindow : Form
     // Tablet Deck again afterwards. Until then the deck keeps working.
     void VerifyAndInstall(string file)
     {
-        SetBannerText("Checking the download...");
+        SetBannerText(() => Lang.T("Checking the download..."));
         try
         {
             string expected;
@@ -1875,23 +2171,24 @@ class DeckWindow : Form
             if (expected.Length != 64 || actual != expected)
             {
                 File.Delete(file);
-                UpdateFailed("the download didn't match its checksum, so it wasn't installed");
+                UpdateFailed(() => Lang.T("the download didn't match its checksum, so it wasn't installed"));
                 return;
             }
         }
         catch (Exception ex)
         {
-            UpdateFailed("couldn't check the download (" + ex.Message + ")");
+            UpdateFailed(() => Lang.F("couldn't check the download ({0})", ex.Message));
             return;
         }
-        SetBannerText("Installing Tablet Deck " + updateVersion + ". Allow the Windows prompt to continue.");
+        string installing = updateVersion;
+        SetBannerText(() => Lang.F("Installing Tablet Deck {0}. Allow the Windows prompt to continue.", installing));
         try
         {
             installer = Process.Start(new ProcessStartInfo(file, "/SILENT /SUPPRESSMSGBOXES /NORESTART /RELAUNCH=1") { UseShellExecute = true });
         }
         catch (Win32Exception ex)
         {
-            UpdateFailed(ex.NativeErrorCode == 1223 ? "the Windows permission prompt was cancelled" : ex.Message);
+            UpdateFailed(() => ex.NativeErrorCode == 1223 ? Lang.T("the Windows permission prompt was cancelled") : ex.Message);
             return;
         }
         // Normally the installer closes this window. If it ends first, the update didn't happen.
@@ -1902,16 +2199,20 @@ class DeckWindow : Form
             {
                 int code = installer.ExitCode;
                 installer = null;
-                UpdateFailed(code == 0 ? "the installer finished without updating" : "the installer stopped (code " + code + "). Was the Windows prompt cancelled?");
+                UpdateFailed(() => code == 0 ? Lang.T("the installer finished without updating") : Lang.F("the installer stopped (code {0}). Was the Windows prompt cancelled?", code));
             });
         };
     }
 
-    void UpdateFailed(string why)
+    void UpdateFailed(Func<string> why)
     {
-        string text = "Update failed: " + why + (why.EndsWith("?") || why.EndsWith(".") ? "" : ".");
+        Func<string> text = () =>
+        {
+            string reason = why();
+            return Lang.F("Update failed: {0}", reason) + (reason.EndsWith("?") || reason.EndsWith(".") ? "" : ".");
+        };
         ShowBanner(text, "info");
-        AppendLog(text, Hud.Warn);
+        AppendLog(text(), Hud.Warn);
     }
 
     // Where Update now saves the installer; emptied when the window next starts.
@@ -1930,7 +2231,7 @@ class DeckWindow : Form
                 if (last != null && last != CurrentVersion)
                 {
                     whatsNewUrl = ReleasesPage + "/tag/v" + CurrentVersion;
-                    ShowBanner("Updated to Tablet Deck " + CurrentVersion + ".", "news");
+                    ShowBanner(() => Lang.F("Updated to Tablet Deck {0}.", CurrentVersion), "news");
                 }
                 key.SetValue("LastVersion", CurrentVersion);
             }
@@ -1942,7 +2243,7 @@ class DeckWindow : Form
     {
         if (editorUrl == "" || !serverReady)
         {
-            Notify("Tablet Deck isn't running", "Start it first; the layout editor is part of the server.");
+            Notify(Lang.T("Tablet Deck isn't running"), Lang.T("Start it first; the layout editor is part of the server."));
             return;
         }
         Process.Start(editorUrl);
@@ -1966,13 +2267,15 @@ class DeckWindow : Form
         using (var dialog = new SettingsWindow(current ?? new Dictionary<string, object>(), serverArgs.Contains("--port"), Icon,
             Path.Combine(appDir, "keybinds", "TabletDeck-StarCitizen.xml")))
         {
-            if (dialog.ShowDialog(this) != DialogResult.OK || dialog.Changes.Count == 0) return;
+            var result = dialog.ShowDialog(this);
+            if (result == DialogResult.OK && dialog.LanguageChanged) ApplyLanguage();
+            if (result != DialogResult.OK || dialog.Changes.Count == 0) return;
             if (serverReady && server != null && !server.HasExited)
             {
                 foreach (var change in dialog.Changes) SendToServer("set " + change.Key + " " + change.Value);
                 if (dialog.NeedsRestart)
                 {
-                    AppendLog("Restarting the server for the new settings...", Hud.Dim);
+                    AppendLog(Lang.T("Restarting the server for the new settings..."), Hud.Dim);
                     StopServer();
                     StartServer();
                 }
@@ -1999,7 +2302,7 @@ class DeckWindow : Form
             }
             catch (Exception ex)
             {
-                AppendLog("Couldn't save the settings: " + ex.Message, Hud.Warn);
+                AppendLog(Lang.F("Couldn't save the settings: {0}", ex.Message), Hud.Warn);
                 return;
             }
             if (server == null) StartServer();
@@ -2073,7 +2376,7 @@ class DeckWindow : Form
         if (!trayHintShown)
         {
             trayHintShown = true;
-            tray.ShowBalloonTip(3000, "Tablet Deck is still running", "Double-click the tray icon to open it, or right-click it to quit.", ToolTipIcon.Info);
+            tray.ShowBalloonTip(3000, Lang.T("Tablet Deck is still running"), Lang.T("Double-click the tray icon to open it, or right-click it to quit."), ToolTipIcon.Info);
         }
     }
 
@@ -2118,7 +2421,7 @@ class VoiceCommandsWindow : HudDialog
             "so \"engines on\" and \"engines off\" press the same key.", 32, 44, 476, 36);
         Field(search, 32, 86, 476, 28);
         search.TextChanged += delegate { Fill(); };
-        search.HandleCreated += delegate { SendMessage(search.Handle, 0x1501, (IntPtr)1, "Search, e.g. shields or quantum"); }; // EM_SETCUEBANNER
+        search.HandleCreated += delegate { SendMessage(search.Handle, 0x1501, (IntPtr)1, Lang.T("Search, e.g. shields or quantum")); }; // EM_SETCUEBANNER
         Caption("Say", 38, 126);
         presses = Caption("Presses", 300, 126);
         Field(list, 32, 144, 476, 404);
@@ -2165,9 +2468,9 @@ class VoiceCommandsWindow : HudDialog
             if (q == "" || c[0].Contains(q) || c[1].ToLowerInvariant().Contains(q))
                 list.Items.Add(new ListViewItem(new[] { c[0], c[1] }));
         list.EndUpdate();
-        Text = commands.Count == 0 ? "Voice commands (not running)"
-            : q == "" ? "Voice commands (" + commands.Count + ")"
-            : "Voice commands (" + list.Items.Count + " of " + commands.Count + ")";
+        Text = commands.Count == 0 ? Lang.T("Voice commands (not running)")
+            : q == "" ? Lang.F("Voice commands ({0})", commands.Count)
+            : Lang.F("Voice commands ({0} of {1})", list.Items.Count, commands.Count);
     }
 }
 
@@ -2211,14 +2514,15 @@ class KeybindProfileWindow : HudDialog
 
         if (!File.Exists(profile))
         {
-            ShowStatus("The profile file is missing (" + profile + "). Reinstall Tablet Deck.", Hud.Bad);
+            ShowStatus(Lang.F("The profile file is missing ({0}). Reinstall Tablet Deck.", profile), Hud.Bad);
             install.Enabled = false;
             return;
         }
         foreach (var game in FindGames()) AddGame(game);
         ShowStatus(games.Count == 0
-            ? "Star Citizen wasn't found in the usual places. Click \"Choose game folder...\" and pick the StarCitizen folder (the one with LIVE in it)."
-            : "Found " + games.Count + (games.Count == 1 ? " copy" : " copies") + " of the game. Missing one? Click \"Choose game folder...\".", Hud.Dim);
+            ? Lang.T("Star Citizen wasn't found in the usual places. Click \"Choose game folder...\" and pick the StarCitizen folder (the one with LIVE in it).")
+            : Lang.F(games.Count == 1 ? "Found {0} copy of the game. Missing one? Click \"Choose game folder...\"."
+                : "Found {0} copies of the game. Missing one? Click \"Choose game folder...\".", games.Count), Hud.Dim);
     }
 
     void ShowStatus(string text, Color color)
@@ -2275,7 +2579,7 @@ class KeybindProfileWindow : HudDialog
         else if (SameFile(target, profile)) { state = "already up to date"; tick = false; }
         else { state = "older copy, will be replaced"; tick = true; }
         games.Add(game);
-        list.Items.Add(Path.GetFileName(game) + "  -  " + game + "  (" + state + ")", tick);
+        list.Items.Add(Path.GetFileName(game) + "  -  " + game + "  (" + Lang.T(state) + ")", tick);
     }
 
     static bool SameFile(string a, string b)
@@ -2287,7 +2591,7 @@ class KeybindProfileWindow : HudDialog
     // Accepts the StarCitizen folder, a channel folder inside it, or the folder above it.
     void ChooseFolder()
     {
-        using (var dialog = new FolderBrowserDialog { Description = "Pick the StarCitizen folder (the one with LIVE in it).", ShowNewFolderButton = false })
+        using (var dialog = new FolderBrowserDialog { Description = Lang.T("Pick the StarCitizen folder (the one with LIVE in it)."), ShowNewFolderButton = false })
         {
             if (dialog.ShowDialog(this) != DialogResult.OK) return;
             string picked = dialog.SelectedPath;
@@ -2298,11 +2602,11 @@ class KeybindProfileWindow : HudDialog
                     if (Directory.Exists(Path.Combine(root, channel))) candidates.Add(Path.Combine(root, channel));
             if (candidates.Count == 0)
             {
-                ShowStatus("That folder doesn't look like Star Citizen. Pick the StarCitizen folder, the one with LIVE in it.", Hud.Warn);
+                ShowStatus(Lang.T("That folder doesn't look like Star Citizen. Pick the StarCitizen folder, the one with LIVE in it."), Hud.Warn);
                 return;
             }
             foreach (var game in candidates) AddGame(game);
-            ShowStatus("Added. Tick the copies of the game to install the profile into, then click Install.", Hud.Dim);
+            ShowStatus(Lang.T("Added. Tick the copies of the game to install the profile into, then click Install."), Hud.Dim);
         }
     }
 
@@ -2327,19 +2631,19 @@ class KeybindProfileWindow : HudDialog
         }
         if (done.Count == 0 && failed.Count == 0)
         {
-            ShowStatus("Nothing ticked. Tick the copies of the game to install the profile into.", Hud.Warn);
+            ShowStatus(Lang.T("Nothing ticked. Tick the copies of the game to install the profile into."), Hud.Warn);
             return;
         }
         var text = new StringBuilder();
         if (done.Count > 0)
         {
-            text.Append("Installed into " + string.Join(", ", done.ToArray()) + ". ");
-            text.Append("Now, in Star Citizen: Options > Keybindings > Control Profiles, load \"Tablet Deck Keyboard\". ");
-            text.Append("This replaces your current custom binds, so note any you want to keep and set them again afterwards.");
+            text.Append(Lang.F("Installed into {0}. ", string.Join(", ", done.ToArray())));
+            text.Append(Lang.T("Now, in Star Citizen: Options > Keybindings > Control Profiles, load \"Tablet Deck Keyboard\". "));
+            text.Append(Lang.T("This replaces your current custom binds, so note any you want to keep and set them again afterwards."));
         }
         if (failed.Count > 0)
-            text.Append((done.Count > 0 ? "\n\n" : "") + "Couldn't copy into " + string.Join("; ", failed.ToArray()) +
-                ". Try running Tablet Deck as administrator, or copy " + profile + " by hand.");
+            text.Append((done.Count > 0 ? "\n\n" : "") + Lang.F("Couldn't copy into {0}. Try running Tablet Deck as administrator, or copy {1} by hand.",
+                string.Join("; ", failed.ToArray()), profile));
         ShowStatus(text.ToString(), failed.Count > 0 ? Hud.Warn : Hud.Good);
         // Refresh the states shown in the list.
         var again = new List<string>(games);
@@ -2365,6 +2669,8 @@ class SettingsWindow : HudDialog
     readonly ComboBox language = new ComboBox();
     readonly ComboBox pttMode = new ComboBox();
     readonly TextBox links = new TextBox();
+    readonly ComboBox windowLanguage = new ComboBox();
+    public bool LanguageChanged; // saved already; the window shows it once Settings closes
 
     // config.json's links as editable lines.
     string LinksText()
@@ -2395,12 +2701,12 @@ class SettingsWindow : HudDialog
             if (name == "" || name.Length > 24 || name.IndexOfAny(new[] { '<', '>', '"' }) >= 0
                 || !System.Text.RegularExpressions.Regex.IsMatch(url, "^https://[^\\s\"<>]{3,300}$"))
             {
-                MessageBox.Show(this, "This link isn't right:\n\n" + line + "\n\nWrite each one as: Name | https://address (names up to 24 characters).", "Tablet Deck", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(this, Lang.F("This link isn't right:\n\n{0}\n\nWrite each one as: Name | https://address (names up to 24 characters).", line), "Tablet Deck", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return null;
             }
             list.Add(new Dictionary<string, string> { { "name", name }, { "url", url } });
         }
-        if (list.Count > 12) { MessageBox.Show(this, "Up to 12 links, please.", "Tablet Deck", MessageBoxButtons.OK, MessageBoxIcon.Warning); return null; }
+        if (list.Count > 12) { MessageBox.Show(this, Lang.T("Up to 12 links, please."), "Tablet Deck", MessageBoxButtons.OK, MessageBoxIcon.Warning); return null; }
         return new JavaScriptSerializer().Serialize(list);
     }
     readonly HudView.Item pttSound, shortEmotes, pttButton;
@@ -2521,7 +2827,7 @@ class SettingsWindow : HudDialog
         Field(pttMode, 424, 120, 344, 28);
         pttMode.DropDownStyle = ComboBoxStyle.DropDownList;
         pttMode.FlatStyle = FlatStyle.Flat;
-        pttMode.Items.AddRange(new object[] { "Hold to talk", "Press to start, again to stop" });
+        pttMode.Items.AddRange(new object[] { Lang.T("Hold to talk"), Lang.T("Press to start, again to stop") });
         pttMode.SelectedIndex = Get("pttMode", "hold") == "toggle" ? 1 : 0;
         pttSound = Switch("Play a sound when it starts and stops listening", GetBool("pttSound", true), 424, 160, 344);
         Hint("Pick a key Star Citizen doesn't use, like a mouse side button, a numpad key or F13-F24: the key still reaches the game.", 424, 192, 344, 48);
@@ -2541,6 +2847,16 @@ class SettingsWindow : HudDialog
         {
             using (var dialog = new KeybindProfileWindow(keybindProfile, Icon)) dialog.ShowDialog(this);
         });
+        // The window's own language; the tablet picks its language in Deck settings.
+        Caption("Language", 282, 548);
+        Field(windowLanguage, 372, 540, 180, 28);
+        windowLanguage.DropDownStyle = ComboBoxStyle.DropDownList;
+        windowLanguage.FlatStyle = FlatStyle.Flat;
+        foreach (var choice in Lang.Choices) windowLanguage.Items.Add(choice[0] == "" ? Lang.T(choice[1]) : choice[1]);
+        string saved = Lang.Saved;
+        for (int i = 0; i < Lang.Choices.Length; i++) if (Lang.Choices[i][0] == saved) windowLanguage.SelectedIndex = i;
+        if (windowLanguage.SelectedIndex < 0) windowLanguage.SelectedIndex = 0;
+
         Primary("Save", 584, 540, 96, delegate { Save(); });
         Button("Cancel", 688, 540, 96, delegate { DialogResult = DialogResult.Cancel; });
         Accept = Save;
@@ -2579,14 +2895,14 @@ class SettingsWindow : HudDialog
         string newCode = code.Text.Trim().ToLowerInvariant();
         if (!System.Text.RegularExpressions.Regex.IsMatch(newCode, "^[a-z0-9]{1,32}$"))
         {
-            MessageBox.Show(this, "The pairing code can only have letters and numbers (up to 32).", "Tablet Deck", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show(this, Lang.T("The pairing code can only have letters and numbers (up to 32)."), "Tablet Deck", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             code.Focus();
             return;
         }
         string newLanguage = language.Text.Trim();
         if (!System.Text.RegularExpressions.Regex.IsMatch(newLanguage, "^[a-z]{2}(-[A-Za-z]{2,4})?$"))
         {
-            MessageBox.Show(this, "The voice language should look like en-US.", "Tablet Deck", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show(this, Lang.T("The voice language should look like en-US."), "Tablet Deck", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             language.Focus();
             return;
         }
@@ -2609,6 +2925,12 @@ class SettingsWindow : HudDialog
             string json = LinksJson();
             if (json == null) { Changes.Clear(); NeedsRestart = false; links.Focus(); return; }
             Change("links", "", json, false);
+        }
+        string chosen = Lang.Choices[Math.Max(0, windowLanguage.SelectedIndex)][0];
+        if (chosen != Lang.Saved)
+        {
+            Lang.Save(chosen);
+            LanguageChanged = true;
         }
         DialogResult = DialogResult.OK;
     }

@@ -47,7 +47,7 @@
 ### 🛸 A HUD for your tablet
 Landing, power management, quantum, operator modes, shields, targeting,
 salvage, mining, doors, emotes and more, on a two-half HUD that pages through
-panels. Phones get their own layout.
+panels. Phones get their own layout. In English, Español, Français or Deutsch.
 
 </td>
 <td width="50%" valign="top">
@@ -213,7 +213,8 @@ empty spot to send a pulse through them.
 - **Minimize** it to keep Tablet Deck running in the tray; double-click the tray
   icon to bring it back. **Closing** the window quits.
 - **Settings:** pairing code, port, the "only while Star Citizen is in front"
-  check, tap length, voice on/off and language, and **Install keybind profile**.
+  check, tap length, voice on/off and language, the window's
+  [language](#languages), and **Install keybind profile**.
 - **Edit layout** opens the [layout editor](#layout-editor).
 - **Start with Windows** starts it in the tray when you log in. **Settings
   folder** opens the folder with `config.json` and your own layouts.
@@ -379,6 +380,23 @@ in **Deck settings**. Each tablet remembers its own. Under **Display**:
 <p align="center">
   <img src="docs/themes.jpg" alt="The deck in all 12 manufacturer themes" width="100%">
 </p>
+
+### Languages
+
+The deck and the app window come in **English, Español, Français and Deutsch**.
+
+- **On the tablet:** pick it under **Layout → Language** in **Deck settings**. Each
+  tablet and phone starts in its own language (if it's one of these) and
+  remembers its choice.
+- **In the window:** it follows Windows' display language; choose another under
+  **Language** in **Settings**.
+
+Button labels, panel titles, status words and the deck's messages are
+translated. Some things stay as they are: Star Citizen's own terms (Quantum,
+SCM, NAV, VTOL, mobiGlas), voice commands (Windows' speech recognition listens
+for English), the labels of layouts you made yourself, and the log in the
+window. The translations were made with AI; if something reads wrong in your
+language, please say so on [GitHub](https://github.com/nodieCode/tablet-deck/issues/new/choose).
 
 ## Settings
 

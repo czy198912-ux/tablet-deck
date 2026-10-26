@@ -58,6 +58,9 @@ without the owner's explicit agreement:
   NuGet packages.
 - **Windows is the target** for everything that runs on the PC. The deck itself
   must keep working in Safari (iPad, iPhone) and Chrome (Android).
+- **Translations:** new text on the deck or in the app window gets Spanish,
+  French and German entries in `public/i18n.js` or `Lang` in
+  `native/launcher.cs` (see [Translations](docs/DEVELOPMENT.md#translations)).
 - **Design:** anything visual follows [docs/DESIGN.md](docs/DESIGN.md): theme
   tokens, button colours, the HUD style and the house colours for the editor,
   website and app window.

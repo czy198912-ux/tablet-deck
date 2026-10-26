@@ -80,7 +80,7 @@ layout from `layouts/`, and presses only play their animations. The website's
 |---|---|
 | `server.js` | the server: serves the deck, pairs tablets, sends keys, runs voice, the layout editor's API |
 | `qr.js` | QR code generator for the console and the app window |
-| `public/` | the deck (`index.html`, `app.js`, `canvas.js`, themes, icons, animations), the layout editor (`editor.*`) and the showcase |
+| `public/` | the deck (`index.html`, `app.js`, `canvas.js`, `i18n.js`, themes, icons, animations), the layout editor (`editor.*`) and the showcase |
 | `layouts/` | built-in layouts; `hud-phone.json` and the starter layouts are generated |
 | `keybinds/` | the Tablet Deck Keyboard profile for Star Citizen (generated) |
 | `native/` | C# sources: `launcher.cs` (the app window), `keysender.cs`, `voice.cs` |
@@ -144,6 +144,28 @@ any screen whose short side is under 500 points as a phone; add
 Themes are CSS variables in `public/themes.css`. Add one by copying a block
 there and adding an entry to `THEMES` in `public/app.js`. Theme fonts come from
 Google Fonts.
+
+## Translations
+
+Text is written in English and translated where it's shown, so layouts, keys
+and voice phrases never change with the language.
+
+- **The deck:** `public/i18n.js` maps each English text to
+  `[Español, Français, Deutsch]`. `t()` translates; `canvas.js`, `fx.js` and
+  `app.js` call it for what they draw, and `apply()` translates the fixed text
+  in `index.html`. Text without an entry shows in English, which is how players'
+  own labels stay as they wrote them.
+- **The app window:** `Lang` in `native/launcher.cs` does the same. Buttons,
+  switches, links and panel titles translate when they're drawn; other text goes
+  through `Lang.T()` or `Lang.F()` (with `{0}` placeholders). Status lines that
+  stay on screen are kept as functions, so they follow a language change at once.
+
+When you add a label, button, panel or message, add its translations too. To
+check a layout's coverage, every `label`, `title` and `text` in `layouts/`
+should have an entry (names like Prospector or mobiGlas stay English). To add a
+language, add a column to both tables and an entry to `LANGUAGES` in
+`i18n.js` and `Choices` in `launcher.cs`; texts must still fit their buttons,
+so check the deck (`?demo`) and the window in the new language.
 
 ## The keybind profile
 
